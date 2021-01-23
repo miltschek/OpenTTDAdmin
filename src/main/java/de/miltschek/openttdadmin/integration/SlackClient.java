@@ -34,6 +34,8 @@ import java.net.http.HttpResponse.BodyHandler;
 import java.net.http.HttpResponse.BodyHandlers;
 import java.nio.charset.StandardCharsets;
 
+import org.json.JSONObject;
+
 /**
  * Very basic implementation of slack connector.
  */
@@ -55,10 +57,10 @@ public class SlackClient {
 	
 	/**
 	 * Sends a message to the slack channel.
-	 * TODO: implement error checking
 	 * @param message message to be sent
+	 * @return true in case the message has been successfully sent, false otherwise
 	 */
-	public void sendMessage(String message) {
+	public boolean sendMessage(String message) {
 		try {
     		String messageEncoded = URLEncoder.encode(message, StandardCharsets.UTF_8);
 	    	BodyPublisher publisher = BodyPublishers.ofString("channel=" + channelEncoded + "&text=" + messageEncoded);
@@ -69,10 +71,26 @@ public class SlackClient {
 	    			.build();
 	    	BodyHandler<String> responseHandler = BodyHandlers.ofString();
 	    	HttpResponse<String> response = http.send(request, responseHandler);
-	    	System.out.println("slack response = " + response.statusCode());
-	    	//System.out.println("slack response = " + response.body());
+	    	
+	    	if (response.statusCode() == 200) {
+	    		JSONObject jsonResponse = new JSONObject(response.body());
+	    		if (jsonResponse.getBoolean("ok")) {
+	    			return true;
+	    		} else {
+	    			System.err.println("failed to send slack message; response " + jsonResponse.getString("error"));
+	    			return false;
+	    		}
+	    	} else if (response.statusCode() == 429) {
+	    		// rate exceeded
+	    		System.err.println("slack reported rate exceeded");
+	    		return false;
+	    	} else {
+	    		System.err.println("slack responded with error code " + response.statusCode());
+	    		return false;
+	    	}
     	} catch (Exception ex) {
     		System.err.println("slack exception " + ex.getMessage());
+    		return false;
     	}
 	}
 }

@@ -26,7 +26,10 @@ package de.miltschek.openttdadmin;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Consumer;
 
@@ -36,14 +39,35 @@ import de.miltschek.openttdadmin.data.ClientListenerAdapter;
 import de.miltschek.openttdadmin.data.ServerInfo;
 import de.miltschek.openttdadmin.data.ServerListenerAdapter;
 import de.miltschek.openttdadmin.data.ChatMessage.Recipient;
+import de.miltschek.openttdadmin.integration.GeoIp;
 import de.miltschek.openttdadmin.integration.SlackClient;
 
+/**
+ * Basic game administration tool.
+ */
 public class BasicTool {
 	private static OttdAdminClient admin;
 	private static SlackClient slack;
 	
-	private static Set<Integer> resetRequests = new HashSet<Integer>();
+	/** A lock for the subsequent objects for the company-reset process. */
+	private static Object resetCompanyLock = new Object();
+	/** Time window hoping to be enough for a successful company reset process. */
+	private static final long RESET_TIME_WINDOW = 10000;
+	/** Timestamp of the last company reset request. */
+	private static long lastResetRequest;
+	/** Client ID of the current company reset request. */
+	private static int resetRequestClientId;
+	/** Flag indicating whether a company has been found. */
+	private static boolean companyFound;
+	/** Company ID that is to be reset. */
+	private static byte companyToReset;
+	/** Collection of client IDs and their company IDs. */
+	private static Map<Integer, Byte> clientsCompanies = new HashMap<Integer, Byte>();
 
+	/**
+	 * Entry point of the application.
+	 * @param args arguments in the fixed order: OTTD server address, port number, admin password, slack channel name, slack token
+	 */
 	public static void main(String[] args) {
 		String host;
 		int port;
@@ -102,18 +126,36 @@ public class BasicTool {
 		    		slack.sendMessage(":boom: " + t.getSenderId() + " " + t.getMessage());
 		    	}
 			} else if (t.getMessage().equals("!reset")) {
-				admin.requestClientInfo(t.getSenderId());
-
-				synchronized (resetRequests) {
-					resetRequests.add(t.getSenderId());
+				// need to find, what company is playing the sender
+				// then, what other clients do play the same company
+				// then, kick them
+				// then, reset the company
+				// (did not find a way to reset a company with active clients, TODO?)
+				synchronized (resetCompanyLock) {
+					if (lastResetRequest < System.currentTimeMillis() - RESET_TIME_WINDOW) {
+						lastResetRequest = System.currentTimeMillis();
+						resetRequestClientId = t.getSenderId();
+						companyFound = false;
+						clientsCompanies.clear();
+					} else {
+						admin.sendChat(new ChatMessage(0, Recipient.Client, t.getSenderId(), "Another reset request still being processed. Please retry in a few seconds."));
+					}
+				}
+				
+				admin.requestAllClientsInfo();
+				
+				if (slack != null) {
+					slack.sendMessage(":information_source: client "
+							+ t.getSenderId()
+							+ " requested a company to be reset");
 				}
 			} else if (t.getMessage().equals("!help")) {
 				admin.sendChat(new ChatMessage(0, Recipient.Client, t.getSenderId(), "Available commands:"));
 				admin.sendChat(new ChatMessage(0, Recipient.Client, t.getSenderId(), "!admin <message>: sends the message to the server's admin"));
 				admin.sendChat(new ChatMessage(0, Recipient.Client, t.getSenderId(), "!reset: resets your company; you will be kicked of the server, so please re-join"));
-			} else if (t.getSenderId() != 1) {
+			} else if (t.getSenderId() != 1 && !t.getMessage().isEmpty()) {
 				if (slack != null) {
-					slack.sendMessage(t.getSenderId() + " " + t.getMessage());
+					slack.sendMessage(":pencil: " + t.getSenderId() + " " + t.getMessage());
 				}
 			}
 		}
@@ -122,18 +164,57 @@ public class BasicTool {
 	private static class CustomClientListener extends ClientListenerAdapter {
 		@Override
 		public void clientInfoReceived(ClientInfo clientInfo) {
-			boolean found;
-			synchronized (resetRequests) {
-				found = resetRequests.remove(clientInfo.getClientId());
+			// build a client-company map if a reset has been requested
+			synchronized (resetCompanyLock) {
+				if (lastResetRequest >= System.currentTimeMillis() - RESET_TIME_WINDOW) {
+					// keep all clients and their companies in cache
+					clientsCompanies.put(clientInfo.getClientId(), clientInfo.getPlayAs());
+					
+					if (resetRequestClientId == clientInfo.getClientId()) {
+						// found the company to be reset
+						companyToReset = clientInfo.getPlayAs();
+						companyFound = true;
+					}
+					
+					// optimization: it's enough to try our luck only if at least the current client plays the company
+					if (companyFound && companyToReset == clientInfo.getPlayAs()) {
+						for (Entry<Integer, Byte> entry : clientsCompanies.entrySet()) {
+							if (entry.getValue() == companyToReset) {
+								admin.executeRCon("kick " + entry.getKey() + " \"resetting company; please re-join\"");
+								System.out.println("kicking " + entry.getKey());
+
+								// ugly: since we don't know, how many clients are still to be delivered
+								// we need to try our luck with each client to achieve the goal = reset the company
+								admin.executeRCon("resetcompany " + (companyToReset + 1));
+								System.out.println("resetting company id " + companyToReset);
+							}
+						}
+						
+						// don't need to kick same players again in next iterations
+						clientsCompanies.clear();
+					}
+					
+					return;
+				}
 			}
 			
-			if (found) {
-				admin.executeRCon("kick " + clientInfo.getClientId() + " \"resetting company\"");
-				admin.executeRCon("resetcompany " + (clientInfo.getPlayAs() + 1));
-			} else {
-				if (slack != null) {
-					slack.sendMessage(":information_source: client " + clientInfo.getClientId() + " " + clientInfo.getClientName() + " " + clientInfo.getNetworkAddress());
-				}
+			// will be executed only if not within the reset-company-process
+			GeoIp geoIp = GeoIp.lookup(clientInfo.getNetworkAddress());
+			if (geoIp != null) {
+				admin.sendChat(
+						new ChatMessage(
+								0,
+								Recipient.All,
+								0,
+								"Warm welcome to " + clientInfo.getClientName() + " coming from " + geoIp.getCountry() + "!"));
+			}
+
+			if (slack != null) {
+				slack.sendMessage(":information_source: client "
+						+ clientInfo.getClientId()
+						+ " " + clientInfo.getClientName()
+						+ " " + clientInfo.getNetworkAddress()
+						+ ((geoIp != null) ? (" " + geoIp.getCountry() + ", " + geoIp.getCity()) : ""));
 			}
 		}
 		

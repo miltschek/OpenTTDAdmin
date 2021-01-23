@@ -25,6 +25,9 @@ package de.miltschek.openttdadmin.packets;
 
 import java.nio.charset.StandardCharsets;
 
+/**
+ * TODO: document it
+ */
 public class AdminChat extends OttdPacket {
 	public AdminChat(byte[] buffer, int startPosition, int length) {
 		super(buffer, startPosition, length);
