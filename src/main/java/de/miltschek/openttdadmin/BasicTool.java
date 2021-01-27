@@ -24,10 +24,13 @@
 package de.miltschek.openttdadmin;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -206,7 +209,7 @@ public class BasicTool {
 								0,
 								Recipient.All,
 								0,
-								"Warm welcome to " + clientInfo.getClientName() + " coming from " + geoIp.getCountry() + "!"));
+								"-> Warm welcome to " + clientInfo.getClientName() + " coming from " + geoIp.getCountry() + "! <-"));
 			}
 
 			if (slack != null) {
@@ -215,6 +218,22 @@ public class BasicTool {
 						+ " " + clientInfo.getClientName()
 						+ " " + clientInfo.getNetworkAddress()
 						+ ((geoIp != null) ? (" " + geoIp.getCountry() + ", " + geoIp.getCity()) : ""));
+			}
+			
+			try {
+				File onNewClient = new File("on_new_client.txt");
+				if (onNewClient.exists()) {
+					for (String line : Files.readAllLines(onNewClient.toPath())) {
+						admin.sendChat(
+								new ChatMessage(
+										0,
+										Recipient.Client,
+										clientInfo.getClientId(),
+										line));
+					}
+				}
+			} catch (Exception ex) {
+				System.err.println("Failed to send on-new-client " + ex.getClass().getSimpleName() + " " + ex.getMessage());
 			}
 		}
 		

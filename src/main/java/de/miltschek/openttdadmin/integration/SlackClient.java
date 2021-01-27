@@ -61,36 +61,43 @@ public class SlackClient {
 	 * @return true in case the message has been successfully sent, false otherwise
 	 */
 	public boolean sendMessage(String message) {
-		try {
-    		String messageEncoded = URLEncoder.encode(message, StandardCharsets.UTF_8);
-	    	BodyPublisher publisher = BodyPublishers.ofString("channel=" + channelEncoded + "&text=" + messageEncoded);
-	    	HttpRequest request = HttpRequest.newBuilder(new URI("https://slack.com/api/chat.postMessage"))
-	    			.setHeader("Authorization", "Bearer " + token)
-	    			.setHeader("Content-Type", "application/x-www-form-urlencoded")
-	    			.POST(publisher)
-	    			.build();
-	    	BodyHandler<String> responseHandler = BodyHandlers.ofString();
-	    	HttpResponse<String> response = http.send(request, responseHandler);
-	    	
-	    	if (response.statusCode() == 200) {
-	    		JSONObject jsonResponse = new JSONObject(response.body());
-	    		if (jsonResponse.getBoolean("ok")) {
-	    			return true;
-	    		} else {
-	    			System.err.println("failed to send slack message; response " + jsonResponse.getString("error"));
-	    			return false;
-	    		}
-	    	} else if (response.statusCode() == 429) {
-	    		// rate exceeded
-	    		System.err.println("slack reported rate exceeded");
-	    		return false;
-	    	} else {
-	    		System.err.println("slack responded with error code " + response.statusCode());
-	    		return false;
+		for (int retryCount = 2; retryCount > 0; retryCount--) {
+			try {
+	    		String messageEncoded = URLEncoder.encode(message, StandardCharsets.UTF_8);
+		    	BodyPublisher publisher = BodyPublishers.ofString("channel=" + channelEncoded + "&text=" + messageEncoded);
+		    	HttpRequest request = HttpRequest.newBuilder(new URI("https://slack.com/api/chat.postMessage"))
+		    			.setHeader("Authorization", "Bearer " + token)
+		    			.setHeader("Content-Type", "application/x-www-form-urlencoded")
+		    			.POST(publisher)
+		    			.build();
+		    	BodyHandler<String> responseHandler = BodyHandlers.ofString();
+		    	HttpResponse<String> response = http.send(request, responseHandler);
+		    	
+		    	if (response.statusCode() == 200) {
+		    		JSONObject jsonResponse = new JSONObject(response.body());
+		    		if (jsonResponse.getBoolean("ok")) {
+		    			return true;
+		    		} else {
+		    			System.err.println("failed to send slack message; response " + jsonResponse.getString("error"));
+		    		}
+		    	} else if (response.statusCode() == 429) {
+		    		// rate exceeded
+		    		System.err.println("slack reported rate exceeded");
+		    	} else {
+		    		System.err.println("slack responded with error code " + response.statusCode());
+		    	}
+	    	} catch (Exception ex) {
+	    		System.err.println("slack exception " + ex.getMessage());
 	    	}
-    	} catch (Exception ex) {
-    		System.err.println("slack exception " + ex.getMessage());
-    		return false;
-    	}
+			
+			try {
+				Thread.sleep(1000);
+			} catch (InterruptedException e) {
+				break;
+			}
+		}
+		
+		System.err.println("failed to deliver the message " + message);
+		return false;
 	}
 }
