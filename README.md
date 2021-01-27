@@ -41,7 +41,7 @@ An example of a functional tool, reacting on some chat commands, looking ip the 
 Integration
 -----------
 The code contains a sample integration of external tools. Please note, the implementation is *very* basic and its intention is only to demonstrate the possibilities:
-- Slack integration in [SlackClient](src/main/java/de/miltschek/openttdadmin/integration/SlackClient.java]
+- Slack integration in [SlackClient](src/main/java/de/miltschek/openttdadmin/integration/SlackClient.java)
 - ip-api.com integration in [GeoIp](src/main/java/de/miltschek/openttdadmin/integration/GeoIp.java)
 
 Development
