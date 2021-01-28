@@ -87,6 +87,7 @@ import de.miltschek.openttdadmin.packets.ServerPong;
 import de.miltschek.openttdadmin.packets.ServerProtocol;
 import de.miltschek.openttdadmin.packets.ServerRcon;
 import de.miltschek.openttdadmin.packets.ServerRconEnd;
+import de.miltschek.openttdadmin.packets.ServerShutdown;
 import de.miltschek.openttdadmin.packets.ServerWelcome;
 import de.miltschek.openttdadmin.packets.UpdateFrequency;
 import de.miltschek.openttdadmin.packets.UpdateType;
@@ -1052,6 +1053,14 @@ public class OttdAdminClient implements Closeable
 			    					}
 			    				} catch (Exception ex) {
 			    					System.err.println("failed to call server banned listener(s) " + ex.getMessage());
+			    				}
+			    			} else if (packetReceived instanceof ServerShutdown) {
+			    				try {
+			    					for (ServerListenerAdapter listener : serverListeners) {
+			    						listener.shutdown();
+			    					}
+			    				} catch (Exception ex) {
+			    					System.err.println("failed to call server shutdown listener(s) " + ex.getMessage());
 			    				}
 			    			} else {
 			    				System.err.println("received unimplemented package " + packetReceived.getClass().getSimpleName());

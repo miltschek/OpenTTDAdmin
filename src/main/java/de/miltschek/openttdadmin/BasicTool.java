@@ -39,6 +39,7 @@ import java.util.function.Consumer;
 import de.miltschek.openttdadmin.data.ChatMessage;
 import de.miltschek.openttdadmin.data.ClientInfo;
 import de.miltschek.openttdadmin.data.ClientListenerAdapter;
+import de.miltschek.openttdadmin.data.ErrorCode;
 import de.miltschek.openttdadmin.data.ServerInfo;
 import de.miltschek.openttdadmin.data.ServerListenerAdapter;
 import de.miltschek.openttdadmin.data.ChatMessage.Recipient;
@@ -153,6 +154,7 @@ public class BasicTool {
 							+ " requested a company to be reset");
 				}
 			} else if (t.getMessage().equals("!help")) {
+				System.out.println("User " + t.getSenderId() + " requested help.");
 				admin.sendChat(new ChatMessage(0, Recipient.Client, t.getSenderId(), "Available commands:"));
 				admin.sendChat(new ChatMessage(0, Recipient.Client, t.getSenderId(), "!admin <message>: sends the message to the server's admin"));
 				admin.sendChat(new ChatMessage(0, Recipient.Client, t.getSenderId(), "!reset: resets your company; you will be kicked of the server, so please re-join"));
@@ -217,9 +219,16 @@ public class BasicTool {
 						+ clientInfo.getClientId()
 						+ " " + clientInfo.getClientName()
 						+ " " + clientInfo.getNetworkAddress()
-						+ ((geoIp != null) ? (" " + geoIp.getCountry() + ", " + geoIp.getCity()) : ""));
+						+ ((geoIp != null) ? (" " + geoIp.getCountry() + ", " + geoIp.getCity()) + (geoIp.isProxy() ? ", proxy" : ""): ""));
 			}
-			
+		}
+		
+		@Override
+		public void clientConnected(int clientId) {
+			if (slack != null) {
+				slack.sendMessage(":information_source: new client " + clientId);
+			}
+
 			try {
 				File onNewClient = new File("on_new_client.txt");
 				if (onNewClient.exists()) {
@@ -228,7 +237,7 @@ public class BasicTool {
 								new ChatMessage(
 										0,
 										Recipient.Client,
-										clientInfo.getClientId(),
+										clientId,
 										line));
 					}
 				}
@@ -238,16 +247,16 @@ public class BasicTool {
 		}
 		
 		@Override
-		public void clientConnected(int clientId) {
+		public void clientDisconnected(int clientId) {
 			if (slack != null) {
-				slack.sendMessage(":information_source: new client " + clientId);
+				slack.sendMessage(":information_source: client left " + clientId);
 			}
 		}
 		
 		@Override
-		public void clientDisconnected(int clientId) {
+		public void clientError(int clientId, ErrorCode errorCode) {
 			if (slack != null) {
-				slack.sendMessage(":information_source: client left " + clientId);
+				slack.sendMessage(":information_source: client error " + clientId + " " + errorCode);
 			}
 		}
 	}

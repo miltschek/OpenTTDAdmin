@@ -255,6 +255,11 @@ public class Demo {
 			}
 			
 			@Override
+			public void shutdown() {
+				System.out.println("server shuts down");
+			}
+			
+			@Override
 			public void wrongPassword() {
 				System.out.println("wrong password");
 			}

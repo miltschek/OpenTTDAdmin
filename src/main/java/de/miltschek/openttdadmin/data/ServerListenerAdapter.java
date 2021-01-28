@@ -40,6 +40,11 @@ public abstract class ServerListenerAdapter {
 	public void disconnected() {}
 	
 	/**
+	 * Called whenever a server shuts down.
+	 */
+	public void shutdown() {}
+	
+	/**
 	 * Called whenever a server delivers self-information.
 	 * @param serverInfo server information data
 	 */
