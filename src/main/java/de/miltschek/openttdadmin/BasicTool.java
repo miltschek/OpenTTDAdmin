@@ -35,6 +35,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import de.miltschek.openttdadmin.data.ChatMessage;
 import de.miltschek.openttdadmin.data.ClientInfo;
@@ -67,6 +69,8 @@ public class BasicTool {
 	private static byte companyToReset;
 	/** Collection of client IDs and their company IDs. */
 	private static Map<Integer, Byte> clientsCompanies = new HashMap<Integer, Byte>();
+	
+	private static final Pattern RENAME_PATTERN = Pattern.compile("[!]name[ \\t]+(\"|)(?<value>(?:[^\"\\\\]|\\\\.)*)\\1");
 
 	/**
 	 * Entry point of the application.
@@ -154,11 +158,24 @@ public class BasicTool {
 							+ t.getSenderId()
 							+ " requested a company to be reset");
 				}
+			} else if (t.getMessage().startsWith("!name")) {
+				Matcher m = RENAME_PATTERN.matcher(t.getMessage());
+				if (m.find()) {
+					String newName = m.group("value");
+					admin.executeRCon("client_name " + t.getSenderId() + " \"" + newName + "\"");
+					
+					if (slack != null) {
+						slack.sendMessage(":information_source: client "
+								+ t.getSenderId()
+								+ " requested a new name " + newName);
+					}
+				}
 			} else if (t.getMessage().equals("!help")) {
 				System.out.println("User " + t.getSenderId() + " requested help.");
 				admin.sendChat(new ChatMessage(0, Recipient.Client, t.getSenderId(), "Available commands:"));
 				admin.sendChat(new ChatMessage(0, Recipient.Client, t.getSenderId(), "!admin <message>: sends the message to the server's admin"));
 				admin.sendChat(new ChatMessage(0, Recipient.Client, t.getSenderId(), "!reset: resets your company; you will be kicked of the server, so please re-join"));
+				admin.sendChat(new ChatMessage(0, Recipient.Client, t.getSenderId(), "!name <new_name>: changes your name; surround multiple words with double quotes"));
 			} else if (t.getMessage().startsWith("!")) {
 				admin.sendChat(new ChatMessage(0, Recipient.Client, t.getSenderId(), "No such command. For help, enter !help"));
 			} else if (t.getSenderId() != 1 && !t.getMessage().isEmpty()) {
