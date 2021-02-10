@@ -128,6 +128,7 @@ public class BasicTool {
 			} else if (t.getMessage().startsWith("!admin")) {
 		    	if (slack != null) {
 		    		slack.sendMessage(":boom: " + t.getSenderId() + " " + t.getMessage());
+		    		admin.sendChat(new ChatMessage(0, Recipient.Client, t.getSenderId(), "Your message has been sent to the admin. Thank you!"));
 		    	}
 			} else if (t.getMessage().equals("!reset")) {
 				// need to find, what company is playing the sender
@@ -158,6 +159,8 @@ public class BasicTool {
 				admin.sendChat(new ChatMessage(0, Recipient.Client, t.getSenderId(), "Available commands:"));
 				admin.sendChat(new ChatMessage(0, Recipient.Client, t.getSenderId(), "!admin <message>: sends the message to the server's admin"));
 				admin.sendChat(new ChatMessage(0, Recipient.Client, t.getSenderId(), "!reset: resets your company; you will be kicked of the server, so please re-join"));
+			} else if (t.getMessage().startsWith("!")) {
+				admin.sendChat(new ChatMessage(0, Recipient.Client, t.getSenderId(), "No such command. For help, enter !help"));
 			} else if (t.getSenderId() != 1 && !t.getMessage().isEmpty()) {
 				if (slack != null) {
 					slack.sendMessage(":pencil: " + t.getSenderId() + " " + t.getMessage());
