@@ -25,10 +25,15 @@ package de.miltschek.openttdadmin.packets;
 
 import java.nio.charset.StandardCharsets;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * TODO: document it
  */
 public abstract class OttdPacket {
+	private static final Logger LOGGER = LoggerFactory.getLogger(OttdPacket.class);
+	
 	public static final int MAX_MTU = 1460;
 	
 	protected byte[] internalBuffer;
@@ -50,7 +55,7 @@ public abstract class OttdPacket {
 			NetworkPacketType type = NetworkPacketType.getEnum(buffer[2] & 0xff);
 			
 			if (type == null) {
-				System.err.println("unknown packet type id " + (buffer[2] & 0xff));
+				LOGGER.error("unknown packet type id {}", (buffer[2] & 0xff));
 				return null;
 			}
 			
@@ -118,13 +123,13 @@ public abstract class OttdPacket {
 				break;
 				
 				default:
-					System.err.println("unsupported packet type " + type);
+					LOGGER.error("unsupported packet type {}", type);
 					break;
 			}
 		} catch (ArrayIndexOutOfBoundsException ex) {
-			System.err.println("invalid packet structure " + ex.getMessage());
+			LOGGER.error("invalid packet structure", ex);
 		} catch (Exception ex) {
-			System.err.println("failed parsing the packet " + ex.getMessage());
+			LOGGER.error("failed parsing the packet", ex);
 		}
 		
 		return null;

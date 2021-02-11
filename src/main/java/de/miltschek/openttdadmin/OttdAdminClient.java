@@ -36,6 +36,9 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.function.Consumer;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import de.miltschek.openttdadmin.data.ChatMessage;
 import de.miltschek.openttdadmin.data.ChatMessage.Recipient;
 import de.miltschek.openttdadmin.data.ClientInfo;
@@ -97,6 +100,8 @@ import de.miltschek.openttdadmin.packets.UpdateType;
  */
 public class OttdAdminClient implements Closeable
 {
+	private static final Logger LOGGER = LoggerFactory.getLogger(OttdAdminClient.class);
+	
 	/** Default address: localhost. */
 	public final static String DEFAULT_HOST = "127.0.0.1";
 	/** Default port: 3977. */
@@ -475,20 +480,20 @@ public class OttdAdminClient implements Closeable
 	    			byte[] task;
 	    			while ((task = requests.take()) != null) {
 	    				if (outputStream == null) {
-	    					System.err.println("could not send data - no output stream");
+	    					LOGGER.error("could not send data - no output stream");
 	    				} else {
 	    					try {
 		    					outputStream.write(task);
 		    					outputStream.flush();
 	    	    			} catch (IOException ex) {
-	    	    				System.err.println("writing to socket failed " + ex.getMessage());
+	    	    				LOGGER.error("writing to socket failed", ex);
 	    	    			} catch (Exception ex) {
-	    	    				System.err.println("unknown error while writing to socket " + ex.getMessage());
+	    	    				LOGGER.error("unknown error while writing to socket", ex);
 	    	    			}
 	    				}
 	    			}
     			} catch (InterruptedException ex) {
-    				System.out.println("writer thread has been interrupted");
+    				LOGGER.info("writer thread has been interrupted");
     			}
     		}
     	};
@@ -517,7 +522,7 @@ public class OttdAdminClient implements Closeable
     		if (this.isAlive()) {
 	    		this.interrupt();
 	    		try {
-	    			System.out.println("closing the socket");
+	    			LOGGER.info("closing the socket");
 	    			client.close();
 	    		} catch (Exception ex) {}
 	    		this.join();
@@ -539,7 +544,7 @@ public class OttdAdminClient implements Closeable
 	    		// outside loop - keep connecting to the server 
 		    	while (true) {
 		    		if (this.isInterrupted()) {
-		    			System.out.println("stopping worker (1)");
+		    			LOGGER.info("stopping worker (1)");
 		    			return;
 		    		}
 		    		
@@ -547,11 +552,11 @@ public class OttdAdminClient implements Closeable
 						client = new Socket(OttdAdminClient.this.host, OttdAdminClient.this.port);
 						// TODO: fine tuning client.setKeepAlive(true);
 					} catch (UnknownHostException e) {
-						System.err.println("unknown host " + OttdAdminClient.this.host);
+						LOGGER.error("unknown host {}", OttdAdminClient.this.host);
 						OttdAdminClient.wait(WaitReason.UNKNOWN_HOST);
 						continue;
 					} catch (IOException e) {
-						System.err.println("failed to connect to " + OttdAdminClient.this.host + ":" + OttdAdminClient.this.port);
+						LOGGER.error("failed to connect to {}:{}", OttdAdminClient.this.host, OttdAdminClient.this.port);
 						OttdAdminClient.wait(WaitReason.CANNOT_CONNECT);
 						continue;
 					}
@@ -568,7 +573,7 @@ public class OttdAdminClient implements Closeable
 				    	// inside loop - keep reading data from the server
 				    	while (true) {
 				    		if (this.isInterrupted()) {
-				    			System.out.println("stopping worker (2)");
+				    			LOGGER.info("stopping worker (2)");
 				    			return;
 				    		}
 
@@ -592,14 +597,14 @@ public class OttdAdminClient implements Closeable
 					    	int read = adminIs.read(buffer, 0, 2);
 					    	
 					    	if (read <= 0) {
-					    		System.err.println("connection closed (1)");
+					    		LOGGER.debug("connection closed (1)");
 					    		
 					    		try {
 				    				for (ServerListenerAdapter listener : serverListeners) {
 				    						listener.disconnected();
 				    				}
 			    				} catch (Exception ex) {
-			    					System.err.println("failed to call server disconnected listener(s) " + ex.getMessage());
+			    					LOGGER.error("failed to call server disconnected listener(s)", ex);
 			    				}
 
 					    		OttdAdminClient.wait(WaitReason.CONNECTION_INTERRUPTED);
@@ -616,14 +621,14 @@ public class OttdAdminClient implements Closeable
 					    	read = adminIs.read(buffer, 2, packetSize - 2);
 					    	
 					    	if (read <= 0) {
-					    		System.err.println("connection closed (2)");
+					    		LOGGER.debug("connection closed (2)");
 					    		
 					    		try {
 				    				for (ServerListenerAdapter listener : serverListeners) {
 				    						listener.disconnected();
 				    				}
 			    				} catch (Exception ex) {
-			    					System.err.println("failed to call server disconnected listener(s) " + ex.getMessage());
+			    					LOGGER.error("failed to call server disconnected listener(s)", ex);
 			    				}
 					    		
 					    		OttdAdminClient.wait(WaitReason.CONNECTION_INTERRUPTED);
@@ -633,10 +638,11 @@ public class OttdAdminClient implements Closeable
 					    	OttdPacket packetReceived = OttdPacket.parsePacket(buffer);
 				    		if (packetReceived == null) {
 				    			// the packet could not be identified - ignore it
+				    			LOGGER.warn("an unidentified packet has been received");
 				    		} else if (packetReceived instanceof ServerProtocol) {
 			    				ServerProtocol p = (ServerProtocol)packetReceived;
 			    				if ((OttdAdminClient.this.serverVersion = p.getAdminVersion()) != SUPPORTED_SERVER_VERSION) {
-			    					System.err.println("warning - the server implements a different protocol version");
+			    					LOGGER.warn("the server implements a potentially unsupported protocol version {}", p.getAdminVersion());
 			    				}
 			    				
 			    				try {
@@ -644,7 +650,7 @@ public class OttdAdminClient implements Closeable
 				    						listener.connected();
 				    				}
 			    				} catch (Exception ex) {
-			    					System.err.println("failed to call server connected listener(s) " + ex.getMessage());
+			    					LOGGER.error("failed to call server connected listener(s)", ex);
 			    				}
 			    			} else if (packetReceived instanceof ServerWelcome) {
 			    				welcomeReceived = true;
@@ -666,11 +672,11 @@ public class OttdAdminClient implements Closeable
 				    						listener.serverInfoReceived(serverInfo);
 				    				}
 			    				} catch (Exception ex) {
-			    					System.err.println("failed to call server info listener(s) " + ex.getMessage());
+			    					LOGGER.error("failed to call server info listener(s)", ex);
 			    				}
 			    			} else if (packetReceived instanceof ServerError) {
 			    				ServerError p = (ServerError)packetReceived;
-			    				System.err.println("error code received " + p.getErrorCode() + " (" + p.getRawErrorCode() + ")");
+			    				LOGGER.warn("server error received {} ({})", p.getErrorCode(), p.getRawErrorCode());
 			    				
 			    				switch (p.getErrorCode()) {
 			    				case NETWORK_ERROR_NOT_EXPECTED:
@@ -683,7 +689,7 @@ public class OttdAdminClient implements Closeable
 					    						listener.wrongPassword();
 					    				}
 				    				} catch (Exception ex) {
-				    					System.err.println("failed to call server wrong password listener(s) " + ex.getMessage());
+				    					LOGGER.error("failed to call server wrong password listener(s)", ex);
 				    				}
 
 			    					OttdAdminClient.wait(WaitReason.WRONG_PASSWORD);
@@ -717,7 +723,7 @@ public class OttdAdminClient implements Closeable
 				    						listener.accept(chatMessage);
 				    				}
 			    				} catch (Exception ex) {
-			    					System.err.println("failed to call chat message listener(s) " + ex.getMessage());
+			    					LOGGER.error("failed to call chat message listener(s)", ex);
 			    				}
 			    			} else if (packetReceived instanceof ServerClientError) {
 			    				ServerClientError p = (ServerClientError)packetReceived;
@@ -773,7 +779,7 @@ public class OttdAdminClient implements Closeable
 			    						listener.clientError(p.getClientId(), errorCode);
 			    					}
 			    				} catch (Exception ex) {
-			    					System.err.println("failed to call client error listener(s) " + ex.getMessage());
+			    					LOGGER.error("failed to call client error listener(s)", ex);
 			    				}
 			    			} else if (packetReceived instanceof ServerClientInfo) {
 			    				ServerClientInfo p = (ServerClientInfo)packetReceived;
@@ -791,7 +797,7 @@ public class OttdAdminClient implements Closeable
 			    						listener.clientInfoReceived(clientInfo);
 			    					}
 			    				} catch (Exception ex) {
-			    					System.err.println("failed to call client info listener(s) " + ex.getMessage());
+			    					LOGGER.error("failed to call client info listener(s)", ex);
 			    				}
 			    			} else if (packetReceived instanceof ServerClientJoin) {
 			    				ServerClientJoin p = (ServerClientJoin)packetReceived;
@@ -801,7 +807,7 @@ public class OttdAdminClient implements Closeable
 			    						listener.clientConnected(p.getClientId());
 			    					}
 			    				} catch (Exception ex) {
-			    					System.err.println("failed to call client connected listener(s) " + ex.getMessage());
+			    					LOGGER.error("failed to call client connected listener(s)", ex);
 			    				}
 			    			} else if (packetReceived instanceof ServerClientQuit) {
 			    				ServerClientQuit p = (ServerClientQuit)packetReceived;
@@ -811,7 +817,7 @@ public class OttdAdminClient implements Closeable
 			    						listener.clientDisconnected(p.getClientId());
 			    					}
 			    				} catch (Exception ex) {
-			    					System.err.println("failed to call client disconnected listener(s) " + ex.getMessage());
+			    					LOGGER.error("failed to call client disconnected listener(s)", ex);
 			    				}
 			    			} else if (packetReceived instanceof ServerClientUpdate) {
 			    				ServerClientUpdate p = (ServerClientUpdate)packetReceived;
@@ -821,7 +827,7 @@ public class OttdAdminClient implements Closeable
 			    						listener.clientUpdated(p.getClientId(), p.getClientName(), p.getPlayAs());
 			    					}
 			    				} catch (Exception ex) {
-			    					System.err.println("failed to call client updated listener(s) " + ex.getMessage());
+			    					LOGGER.error("failed to call client updated listener(s)", ex);
 			    				}
 			    			} else if (packetReceived instanceof ServerCompanyInfo) {
 			    				ServerCompanyInfo p = (ServerCompanyInfo)packetReceived;
@@ -842,7 +848,7 @@ public class OttdAdminClient implements Closeable
 			    						listener.companyInfoReceived(companyInfo);
 			    					}
 			    				} catch (Exception ex) {
-			    					System.err.println("failed to call company info listener(s) " + ex.getMessage());
+			    					LOGGER.error("failed to call company info listener(s)", ex);
 			    				}
 			    			} else if (packetReceived instanceof ServerCompanyNew) {
 			    				ServerCompanyNew p = (ServerCompanyNew)packetReceived;
@@ -852,7 +858,7 @@ public class OttdAdminClient implements Closeable
 			    						listener.companyCreated(p.getCompanyId());
 			    					}
 			    				} catch (Exception ex) {
-			    					System.err.println("failed to call company created listener(s) " + ex.getMessage());
+			    					LOGGER.error("failed to call company created listener(s)", ex);
 			    				}
 			    			} else if (packetReceived instanceof ServerCompanyRemove) {
 			    				ServerCompanyRemove p = (ServerCompanyRemove)packetReceived;
@@ -874,7 +880,7 @@ public class OttdAdminClient implements Closeable
 			    						listener.companyRemoved(p.getCompanyId(), reason);
 			    					}
 			    				} catch (Exception ex) {
-			    					System.err.println("failed to call company removed listener(s) " + ex.getMessage());
+			    					LOGGER.error("failed to call company removed listener(s)", ex);
 			    				}
 			    			} else if (packetReceived instanceof ServerCompanyUpdate) {
 			    				ServerCompanyUpdate p = (ServerCompanyUpdate)packetReceived;
@@ -893,7 +899,7 @@ public class OttdAdminClient implements Closeable
 			    						listener.companyUpdated(companyInfo);
 			    					}
 			    				} catch (Exception ex) {
-			    					System.err.println("failed to call company updated listener(s) " + ex.getMessage());
+			    					LOGGER.error("failed to call company updated listener(s)", ex);
 			    				}
 			    			} else if (packetReceived instanceof ServerConsole) {
 			    				ServerConsole p = (ServerConsole)packetReceived;
@@ -903,7 +909,7 @@ public class OttdAdminClient implements Closeable
 			    						listener.console(p.getOrigin(), p.getText());
 			    					}
 			    				} catch (Exception ex) {
-			    					System.err.println("failed to call server console listener(s) " + ex.getMessage());
+			    					LOGGER.error("failed to call server console listener(s)", ex);
 			    				}
 			    			} else if (packetReceived instanceof ServerRcon) {
 			    				ServerRcon p = (ServerRcon)packetReceived;
@@ -913,7 +919,7 @@ public class OttdAdminClient implements Closeable
 			    						listener.rcon(p.getColor(), p.getResult());
 			    					}
 			    				} catch (Exception ex) {
-			    					System.err.println("failed to call server rcon listener(s) " + ex.getMessage());
+			    					LOGGER.error("failed to call server rcon listener(s)", ex);
 			    				}
 			    			} else if (packetReceived instanceof ServerRconEnd) {
 			    				ServerRconEnd p = (ServerRconEnd)packetReceived;
@@ -923,7 +929,7 @@ public class OttdAdminClient implements Closeable
 			    						listener.rconFinished(p.getCommand());
 			    					}
 			    				} catch (Exception ex) {
-			    					System.err.println("failed to call server rcon finished listener(s) " + ex.getMessage());
+			    					LOGGER.error("failed to call server rcon finished listener(s)", ex);
 			    				}
 			    			} else if (packetReceived instanceof ServerNewGame) {
 			    				//ServerNewGame p = (ServerNewGame)packetReceived;
@@ -933,7 +939,7 @@ public class OttdAdminClient implements Closeable
 			    						listener.newGame();
 			    					}
 			    				} catch (Exception ex) {
-			    					System.err.println("failed to call server new game listener(s) " + ex.getMessage());
+			    					LOGGER.error("failed to call server new game listener(s)", ex);
 			    				}
 			    			} else if (packetReceived instanceof ServerDate) {
 			    				ServerDate p = (ServerDate)packetReceived;
@@ -943,7 +949,7 @@ public class OttdAdminClient implements Closeable
 			    						listener.newDate(new Date(p.getDate()));
 			    					}
 			    				} catch (Exception ex) {
-			    					System.err.println("failed to call server new date listener(s) " + ex.getMessage());
+			    					LOGGER.error("failed to call server new date listener(s)", ex);
 			    				}
 			    			} else if (packetReceived instanceof ServerCompanyEconomy) {
 			    				ServerCompanyEconomy p = (ServerCompanyEconomy)packetReceived;
@@ -972,7 +978,7 @@ public class OttdAdminClient implements Closeable
 			    						listener.companyEconomy(p.getIndex(), companyEconomy);
 			    					}
 			    				} catch (Exception ex) {
-			    					System.err.println("failed to call company economy listener(s) " + ex.getMessage());
+			    					LOGGER.error("failed to call company economy listener(s)", ex);
 			    				}
 			    			} else if (packetReceived instanceof ServerCompanyStats) {
 			    				ServerCompanyStats p = (ServerCompanyStats)packetReceived;
@@ -994,7 +1000,7 @@ public class OttdAdminClient implements Closeable
 			    						listener.companyStatistics(p.getIndex(), companyStatistics);
 			    					}
 			    				} catch (Exception ex) {
-			    					System.err.println("failed to call company statistics listener(s) " + ex.getMessage());
+			    					LOGGER.error("failed to call company statistics listener(s)", ex);
 			    				}
 			    			} else if (packetReceived instanceof ServerCmdNames) {
 			    				ServerCmdNames p = (ServerCmdNames)packetReceived;
@@ -1004,7 +1010,7 @@ public class OttdAdminClient implements Closeable
 			    						listener.commandNamesReceived(p.getCommands());
 			    					}
 			    				} catch (Exception ex) {
-			    					System.err.println("failed to call server command names listener(s) " + ex.getMessage());
+			    					LOGGER.error("failed to call server command names listener(s)", ex);
 			    				}
 			    			} else if (packetReceived instanceof ServerCmdLogging) {
 			    				ServerCmdLogging p = (ServerCmdLogging)packetReceived;
@@ -1014,7 +1020,7 @@ public class OttdAdminClient implements Closeable
 			    						listener.logging(p.getClientId(), p.getCompanyId(), p.getCmdId(), p.getP1(), p.getP2(), p.getTile(), p.getText(), p.getFrame());
 			    					}
 			    				} catch (Exception ex) {
-			    					System.err.println("failed to call server command logging listener(s) " + ex.getMessage());
+			    					LOGGER.error("failed to call server command logging listener(s)", ex);
 			    				}
 			    			} else if (packetReceived instanceof ServerGameScript) {
 			    				ServerGameScript p = (ServerGameScript)packetReceived;
@@ -1024,7 +1030,7 @@ public class OttdAdminClient implements Closeable
 			    						listener.gameScript(p.getJson());
 			    					}
 			    				} catch (Exception ex) {
-			    					System.err.println("failed to call server game script listener(s) " + ex.getMessage());
+			    					LOGGER.error("failed to call server game script listener(s)", ex);
 			    				}
 			    			} else if (packetReceived instanceof ServerPong) {
 			    				ServerPong p = (ServerPong)packetReceived;
@@ -1034,7 +1040,7 @@ public class OttdAdminClient implements Closeable
 			    						listener.pong(p.getD1());
 			    					}
 			    				} catch (Exception ex) {
-			    					System.err.println("failed to call server pong listener(s) " + ex.getMessage());
+			    					LOGGER.error("failed to call server pong listener(s)", ex);
 			    				}
 			    			} else if (packetReceived instanceof ServerFull) {
 			    				//ServerFull p = (ServerFull)packetReceived;
@@ -1043,7 +1049,7 @@ public class OttdAdminClient implements Closeable
 			    						listener.serverFull();
 			    					}
 			    				} catch (Exception ex) {
-			    					System.err.println("failed to call server full listener(s) " + ex.getMessage());
+			    					LOGGER.error("failed to call server full listener(s)", ex);
 			    				}
 			    			} else if (packetReceived instanceof ServerBanned) {
 			    				//ServerBanned p = (ServerBanned)packetReceived;
@@ -1052,7 +1058,7 @@ public class OttdAdminClient implements Closeable
 			    						listener.serverBanned();
 			    					}
 			    				} catch (Exception ex) {
-			    					System.err.println("failed to call server banned listener(s) " + ex.getMessage());
+			    					LOGGER.error("failed to call server banned listener(s)", ex);
 			    				}
 			    			} else if (packetReceived instanceof ServerShutdown) {
 			    				try {
@@ -1060,26 +1066,25 @@ public class OttdAdminClient implements Closeable
 			    						listener.shutdown();
 			    					}
 			    				} catch (Exception ex) {
-			    					System.err.println("failed to call server shutdown listener(s) " + ex.getMessage());
+			    					LOGGER.error("failed to call server shutdown listener(s)", ex);
 			    				}
 			    			} else {
-			    				System.err.println("received unimplemented package " + packetReceived.getClass().getSimpleName());
+			    				LOGGER.error("received an unimplemented package {}", packetReceived.getClass().getSimpleName());
 			    			}
 				    	}
-				    	
 					} catch (IOException ex) {
-						System.err.println("io exception; disconnecting " + ex.getClass().getSimpleName());
+						LOGGER.error("io exception; disconnecting", ex);
 						OttdAdminClient.wait(WaitReason.IO_EXCEPTION);
 					} finally {
 						try {
 							client.close();
 						} catch (Exception closeEx) {
-							System.err.println("failed to close the connection due to " + closeEx.getMessage());
+							LOGGER.error("failed to close the connection", closeEx);
 						}
 					}
 		    	}
 	    	} catch (InterruptedException ex) {
-	    		System.err.println("thread interrupted; abort");
+	    		LOGGER.info("thread interrupted; abort");
 	    		return;
 	    	}
 		}
@@ -1108,7 +1113,7 @@ public class OttdAdminClient implements Closeable
     			interval = 100;
     	}
     	
-    	System.err.println("delay of " + (interval / 1000f) + " seconds");
+    	LOGGER.debug("delay of {} ms", interval);
     	Thread.sleep(interval);
     }
 }

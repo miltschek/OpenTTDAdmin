@@ -38,6 +38,9 @@ import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import de.miltschek.openttdadmin.data.ChatMessage;
 import de.miltschek.openttdadmin.data.ClientInfo;
 import de.miltschek.openttdadmin.data.ClientListenerAdapter;
@@ -52,6 +55,8 @@ import de.miltschek.openttdadmin.integration.SlackClient;
  * Basic game administration tool.
  */
 public class BasicTool {
+	private static final Logger LOGGER = LoggerFactory.getLogger(BasicTool.class);
+
 	private static OttdAdminClient admin;
 	private static SlackClient slack;
 	
@@ -95,8 +100,11 @@ public class BasicTool {
 			return;
 		}
 		
+		LOGGER.info("Starting the basic tool.");
+		LOGGER.debug("Configuring slack connector for the channel {}.", channel);
 		slack = new SlackClient(channel, token);
 		
+		LOGGER.debug("Configuring OTTD Admin client to connect to {} on port {}.", host, port);
 		admin = new OttdAdminClient(host, port, password);
 		admin.setDeliveryChatMessages(true);
 		admin.setUpdateClientInfos(true);
@@ -105,6 +113,7 @@ public class BasicTool {
 		admin.addClientListener(new CustomClientListener());
 		admin.addServerListener(new CustomServerListener());
 		
+		LOGGER.debug("Starting the OTTD Admin client.");
 		admin.start();
 		
 		System.out.println("enter q/quit/exit to quit");
@@ -118,10 +127,11 @@ public class BasicTool {
 			}
 		} while (!command.equals("q") && !command.equals("quit") && !command.equals("exit"));
 
+		LOGGER.info("Closing the basic tool.");
 		try {
 			admin.close();
 		} catch (IOException e) {
-			e.printStackTrace();
+			LOGGER.warn("Failed to close the OTTD Admin client.", e);
 		}
 	}
 	
@@ -129,12 +139,17 @@ public class BasicTool {
 		public void accept(ChatMessage t) {
 			if (t.getMessage() == null) {
 				// nix
+				LOGGER.debug("A null chat message has been received from {} to {} private {} company {} public {}.", t.getSenderId(), t.getRecipientId(), t.isPrivate(), t.isCompany(), t.isPublic());
 			} else if (t.getMessage().startsWith("!admin")) {
-		    	if (slack != null) {
+				LOGGER.warn("Admin action has been requested by {}: {}.", t.getSenderId(), t.getMessage());
+		    	
+				if (slack != null) {
 		    		slack.sendMessage(":boom: " + t.getSenderId() + " " + t.getMessage());
 		    		admin.sendChat(new ChatMessage(0, Recipient.Client, t.getSenderId(), "Your message has been sent to the admin. Thank you!"));
 		    	}
 			} else if (t.getMessage().equals("!reset")) {
+				LOGGER.info("Company reset has been requested by {}.", t.getSenderId());
+
 				// need to find, what company is playing the sender
 				// then, what other clients do play the same company
 				// then, kick them
@@ -159,6 +174,8 @@ public class BasicTool {
 							+ " requested a company to be reset");
 				}
 			} else if (t.getMessage().startsWith("!name")) {
+				LOGGER.info("Name change has been requested by {} raw {}.", t.getSenderId(), t.getMessage());
+
 				Matcher m = RENAME_PATTERN.matcher(t.getMessage());
 				if (m.find()) {
 					String newName = m.group("value");
@@ -171,14 +188,23 @@ public class BasicTool {
 					}
 				}
 			} else if (t.getMessage().equals("!help")) {
-				System.out.println("User " + t.getSenderId() + " requested help.");
+				LOGGER.info("User {} requested help.", t.getSenderId());
+
 				admin.sendChat(new ChatMessage(0, Recipient.Client, t.getSenderId(), "Available commands:"));
 				admin.sendChat(new ChatMessage(0, Recipient.Client, t.getSenderId(), "!admin <message>: sends the message to the server's admin"));
 				admin.sendChat(new ChatMessage(0, Recipient.Client, t.getSenderId(), "!reset: resets your company; you will be kicked of the server, so please re-join"));
 				admin.sendChat(new ChatMessage(0, Recipient.Client, t.getSenderId(), "!name <new_name>: changes your name; surround multiple words with double quotes"));
 			} else if (t.getMessage().startsWith("!")) {
+				LOGGER.debug("User {} entered an invalid command {}.", t.getSenderId(), t.getMessage());
+
 				admin.sendChat(new ChatMessage(0, Recipient.Client, t.getSenderId(), "No such command. For help, enter !help"));
 			} else if (t.getSenderId() != 1 && !t.getMessage().isEmpty()) {
+				LOGGER.debug("User {} sent a message to {} {}: {}.",
+						t.getSenderId(),
+						t.isPrivate() ? "user" : t.isCompany() ? "company" : t.isPublic() ? "all" : "unknown",
+						t.getRecipientId(),
+						t.getMessage());
+
 				if (slack != null) {
 					slack.sendMessage(":pencil: " + t.getSenderId() + " " + t.getMessage());
 				}
@@ -205,13 +231,13 @@ public class BasicTool {
 					if (companyFound && companyToReset == clientInfo.getPlayAs()) {
 						for (Entry<Integer, Byte> entry : clientsCompanies.entrySet()) {
 							if (entry.getValue() == companyToReset) {
+								LOGGER.info("Kicking user {}.", entry.getKey());
 								admin.executeRCon("kick " + entry.getKey() + " \"resetting company; please re-join\"");
-								System.out.println("kicking " + entry.getKey());
 
 								// ugly: since we don't know, how many clients are still to be delivered
 								// we need to try our luck with each client to achieve the goal = reset the company
+								LOGGER.info("Trying to reset the company {}.", companyToReset);
 								admin.executeRCon("resetcompany " + (companyToReset + 1));
-								System.out.println("resetting company id " + companyToReset);
 							}
 						}
 						
@@ -226,12 +252,16 @@ public class BasicTool {
 			// will be executed only if not within the reset-company-process
 			GeoIp geoIp = GeoIp.lookup(clientInfo.getNetworkAddress());
 			if (geoIp != null) {
+				LOGGER.info("User info {} IP {} from {}, {} proxy {}.", clientInfo.getClientId(), clientInfo.getNetworkAddress(), geoIp.getCountry(), geoIp.getCity(), geoIp.isProxy());
+				
 				admin.sendChat(
 						new ChatMessage(
 								0,
 								Recipient.All,
 								0,
 								"-> Warm welcome to " + clientInfo.getClientName() + " coming from " + geoIp.getCountry() + "! <-"));
+			} else {
+				LOGGER.info("User info {} IP {} no geo info.", clientInfo.getClientId(), clientInfo.getNetworkAddress());
 			}
 
 			if (slack != null) {
@@ -245,6 +275,8 @@ public class BasicTool {
 		
 		@Override
 		public void clientConnected(int clientId) {
+			LOGGER.info("New user {}.", clientId);
+			
 			if (slack != null) {
 				slack.sendMessage(":information_source: new client " + clientId);
 			}
@@ -262,12 +294,14 @@ public class BasicTool {
 					}
 				}
 			} catch (Exception ex) {
-				System.err.println("Failed to send on-new-client " + ex.getClass().getSimpleName() + " " + ex.getMessage());
+				LOGGER.error("Failed to send on-new-client message.", ex);
 			}
 		}
 		
 		@Override
 		public void clientDisconnected(int clientId) {
+			LOGGER.info("User {} disconnected.", clientId);
+			
 			if (slack != null) {
 				slack.sendMessage(":information_source: client left " + clientId);
 			}
@@ -275,6 +309,8 @@ public class BasicTool {
 		
 		@Override
 		public void clientError(int clientId, ErrorCode errorCode) {
+			LOGGER.info("Client {} error {}.", clientId, errorCode);
+			
 			if (slack != null) {
 				slack.sendMessage(":information_source: client error " + clientId + " " + errorCode);
 			}
@@ -284,6 +320,8 @@ public class BasicTool {
 	private static class CustomServerListener extends ServerListenerAdapter {
 		@Override
 		public void newGame() {
+			LOGGER.info("New game started.");
+			
 			if (slack != null) {
 				slack.sendMessage(":information_source: new game");
 			}
@@ -291,6 +329,17 @@ public class BasicTool {
 		
 		@Override
 		public void serverInfoReceived(ServerInfo serverInfo) {
+			LOGGER.info("Server name {} revision {} dedicated {} map {} seed {} landscape {} start-year {} x {} y {}.",
+					serverInfo.getServerName(),
+					serverInfo.getNetworkRevision(),
+					serverInfo.isServerDedicated(),
+					serverInfo.getMapName(),
+					serverInfo.getGenerationSeed(),
+					serverInfo.getLandscape(),
+					serverInfo.getStartingYear(),
+					serverInfo.getMapSizeX(),
+					serverInfo.getMapSizeY());
+			
 			System.out.println(" - server name = " + serverInfo.getServerName());
 			System.out.println(" - network revision = " + serverInfo.getNetworkRevision());
 			System.out.println(" - dedicated = " + serverInfo.isServerDedicated());

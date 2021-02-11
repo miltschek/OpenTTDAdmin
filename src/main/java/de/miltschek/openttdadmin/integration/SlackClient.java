@@ -35,11 +35,15 @@ import java.net.http.HttpResponse.BodyHandlers;
 import java.nio.charset.StandardCharsets;
 
 import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Very basic implementation of slack connector.
  */
 public class SlackClient {
+	private static final Logger LOGGER = LoggerFactory.getLogger(SlackClient.class);
+	
 	private final HttpClient http;
 	private String channelEncoded;
 	private String token;
@@ -78,16 +82,16 @@ public class SlackClient {
 		    		if (jsonResponse.getBoolean("ok")) {
 		    			return true;
 		    		} else {
-		    			System.err.println("failed to send slack message; response " + jsonResponse.getString("error"));
+		    			LOGGER.error("failed to send slack message; response {}", jsonResponse.getString("error"));
 		    		}
 		    	} else if (response.statusCode() == 429) {
 		    		// rate exceeded
-		    		System.err.println("slack reported rate exceeded");
+		    		LOGGER.warn("slack reported rate exceeded");
 		    	} else {
-		    		System.err.println("slack responded with error code " + response.statusCode());
+		    		LOGGER.error("slack responded with error code {}", response.statusCode());
 		    	}
 	    	} catch (Exception ex) {
-	    		System.err.println("slack exception " + ex.getMessage());
+	    		LOGGER.error("slack exception", ex);
 	    	}
 			
 			try {
@@ -97,7 +101,7 @@ public class SlackClient {
 			}
 		}
 		
-		System.err.println("failed to deliver the message " + message);
+		LOGGER.debug("failed to deliver the message {}", message);
 		return false;
 	}
 }

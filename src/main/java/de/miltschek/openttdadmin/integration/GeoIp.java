@@ -32,12 +32,16 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
 import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Geolocation of an IP address.
  * Current implementation uses ip-api.com as a provider.
  */
 public class GeoIp {
+	private static final Logger LOGGER = LoggerFactory.getLogger(GeoIp.class);
+	
 	private String country;
 	private String city;
 	private boolean proxy;
@@ -60,10 +64,10 @@ public class GeoIp {
 					+ "?fields=status,country,city,proxy")
 					.openConnection();
 		} catch (MalformedURLException e) {
-			System.err.println("invalid url for ip geo lookups " + e.getMessage());
+			LOGGER.error("invalid url for ip geo lookups", e);
 			return null;
 		} catch (IOException e) {
-			System.err.println("could not connect to the ip geo lookup api " + e.getMessage());
+			LOGGER.error("could not connect to the ip geo lookup api", e);
 			return null;
 		}
 		
@@ -76,14 +80,14 @@ public class GeoIp {
 				response.append(buffer, 0, read);
 			}
 		} catch (IOException ex) {
-			System.err.println("failed querying the ip geo lookup api " + ex.getMessage());
+			LOGGER.error("failed querying the ip geo lookup api", ex);
 			return null;
 		}
 		
 		try {
 			JSONObject data = new JSONObject(response.toString());
 			if (!"success".equals(data.getString("status"))) {
-				System.err.println("geo ip lookup api responded with a status " + data.getString("status"));
+				LOGGER.error("geo ip lookup api responded with a status {}", data.getString("status"));
 				return null;
 			}
 			
@@ -93,7 +97,7 @@ public class GeoIp {
 			geoIp.proxy = data.getBoolean("proxy");
 			return geoIp;
 		} catch (Exception ex) {
-			System.err.println("geo lookup api json parse failed " + ex.getMessage());
+			LOGGER.error("geo lookup api json parse failed", ex);
 			return null;
 		}
 	}
