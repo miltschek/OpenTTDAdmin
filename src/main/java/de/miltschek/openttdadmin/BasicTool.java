@@ -49,6 +49,7 @@ import de.miltschek.openttdadmin.data.ServerInfo;
 import de.miltschek.openttdadmin.data.ServerListenerAdapter;
 import de.miltschek.openttdadmin.data.ChatMessage.Recipient;
 import de.miltschek.openttdadmin.integration.GeoIp;
+import de.miltschek.openttdadmin.integration.GoogleTranslate;
 import de.miltschek.openttdadmin.integration.SlackClient;
 
 /**
@@ -194,6 +195,24 @@ public class BasicTool {
 				admin.sendChat(new ChatMessage(0, Recipient.Client, t.getSenderId(), "!admin <message>: sends the message to the server's admin"));
 				admin.sendChat(new ChatMessage(0, Recipient.Client, t.getSenderId(), "!reset: resets your company; you will be kicked of the server, so please re-join"));
 				admin.sendChat(new ChatMessage(0, Recipient.Client, t.getSenderId(), "!name <new_name>: changes your name; surround multiple words with double quotes"));
+				admin.sendChat(new ChatMessage(0, Recipient.Client, t.getSenderId(), "!dict <message>: tries to translate your message to English"));
+			} else if (t.getMessage().startsWith("!dict ") && t.getMessage().length() > 6) {
+				LOGGER.info("User {} requested translation.", t.getSenderId());
+				
+				GoogleTranslate.Result translation = GoogleTranslate.translateToEnglish(t.getMessage().substring(6));
+				if (translation.isSuccess()) {
+					if (translation.getSourceLanguage().equals("en")) {
+						admin.sendChat(new ChatMessage(0, Recipient.Client, t.getSenderId(), "It was English already. Nothing to translate."));
+					} else {
+						admin.sendChat(new ChatMessage(0, Recipient.All, 0, "[translation/" + translation.getSourceLanguage() + "] " + translation.getTranslatedText()));
+					}
+					
+					if (slack != null) {
+						slack.sendMessage(":point_right: " + t.getSenderId() + " " + translation.getSourceLanguage() + ": " + translation.getTranslatedText());
+					}
+				} else {
+					admin.sendChat(new ChatMessage(0, Recipient.Client, t.getSenderId(), "Sorry, translation did not work."));
+				}
 			} else if (t.getMessage().startsWith("!")) {
 				LOGGER.debug("User {} entered an invalid command {}.", t.getSenderId(), t.getMessage());
 
@@ -206,7 +225,13 @@ public class BasicTool {
 						t.getMessage());
 
 				if (slack != null) {
-					slack.sendMessage(":pencil: " + t.getSenderId() + " " + t.getMessage());
+					GoogleTranslate.Result translation = GoogleTranslate.translateToEnglish(t.getMessage());
+					if (translation.isSuccess() && !translation.getSourceLanguage().equals("en")) {
+						slack.sendMessage(":pencil: " + t.getSenderId() + " " + t.getMessage() + "\r\n"
+								+ ":point_right: " + translation.getTranslatedText());
+					} else {
+						slack.sendMessage(":pencil: " + t.getSenderId() + " " + t.getMessage());
+					}
 				}
 			}
 		}

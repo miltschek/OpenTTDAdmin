@@ -4,7 +4,7 @@
 
   <groupId>de.miltschek</groupId>
   <artifactId>openttdadmin</artifactId>
-  <version>1.0.1</version>
+  <version>1.1.1</version>
   <packaging>jar</packaging>
 
   <name>openttdadmin</name>
@@ -32,6 +32,11 @@
 	    <groupId>org.slf4j</groupId>
 	    <artifactId>slf4j-api</artifactId>
 	    <version>1.7.30</version>
+	</dependency>
+	<dependency>
+		<groupId>com.google.cloud</groupId>
+		<artifactId>google-cloud-translate</artifactId>
+		<version>1.95.7</version>
 	</dependency>
   </dependencies>
 
