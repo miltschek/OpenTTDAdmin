@@ -42,6 +42,7 @@ import org.slf4j.LoggerFactory;
 public class GeoIp {
 	private static final Logger LOGGER = LoggerFactory.getLogger(GeoIp.class);
 	
+	private String countryCode;
 	private String country;
 	private String city;
 	private boolean proxy;
@@ -61,7 +62,7 @@ public class GeoIp {
 		try {
 			http = (HttpURLConnection)new URL("http://ip-api.com/json/"
 					+ URLEncoder.encode(address, StandardCharsets.UTF_8)
-					+ "?fields=status,country,city,proxy")
+					+ "?fields=status,country,city,proxy,countryCode")
 					.openConnection();
 		} catch (MalformedURLException e) {
 			LOGGER.error("invalid url for ip geo lookups", e);
@@ -92,6 +93,7 @@ public class GeoIp {
 			}
 			
 			GeoIp geoIp = new GeoIp();
+			geoIp.countryCode = data.getString("countryCode");
 			geoIp.country = data.getString("country");
 			geoIp.city = data.getString("city");
 			geoIp.proxy = data.getBoolean("proxy");
@@ -102,6 +104,14 @@ public class GeoIp {
 		}
 	}
 
+	/**
+	 * Gets the country code (ISO 3166-1 alpha-2) of the country of the IP address.
+	 * @return country code (ISO 3166-1 alpha-2) of the country of the IP address
+	 */
+	public String getCountryCode() {
+		return countryCode;
+	}
+	
 	/**
 	 * Gets the country of the IP address.
 	 * @return country of the IP address

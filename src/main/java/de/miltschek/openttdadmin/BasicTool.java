@@ -29,11 +29,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -42,12 +39,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.miltschek.openttdadmin.data.ChatMessage;
+import de.miltschek.openttdadmin.data.ChatMessage.Recipient;
 import de.miltschek.openttdadmin.data.ClientInfo;
 import de.miltschek.openttdadmin.data.ClientListenerAdapter;
+import de.miltschek.openttdadmin.data.ClosureReason;
+import de.miltschek.openttdadmin.data.Color;
+import de.miltschek.openttdadmin.data.CompanyInfo;
+import de.miltschek.openttdadmin.data.CompanyListenerAdapter;
 import de.miltschek.openttdadmin.data.ErrorCode;
 import de.miltschek.openttdadmin.data.ServerInfo;
 import de.miltschek.openttdadmin.data.ServerListenerAdapter;
-import de.miltschek.openttdadmin.data.ChatMessage.Recipient;
 import de.miltschek.openttdadmin.integration.GeoIp;
 import de.miltschek.openttdadmin.integration.GoogleTranslate;
 import de.miltschek.openttdadmin.integration.SlackClient;
@@ -77,6 +78,122 @@ public class BasicTool {
 	private static Map<Integer, Byte> clientsCompanies = new HashMap<Integer, Byte>();
 	
 	private static final Pattern RENAME_PATTERN = Pattern.compile("[!]name[ \\t]+(\"|)(?<value>(?:[^\"\\\\]|\\\\.)*)\\1");
+	
+	private static final Map<Integer, ClientData> clients = new HashMap<>();
+	private static final Map<Integer, CompanyData> companies = new HashMap<>();
+	
+	private static class ClientData {
+		private final int id;
+		private String name;
+		private String networkAddress;
+		private CompanyData playAs;
+		private String country;
+		private String city;
+		private boolean proxy;
+		private boolean proxySet;
+		
+		public ClientData(int id) {
+			this.id = id;
+		}
+		
+		public String getName() {
+			return name;
+		}
+		
+		public void setName(String name) {
+			this.name = name;
+		}
+		
+		public String getNetworkAddress() {
+			return networkAddress;
+		}
+		
+		public void setNetworkAddress(String networkAddress) {
+			this.networkAddress = networkAddress;
+		}
+		
+		public CompanyData getPlayAs() {
+			return playAs;
+		}
+		
+		public void setPlayAs(CompanyData playAs) {
+			this.playAs = playAs;
+		}
+		
+		public String getCountry() {
+			return country;
+		}
+		
+		public void setCountry(String country) {
+			this.country = country;
+		}
+		
+		public String getCity() {
+			return city;
+		}
+		
+		public void setCity(String city) {
+			this.city = city;
+		}
+		
+		public boolean isProxy() {
+			return proxy;
+		}
+		
+		public void setProxy(boolean proxy) {
+			this.proxy = proxy;
+			this.proxySet = true;
+		}
+		
+		public boolean isProxySet() {
+			return proxySet;
+		}
+	}
+	
+	private static class CompanyData {
+		private final int id;
+		private String name;
+		private Color color;
+		private boolean passwordProtected;
+		private boolean passwordProtectedSet;
+		
+		public CompanyData(int id) {
+			this.id = id;
+		}
+		
+		public int getId() {
+			return id;
+		}
+		
+		public String getName() {
+			return name;
+		}
+		
+		public void setName(String name) {
+			this.name = name;
+		}
+		
+		public Color getColor() {
+			return color;
+		}
+		
+		public void setColor(Color color) {
+			this.color = color;
+		}
+		
+		public boolean isPasswordProtected() {
+			return passwordProtected;
+		}
+		
+		public void setPasswordProtected(boolean passwordProtected) {
+			this.passwordProtected = passwordProtected;
+			this.passwordProtectedSet = true;
+		}
+		
+		public boolean isPasswordProtectedSet() {
+			return passwordProtectedSet;
+		}
+	}
 
 	/**
 	 * Entry point of the application.
@@ -109,9 +226,11 @@ public class BasicTool {
 		admin = new OttdAdminClient(host, port, password);
 		admin.setDeliveryChatMessages(true);
 		admin.setUpdateClientInfos(true);
+		admin.setUpdateCompanyInfos(true);
 		
 		admin.addChatListener(new ChatListener());
 		admin.addClientListener(new CustomClientListener());
+		admin.addCompanyListener(new CustomCompanyListener());
 		admin.addServerListener(new CustomServerListener());
 		
 		LOGGER.debug("Starting the OTTD Admin client.");
@@ -138,6 +257,28 @@ public class BasicTool {
 	
 	private static class ChatListener implements Consumer<ChatMessage> {
 		public void accept(ChatMessage t) {
+			String senderId;
+			
+			ClientData clientData;
+			if ((clientData = clients.get(t.getSenderId())) != null) {
+				if (clientData.getName() == null) {
+					senderId = String.valueOf(t.getSenderId());
+				} else {
+					senderId = clientData.getName() + "(" + t.getSenderId() + ")";
+				}
+				
+				CompanyData companyData;
+				if ((companyData = clientData.getPlayAs()) != null) {
+					if (companyData.getColor() == null) {
+						senderId += "[" + companyData.getColor() + "]";
+					} else {
+						senderId += "[" + companyData.getId() + "]";
+					}
+				}
+			} else {
+				senderId = String.valueOf(t.getSenderId());
+			}
+			
 			if (t.getMessage() == null) {
 				// nix
 				LOGGER.debug("A null chat message has been received from {} to {} private {} company {} public {}.", t.getSenderId(), t.getRecipientId(), t.isPrivate(), t.isCompany(), t.isPublic());
@@ -145,7 +286,7 @@ public class BasicTool {
 				LOGGER.warn("Admin action has been requested by {}: {}.", t.getSenderId(), t.getMessage());
 		    	
 				if (slack != null) {
-		    		slack.sendMessage(":boom: " + t.getSenderId() + " " + t.getMessage());
+		    		slack.sendMessage(":boom: " + senderId + " " + t.getMessage());
 		    		admin.sendChat(new ChatMessage(0, Recipient.Client, t.getSenderId(), "Your message has been sent to the admin. Thank you!"));
 		    	}
 			} else if (t.getMessage().equals("!reset")) {
@@ -170,9 +311,9 @@ public class BasicTool {
 				admin.requestAllClientsInfo();
 				
 				if (slack != null) {
-					slack.sendMessage(":information_source: client "
-							+ t.getSenderId()
-							+ " requested a company to be reset");
+					slack.sendMessage(":information_source: "
+							+ senderId
+							+ " resets the company");
 				}
 			} else if (t.getMessage().startsWith("!name")) {
 				LOGGER.info("Name change has been requested by {} raw {}.", t.getSenderId(), t.getMessage());
@@ -184,7 +325,7 @@ public class BasicTool {
 					
 					if (slack != null) {
 						slack.sendMessage(":information_source: client "
-								+ t.getSenderId()
+								+ senderId
 								+ " requested a new name " + newName);
 					}
 				}
@@ -208,7 +349,7 @@ public class BasicTool {
 					}
 					
 					if (slack != null) {
-						slack.sendMessage(":point_right: " + t.getSenderId() + " " + translation.getSourceLanguage() + ": " + translation.getTranslatedText());
+						slack.sendMessage(":point_right: " + senderId + " " + translation.getSourceLanguage() + ": " + translation.getTranslatedText());
 					}
 				} else {
 					admin.sendChat(new ChatMessage(0, Recipient.Client, t.getSenderId(), "Sorry, translation did not work."));
@@ -227,10 +368,10 @@ public class BasicTool {
 				if (slack != null) {
 					GoogleTranslate.Result translation = GoogleTranslate.translateToEnglish(t.getMessage());
 					if (translation.isSuccess() && !translation.getSourceLanguage().equals("en")) {
-						slack.sendMessage(":pencil: " + t.getSenderId() + " " + t.getMessage() + "\r\n"
+						slack.sendMessage(":pencil: " + senderId + " " + t.getMessage() + "\r\n"
 								+ ":point_right: " + translation.getTranslatedText());
 					} else {
-						slack.sendMessage(":pencil: " + t.getSenderId() + " " + t.getMessage());
+						slack.sendMessage(":pencil: " + senderId + " " + t.getMessage());
 					}
 				}
 			}
@@ -274,17 +415,101 @@ public class BasicTool {
 				}
 			}
 			
+			// --- cache data
+			ClientData clientData = clients.get(clientInfo.getClientId());
+			if (clientData == null) {
+				clientData = new ClientData(clientInfo.getClientId());
+				clients.put(clientInfo.getClientId(), clientData);
+			}
+			
+			clientData.setName(clientInfo.getClientName());
+			clientData.setNetworkAddress(clientInfo.getNetworkAddress());
+			
+			int playAs = clientInfo.getPlayAs() & 0xff;
+			CompanyData companyData = companies.get(playAs);
+			if (companyData == null) {
+				companyData = new CompanyData(playAs);
+				companies.put(playAs, companyData);
+			}
+			
+			clientData.setPlayAs(companyData);
+			// --- end of cache data
+			
 			// will be executed only if not within the reset-company-process
 			GeoIp geoIp = GeoIp.lookup(clientInfo.getNetworkAddress());
 			if (geoIp != null) {
 				LOGGER.info("User info {} IP {} from {}, {} proxy {}.", clientInfo.getClientId(), clientInfo.getNetworkAddress(), geoIp.getCountry(), geoIp.getCity(), geoIp.isProxy());
+				
+				// --- cache data
+				clientData.setCountry(geoIp.getCountry());
+				clientData.setCity(geoIp.getCity());
+				clientData.setProxy(geoIp.isProxy());
+				// --- end of cache data
+				
+				String welcomeMessage = "-> Warm welcome to " + clientInfo.getClientName() + " coming from " + geoIp.getCountry() + "! <-";
+				String cc = geoIp.getCountryCode();
+				if (cc == null) {
+					// nix
+				} else if (cc.equals("DE")) {
+					welcomeMessage = "-> Moin moin, " + clientInfo.getClientName() + " aus Deutschland! <-";
+				} else if (cc.equals("AT")) {
+					welcomeMessage = "-> Servus, " + clientInfo.getClientName() + " aus Österreich! <-";
+				} else if (cc.equals("AU")) {
+					welcomeMessage = "-> Hey, how are you, " + clientInfo.getClientName() + " from Australia? <-";
+				} else if (cc.equals("BE")) {
+					welcomeMessage = "-> Hoe gaat het, " + clientInfo.getClientName() + " uit België? <-";
+				} else if (cc.equals("BR")) {
+					welcomeMessage = "-> Como vai, " + clientInfo.getClientName() + " do Brasil? <-";
+				} else if (cc.equals("CH")) {
+					welcomeMessage = "-> Grüezi, " + clientInfo.getClientName() + " aus der Schweiz! <-";
+				} else if (cc.equals("CZ")) {
+					welcomeMessage = "-> Jak se máš, " + clientInfo.getClientName() + " z Čech? <-";
+				} else if (cc.equals("DK")) {
+					welcomeMessage = "-> Hvordan har du det, " + clientInfo.getClientName() + " fra Danmark? <-";
+				} else if (cc.equals("ES")) {
+					welcomeMessage = "-> ¿Cómo estás, " + clientInfo.getClientName() + " de España? <-";
+				} else if (cc.equals("FI")) {
+					welcomeMessage = "-> Kuinka voit, " + clientInfo.getClientName() + " Suomesta? <-";
+				} else if (cc.equals("FR")) {
+					welcomeMessage = "-> Comment vas-tu, " + clientInfo.getClientName() + " de France? <-";
+				} else if (cc.equals("GB")) {
+					welcomeMessage = "-> Pleased to meet you, " + clientInfo.getClientName() + " from " + geoIp.getCountry() + "! <-";
+				} else if (cc.equals("HU")) {
+					welcomeMessage = "-> Hogy vagy, " + clientInfo.getClientName() + "  Magyarországról? <-";
+				} else if (cc.equals("IE")) {
+					welcomeMessage = "-> Conas atá tú, " + clientInfo.getClientName() + " as Éirinn? <-";
+				} else if (cc.equals("IT")) {
+					welcomeMessage = "-> Come stai, " + clientInfo.getClientName() + " dall'Italia? <-";
+				} else if (cc.equals("LI")) {
+					welcomeMessage = "-> Hoi Du, " + clientInfo.getClientName() + " aus Lichtenstein! <-";
+				} else if (cc.equals("LU")) {
+					welcomeMessage = "-> Wéi geet et dir, " + clientInfo.getClientName() + " aus Lëtzebuerg? <-";
+				} else if (cc.equals("NO")) {
+					welcomeMessage = "-> Hvordan har du det, " + clientInfo.getClientName() + " fra Norge? <-";
+				} else if (cc.equals("PL")) {
+					welcomeMessage = "-> Siema, " + clientInfo.getClientName() + " z Polski! <-";
+				} else if (cc.equals("PT")) {
+					welcomeMessage = "-> Como está você, " + clientInfo.getClientName() + " de Portugal? <-";
+				} else if (cc.equals("RU")) {
+					welcomeMessage = "-> Как дела, " + clientInfo.getClientName() + " из России? <-";
+				} else if (cc.equals("SE")) {
+					welcomeMessage = "-> Hur mår du, " + clientInfo.getClientName() + " från Sverige? <-";
+				} else if (cc.equals("SI")) {
+					welcomeMessage = "-> Kako si, " + clientInfo.getClientName() + " iz Slovaške? <-";
+				} else if (cc.equals("SK")) {
+					welcomeMessage = "-> Ako sa máš, " + clientInfo.getClientName() + " zo Slovenska? <-";
+				} else if (cc.equals("UA")) {
+					welcomeMessage = "-> Як справи, " + clientInfo.getClientName() + " з України? <-";
+				} else if (cc.equals("US")) {
+					welcomeMessage = "-> What’s up, " + clientInfo.getClientName() + " coming from the US? <-";
+				}
 				
 				admin.sendChat(
 						new ChatMessage(
 								0,
 								Recipient.All,
 								0,
-								"-> Warm welcome to " + clientInfo.getClientName() + " coming from " + geoIp.getCountry() + "! <-"));
+								welcomeMessage));
 			} else {
 				LOGGER.info("User info {} IP {} no geo info.", clientInfo.getClientId(), clientInfo.getNetworkAddress());
 			}
@@ -301,6 +526,12 @@ public class BasicTool {
 		@Override
 		public void clientConnected(int clientId) {
 			LOGGER.info("New user {}.", clientId);
+			
+			// --- cache data
+			if (clients.get(clientId) == null) {
+				clients.put(clientId, new ClientData(clientId));
+			}
+			// --- end of cache data
 			
 			if (slack != null) {
 				slack.sendMessage(":information_source: new client " + clientId);
@@ -327,6 +558,12 @@ public class BasicTool {
 		public void clientDisconnected(int clientId) {
 			LOGGER.info("User {} disconnected.", clientId);
 			
+			// --- cache data
+			if (clients.get(clientId) != null) {
+				clients.remove(clientId);
+			}
+			// --- end of cache data
+
 			if (slack != null) {
 				slack.sendMessage(":information_source: client left " + clientId);
 			}
@@ -336,8 +573,120 @@ public class BasicTool {
 		public void clientError(int clientId, ErrorCode errorCode) {
 			LOGGER.info("Client {} error {}.", clientId, errorCode);
 			
+			// --- cache data
+			if (clients.get(clientId) != null) {
+				clients.remove(clientId);
+			}
+			// --- end of cache data
+
 			if (slack != null) {
 				slack.sendMessage(":information_source: client error " + clientId + " " + errorCode);
+			}
+		}
+		
+		@Override
+		public void clientUpdated(int clientId, String clientName, byte playAs) {
+			LOGGER.info("Client {} update name {}, update company {}.", clientId, clientName, playAs);
+			
+			// --- cache data
+			ClientData clientData = clients.get(clientId);
+			if (clientData == null) {
+				clientData = new ClientData(clientId);
+				clients.put(clientId, clientData);
+			}
+			
+			clientData.setName(clientName);
+			
+			int playAsInt = playAs & 0xff;
+			CompanyData companyData = companies.get(playAsInt);
+			if (companyData == null) {
+				companyData = new CompanyData(playAsInt);
+				companies.put(playAsInt, companyData);
+			}
+			
+			clientData.setPlayAs(companyData);
+			// --- end of cache data
+		}
+	}
+	
+	private static class CustomCompanyListener extends CompanyListenerAdapter {
+		@Override
+		public void companyCreated(byte companyId) {
+			LOGGER.info("New company created {}.", companyId);
+			
+			// --- cache data
+			int companyIdInt = companyId & 0xff;
+			if (!companies.containsKey(companyIdInt)) {
+				companies.put(companyIdInt, new CompanyData(companyIdInt));
+			}
+			// --- end of cache data
+		}
+		
+		@Override
+		public void companyInfoReceived(CompanyInfo companyInfo) {
+			LOGGER.info("Company info received {}, name {}, color {}, password-protected {}.", companyInfo.getIndex(), companyInfo.getColor(), companyInfo.isPasswordProtected());
+			
+			// --- cache data
+			int companyIdInt = companyInfo.getIndex() & 0xff;
+			CompanyData companyData = companies.get(companyIdInt);
+			if (companyData == null) {
+				companyData = new CompanyData(companyIdInt);
+				companies.put(companyIdInt, companyData);
+			}
+			
+			companyData.setColor(companyInfo.getColor());
+			companyData.setName(companyInfo.getCompanyName());
+			companyData.setPasswordProtected(companyInfo.isPasswordProtected());
+			// --- end of cache data
+			
+			if (slack != null) {
+				slack.sendMessage(":information_source: company info "
+						+ companyInfo.getColor()
+						+ " " + companyInfo.getCompanyName()
+						+ " " + companyInfo.getManagerName()
+						+ " " + (companyInfo.isPasswordProtected() ? "pwd" : "no-pwd"));
+			}
+		}
+		
+		@Override
+		public void companyRemoved(byte companyId, ClosureReason closureReason) {
+			LOGGER.info("Company removed {}, reason {}.", companyId, closureReason);
+			
+			// --- cache data
+			int companyIdInt = companyId & 0xff;
+			CompanyData companyData = companies.remove(companyIdInt);
+			// --- end of cache data
+			
+			if (slack != null) {
+				slack.sendMessage(":information_source: company closed "
+						+ (companyData == null ? "?" : String.valueOf(companyData.getColor())) + "/" + companyId
+						+ " " + closureReason);
+			}
+		}
+		
+		@Override
+		public void companyUpdated(CompanyInfo companyInfo) {
+			LOGGER.info("Company updated received {}, name {}, color {}, password-protected {}.", companyInfo.getIndex(), companyInfo.getColor(), companyInfo.isPasswordProtected());
+			
+			// --- cache data
+			int companyIdInt = companyInfo.getIndex() & 0xff;
+			CompanyData companyData = companies.get(companyIdInt);
+			if (companyData == null) {
+				companyData = new CompanyData(companyIdInt);
+				companies.put(companyIdInt, companyData);
+			}
+			
+			companyData.setColor(companyInfo.getColor());
+			companyData.setName(companyInfo.getCompanyName());
+			companyData.setPasswordProtected(companyInfo.isPasswordProtected());
+			// --- end of cache data
+			
+			if (slack != null) {
+				slack.sendMessage(":information_source: company update "
+						+ companyInfo.getColor()
+						+ " " + companyInfo.getCompanyName()
+						+ " " + companyInfo.getManagerName()
+						+ " " + (companyInfo.isPasswordProtected() ? "pwd" : "no-pwd"));
 			}
 		}
 	}
