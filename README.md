@@ -43,6 +43,52 @@ Integration
 The code contains a sample integration of external tools. Please note, the implementation is *very* basic and its intention is only to demonstrate the possibilities:
 - Slack integration in [SlackClient](src/main/java/de/miltschek/openttdadmin/integration/SlackClient.java)
 - ip-api.com integration in [GeoIp](src/main/java/de/miltschek/openttdadmin/integration/GeoIp.java)
+- Google Cloud Translator in [GoogleTranslate](src/main/java/de/miltschek/openttdadmin/integration/GoogleTranslate.java)
+
+How-To Slack
+------------
+1. Go to your [Slack Apps](https://api.slack.com/apps/)
+2. Click 'Create New App' button, decide on the name and merge it with one of your workspaces.
+3. Go to 'OAuth and Permissions' page.
+4. Add an OAuth scope under 'Scopes' / 'Bot Token Scopes'
+    - chat:write for chats to which the App will be invited
+    - or chat:write.public for all public chats of your workspace
+5. Scroll up and hit the button 'Install in Workspace', followed by allowing the access for the purpose.
+6. Copy the value 'Bot User OAuth Access Token', usually staring with 'xoxb-...' - this is your **Slack Token**.
+7. Go to your workspace (mobile app is more user-friendly than the web).
+8. Create a new channel, you want your messages to be posted to (or take an existing one).
+9. If you granted the App only the **chat:write** scope, you have to add the App to the created/chosen channel:
+    - mobile: enter the channel, click the info icon (i), hit 'Apps', hit plus symbol (+), select the newly created App
+    - web: really, no solution found if the App did not write to any of the existing channels already! if so, click on the App's name in any chat, hit 'Add this app to channel...', choose the channel, hit 'Add'
+10. Start the [BasicTool](src/main/java/de/miltschek/openttdadmin/BasicTool.java) providing the channel's name or ID as **Slack Channel** and the newly created token as **Slack Token**. That's it!
+
+How-To GeoIp
+------------
+The service is ready to use and requires no configuration, for as long as you stick to the [Terms of Service](https://ip-api.com/docs/legal), especially:
+- The use of the API is strictly limited for a non-commercial purpose and in a non-commercial environment.
+- If you exceed the usage limit of 45 requests per minute your access to the API will be temporarily blocked. Repeatedly exceeding the limit will result in your IP address being banned for up to 1 hour.
+
+How-To Google Translator
+------------------------
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a new project if needed.
+3. Scroll down the menue to 'Artificial Intelligence' / 'Translation'
+4. Enable the API.
+5. You may be required to set up your payment account/method.
+6. Go to 'APIs & Services' / 'Credentials' menue.
+7. Create a new service account:
+    - 'Create credentials' button
+    - 'Service account' type
+    - Choose some name and id
+    - Grant this service account access to project: select the role 'Cloud Translation API User'.
+8. If not directed automatically, click on the newly created account and select 'Add Key'.
+9. Choose the 'JSON' format and download the key in a **secure place**.
+10. Set the environment variable `GOOGLE_APPLICATION_CREDENTIALS` to contain the path to the JSON key file:
+    - Linux-like: `export GOOGLE_APPLICATION_CREDENTIALS=/home/you/mykey.json`
+    - Windows-like: `set GOOGLE_APPLICATION_CREDENTIALS=C:\Folder\mykey.json`
+
+**Caution**
+The Google Translation Service **does cost real money**. Please refer to the current price list.
 
 Development
 -----------
