@@ -11,6 +11,7 @@ Just focus of the business logic of your application and leave the networking st
 - Receive notifications of the events you are interested in.
 - Send requests to the server as you need them.
 - Integrate with other tools of your choice.
+- Use a logging framework of your choice: see [Slf4j](#slf4j) below.
 
 How-To
 ------
@@ -89,6 +90,14 @@ How-To Google Translator
 
 **Caution**
 The Google Translation Service **does cost real money**. Please refer to the current price list.
+
+<a name="slf4j">Slf4j</a>
+-------------------------
+
+The code makes use of the [Slf4j framework](https://www.slf4j.org/). It means, you may link it with virtually any logging engine of your choice.
+If you just want to see the log output on the console, it's enough to add the `slf4j-simple-1.7.28.jar` library to the classpath (or whatever version will be valid at the time you use it).
+
+Outside of an IDE environment, you may download the library from <https://repo1.maven.org/maven2/org/slf4j/slf4j-simple/>.
 
 Development
 -----------
