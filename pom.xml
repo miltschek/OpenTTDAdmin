@@ -4,7 +4,7 @@
 
   <groupId>de.miltschek</groupId>
   <artifactId>openttdadmin</artifactId>
-  <version>1.1.2</version>
+  <version>1.2.2</version>
   <packaging>jar</packaging>
 
   <name>openttdadmin</name>
@@ -38,6 +38,33 @@
 		<artifactId>google-cloud-translate</artifactId>
 		<version>1.95.7</version>
 	</dependency>
+	<dependency>
+		<groupId>org.slf4j</groupId>
+		<artifactId>slf4j-simple</artifactId>
+		<version>1.7.5</version>
+		<scope>runtime</scope>
+	</dependency>
+	<dependency>
+		<groupId>com.slack.api</groupId>
+		<artifactId>bolt</artifactId>
+		<version>1.6.1</version>
+	</dependency>
+	<dependency>
+		<groupId>com.slack.api</groupId>
+		<artifactId>bolt-socket-mode</artifactId>
+		<version>1.6.1</version>
+	</dependency>
+	<dependency>
+		<groupId>javax.websocket</groupId>
+		<artifactId>javax.websocket-api</artifactId>
+		<version>1.1</version>
+	</dependency>
+	<dependency>
+		<groupId>org.glassfish.tyrus.bundles</groupId>
+		<artifactId>tyrus-standalone-client</artifactId>
+		<version>1.17</version>
+	</dependency>
+	
   </dependencies>
 
   <build>

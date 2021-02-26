@@ -114,4 +114,8 @@ public class GoogleTranslate {
 			return new Result(ex.getMessage());
 		}
 	}
+	
+	public static void main(String[] args) {
+		System.out.println(translateToEnglish("dzień dobry").getTranslatedText());
+	}
 }

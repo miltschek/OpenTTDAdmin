@@ -30,6 +30,10 @@ The Maven file is configured for JDK 11, but the code is compatible with older l
 1. Don't worry about any network issues, disconnects etc. The client works in an endless loop and tries to keep the connection active all the time.
 1. If you are done, you may stop the client, so that any resources are cleaned in a nice way. It is not a must.
 
+#### Known Issues
+
+As the number of integrations increase, the compiled library with dependencies gets very big. The project needs to be split into the library and separately into integrations.
+
 Demo App
 --------
 A simple app presenting how to use the library is to be found under [Demo](src/main/java/de/miltschek/openttdadmin/Demo.java). It shows on how to use all offered functions.
@@ -42,15 +46,18 @@ An example of a functional tool, reacting on some chat commands, looking ip the 
 Integration
 -----------
 The code contains a sample integration of external tools. Please note, the implementation is *very* basic and its intention is only to demonstrate the possibilities:
-- Slack integration in [SlackClient](src/main/java/de/miltschek/openttdadmin/integration/SlackClient.java)
+- Slack integration (one-way) in [SlackClient](src/main/java/de/miltschek/openttdadmin/integration/SlackClient.java)
+- Slack integration (two-way) in [SlackRTMClient](src/main/java/de/miltschek/openttdadmin/integration/SlackRTMClient.java)
 - ip-api.com integration in [GeoIp](src/main/java/de/miltschek/openttdadmin/integration/GeoIp.java)
 - Google Cloud Translator in [GoogleTranslate](src/main/java/de/miltschek/openttdadmin/integration/GoogleTranslate.java)
 
-How-To Slack
-------------
+How-To Slack (One-Way)
+------------------------
+The one-way variant is supported by the simple [SlackClient](src/main/java/de/miltschek/openttdadmin/integration/SlackClient.java) class. You will be able to get chat messages out of the game to your Slack channel only. If you are looking for a two-way communication, jump to the next section.
+
 1. Go to your [Slack Apps](https://api.slack.com/apps/)
 2. Click 'Create New App' button, decide on the name and merge it with one of your workspaces.
-3. Go to 'OAuth and Permissions' page.
+3. Go to 'OAuth and Permissions' page in the 'Features' group.
 4. Add an OAuth scope under 'Scopes' / 'Bot Token Scopes'
     - chat:write for chats to which the App will be invited
     - or chat:write.public for all public chats of your workspace
@@ -61,7 +68,38 @@ How-To Slack
 9. If you granted the App only the **chat:write** scope, you have to add the App to the created/chosen channel:
     - mobile: enter the channel, click the info icon (i), hit 'Apps', hit plus symbol (+), select the newly created App
     - web: really, no solution found if the App did not write to any of the existing channels already! if so, click on the App's name in any chat, hit 'Add this app to channel...', choose the channel, hit 'Add'
-10. Start the [BasicTool](src/main/java/de/miltschek/openttdadmin/BasicTool.java) providing the channel's name or ID as **Slack Channel** and the newly created token as **Slack Token**. That's it!
+10. The [BasicTool](src/main/java/de/miltschek/openttdadmin/BasicTool.java) up to the version 1.1.2 inclusive does use this Slack Client. Just start it providing the channel's name or ID as **Slack Channel** and the newly created token as **Slack Token**. That's it!
+11. Starting with the version 1.2.x, the [BasicTool](src/main/java/de/miltschek/openttdadmin/BasicTool.java) makes use of the RTM client described in the next section.
+
+How-To Slack (Two-Way)
+----------------------
+The two-way variant is implemented as a new [SlackRTMClient](src/main/java/de/miltschek/openttdadmin/integration/SlackRTMClient.java) class. It provides the same push function from the game to the Slack channel plus a possibility to write back from Slack to the game. There are still a few issues explained below.
+
+1. Go to your [Slack Apps](https://api.slack.com/apps/)
+2. Click 'Create New App' button, decide on the name and merge it with one of your workspaces.
+3. Go to the 'Socket Mode' page in the 'Settings' group.
+    - enable the 'Socket Mode'.
+    - it will automatically create an app-level token (connections:write scope)
+    - name the token however you like to, it does not matter at all
+    - copy the token (xapp-...) - this is your `SLACK_APP_TOKEN`.
+4. Go to the 'OAuth & Permissions' page in the 'Features' group. In the 'Bot Token Scopes' section add the scopes:
+    - `chat:write` to allow the bot to post messages to the channels it will be invited to
+    - `reactions:write` to allow the bot to mark your messages as processed/failed
+    - `channels:read` to allow the bot to get a list of channels and match the required ID
+5. Go to the 'Event Subscriptions' page in the 'Features' group.
+    - enable the 'Events'
+    - in the 'Subscribe to bot events section' add:
+      - `message.channels` to make the bot receive messages from the channels
+6. Scroll up and hit the button 'Install to Workspace', followed by allowing the access for the purpose.
+7. Copy the value 'Bot User OAuth Access Token' (xoxb-...) from the 'OAuth & Permissions' page - this is your `SLACK_BOT_TOKEN`.
+8. Set the following environment variables:
+    - `SLACK_APP_TOKEN` to the respective value noted above
+    - `SLACK_BOT_TOKEN` to the respective value noted above
+    - `SLACK_CHANNEL` to either a channel name #channel or to a channel ID Cxxxxxxxxxx.
+9. Start the [BasicTool](src/main/java/de/miltschek/openttdadmin/BasicTool.java). That's it!
+
+#### Known Issues
+If using more than one instance of the app with the same workspace, the messages will be randomly delivered to one of the running instances. Still investigating, whether it can be solved somehow.
 
 How-To GeoIp
 ------------
@@ -98,6 +136,14 @@ The code makes use of the [Slf4j framework](https://www.slf4j.org/). It means, y
 If you just want to see the log output on the console, it's enough to add the `slf4j-simple-1.7.28.jar` library to the classpath (or whatever version will be valid at the time you use it).
 
 Outside of an IDE environment, you may download the library from <https://repo1.maven.org/maven2/org/slf4j/slf4j-simple/>.
+
+The Bolt library of Slack sets the default Log Level to ERROR. If you want to get another output level from the library itself, create a custom configuration or just add:
+
+```
+-Dorg.slf4j.simpleLogger.log.de.miltschek=debug
+```
+
+to the command line.
 
 Development
 -----------

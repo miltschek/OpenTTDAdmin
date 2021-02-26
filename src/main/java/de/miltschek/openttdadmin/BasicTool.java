@@ -52,6 +52,7 @@ import de.miltschek.openttdadmin.data.ServerListenerAdapter;
 import de.miltschek.openttdadmin.integration.GeoIp;
 import de.miltschek.openttdadmin.integration.GoogleTranslate;
 import de.miltschek.openttdadmin.integration.SlackClient;
+import de.miltschek.openttdadmin.integration.SlackRTMClient;
 
 /**
  * Basic game administration tool.
@@ -60,7 +61,7 @@ public class BasicTool {
 	private static final Logger LOGGER = LoggerFactory.getLogger(BasicTool.class);
 
 	private static OttdAdminClient admin;
-	private static SlackClient slack;
+	private static SlackRTMClient slack;
 	
 	/** A lock for the subsequent objects for the company-reset process. */
 	private static Object resetCompanyLock = new Object();
@@ -194,6 +195,15 @@ public class BasicTool {
 			return passwordProtectedSet;
 		}
 	}
+	
+	private static Boolean onMessage(String text) {
+		try {
+			admin.sendChat(new ChatMessage(0, Recipient.All, 0, text));
+			return true;
+		} catch (Exception ex) {
+			return false;
+		}
+	}
 
 	/**
 	 * Entry point of the application.
@@ -203,24 +213,27 @@ public class BasicTool {
 		String host;
 		int port;
 		String password;
-		String channel;
-		String token;
 		
-		if (args.length == 5) {
+		if (args.length == 3) {
 			host = args[0];
 			port = Integer.parseInt(args[1]);
 			password = args[2];
-			channel = args[3];
-			token = args[4];
 		} else {
 			System.err.println("Usage:");
-			System.err.println(BasicTool.class.getName() + " <address> <port> <admin_password> <slack_channel> <slack_token>");
+			System.err.println(BasicTool.class.getName() + " <address> <port> <admin_password>");
 			return;
 		}
 		
 		LOGGER.info("Starting the basic tool.");
-		LOGGER.debug("Configuring slack connector for the channel {}.", channel);
-		slack = new SlackClient(channel, token);
+		
+		if (System.getenv("SLACK_CHANNEL") != null) {
+			LOGGER.debug("Starting slack connector.");
+			try {
+				slack = new SlackRTMClient(BasicTool::onMessage);
+			} catch (IOException e) {
+				LOGGER.error("Failed to initialize the Slack client.", e);
+			}
+		}
 		
 		LOGGER.debug("Configuring OTTD Admin client to connect to {} on port {}.", host, port);
 		admin = new OttdAdminClient(host, port, password);
