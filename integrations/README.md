@@ -1,10 +1,10 @@
 # Integrations
 
 This subproject contains a basic integration of external tools:
-- Slack integration (one-way) in [SlackClient](src/main/java/de/miltschek/openttdadmin/integration/SlackClient.java)
-- Slack integration (two-way) in [SlackRTMClient](src/main/java/de/miltschek/openttdadmin/integration/SlackRTMClient.java)
-- ip-api.com integration in [GeoIp](src/main/java/de/miltschek/openttdadmin/integration/GeoIp.java)
-- Google Cloud Translator in [GoogleTranslate](src/main/java/de/miltschek/openttdadmin/integration/GoogleTranslate.java)
+- Slack integration (one-way) in [SlackClient](https://github.com/miltschek/OpenTTDAdmin/blob/main/integrations/src/main/java/de/miltschek/integrations/SlackClient.java)
+- Slack integration (two-way) in [SlackRTMClient](https://github.com/miltschek/OpenTTDAdmin/blob/main/integrations/src/main/java/de/miltschek/integrations/SlackRTMClient.java)
+- ip-api.com integration in [GeoIp](https://github.com/miltschek/OpenTTDAdmin/blob/main/integrations/src/main/java/de/miltschek/integrations/GeoIp.java)
+- Google Cloud Translator in [GoogleTranslate](https://github.com/miltschek/OpenTTDAdmin/blob/main/integrations/src/main/java/de/miltschek/integrations/GoogleTranslate.java)
 
 Building
 --------
@@ -16,11 +16,11 @@ mvn clean compile package assembly:single install
 
 - `package` will create an integrations-VERSION.jar file
 - `assembly:single` will add dependencies to an integrations-VERSION-jar-with-dependencies.jar file
-- `install` will register the library in your Maven repository so that other projects (including [Genowefa](../genowefa)) may make use of it
+- `install` will register the library in your Maven repository so that other projects (including [Genowefa](https://github.com/miltschek/OpenTTDAdmin/tree/main/genowefa)) may make use of it
 
 How-To Slack (One-Way)
 ------------------------
-The one-way variant is supported by the simple [SlackClient](src/main/java/de/miltschek/openttdadmin/integration/SlackClient.java) class. You will be able to get chat messages out of the game to your Slack channel only. If you are looking for a two-way communication, jump to the next section.
+The one-way variant is supported by the simple [SlackClient](https://github.com/miltschek/OpenTTDAdmin/blob/main/integrations/src/main/java/de/miltschek/integrations/SlackClient.java) class. You will be able to get chat messages out of the game to your Slack channel only. If you are looking for a two-way communication, jump to the next section.
 
 1. Go to your [Slack Apps](https://api.slack.com/apps/)
 2. Click 'Create New App' button, decide on the name and merge it with one of your workspaces.
@@ -35,12 +35,13 @@ The one-way variant is supported by the simple [SlackClient](src/main/java/de/mi
 9. If you granted the App only the **chat:write** scope, you have to add the App to the created/chosen channel:
     - mobile: enter the channel, click the info icon (i), hit 'Apps', hit plus symbol (+), select the newly created App
     - web: really, no solution found if the App did not write to any of the existing channels already! if so, click on the App's name in any chat, hit 'Add this app to channel...', choose the channel, hit 'Add'
-10. The [BasicTool](src/main/java/de/miltschek/openttdadmin/BasicTool.java) up to the version 1.1.2 inclusive does use this Slack Client. Just start it providing the channel's name or ID as **Slack Channel** and the newly created token as **Slack Token**. That's it!
-11. Starting with the version 1.2.x, the [BasicTool](src/main/java/de/miltschek/openttdadmin/BasicTool.java) makes use of the RTM client described in the next section.
+
+**Caution**
+The current version of the app [Genowefa](https://github.com/miltschek/OpenTTDAdmin/tree/main/genowefa) does not use the one-way approach anymore.
 
 How-To Slack (Two-Way)
 ----------------------
-The two-way variant is implemented as a new [SlackRTMClient](src/main/java/de/miltschek/openttdadmin/integration/SlackRTMClient.java) class. It provides the same push function from the game to the Slack channel plus a possibility to write back from Slack to the game. There are still a few issues explained below.
+The two-way variant is implemented as a new [SlackRTMClient](https://github.com/miltschek/OpenTTDAdmin/blob/main/integrations/src/main/java/de/miltschek/integrations/SlackRTMClient.java) class. It provides the same push function from the game to the Slack channel plus a possibility to write back from Slack to the game. There are still a few issues explained below.
 
 1. Go to your [Slack Apps](https://api.slack.com/apps/)
 2. Click 'Create New App' button, decide on the name and merge it with one of your workspaces.
@@ -63,7 +64,7 @@ The two-way variant is implemented as a new [SlackRTMClient](src/main/java/de/mi
     - `SLACK_APP_TOKEN` to the respective value noted above
     - `SLACK_BOT_TOKEN` to the respective value noted above
     - `SLACK_CHANNEL` to either a channel name #channel or to a channel ID Cxxxxxxxxxx.
-9. Start the [BasicTool](src/main/java/de/miltschek/openttdadmin/BasicTool.java). That's it!
+9. Start the [Genowefa](https://github.com/miltschek/OpenTTDAdmin/tree/main/genowefa) app. That's it!
 
 #### Known Issues
 If using more than one instance of the app with the same workspace, the messages will be randomly delivered to one of the running instances. Still investigating, whether it can be solved somehow.
