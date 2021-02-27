@@ -45,25 +45,33 @@ You may use an official release of the app (as a JAR file):
       - Linux-like: `export SLACK_CHANNEL=#your_channel`
       - Windows-like: `set SLACK_CHANNEL=#your_channel`
 - Start the app with the following command line:
-    - Windows, without logging
+- Windows, without logging
+
 ```
 C:\> java -jar genowefa-VERSION-jar-with-dependencies.jar 127.0.0.1 3977 OPENTTD_ADMIN_PASSWORD
 ```
-    - Windows, with console logging
+
+- Windows, with console logging
+
 ```
 C:\> java -cp slf4j-simple-1.7.30.jar -Dorg.slf4j.simpleLogger.log.de.miltschek=debug -jar genowefa-VERSION-jar-with-dependencies.jar 127.0.0.1 3977 OPENTTD_ADMIN_PASSWORD
 ```
-    - Linux, without logging
+
+- Linux, without logging
+
 ```
 ~$ java -cp -jar ./genowefa-VERSION-jar-with-dependencies.jar 127.0.0.1 3977 OPENTTD_ADMIN_PASSWORD
 ```
-    - Linux, with logging
+
+- Linux, with logging
+
 ```
 ~$ java -cp ./slf4j-simple-1.7.30.jar -Dorg.slf4j.simpleLogger.log.de.miltschek=debug -jar ./genowefa-VERSION-jar-with-dependencies.jar 127.0.0.1 3977 OPENTTD_ADMIN_PASSWORD
 ```
-    - `127.0.0.1` should be the address of the OpenTTD server
-    - `3977` should be the port number of the Admin Port of the OpenTTD server as configured in the openttd.cfg under `[network]`: `server_admin_port`
-    - `OPENTTD_ADMIN_PASSWORD` should be the password as configured in the openttd.cfg file under `[network]`: `admin_password`
+
+- `127.0.0.1` should be the address of the OpenTTD server
+- `3977` should be the port number of the Admin Port of the OpenTTD server as configured in the openttd.cfg under `[network]`: `server_admin_port`
+- `OPENTTD_ADMIN_PASSWORD` should be the password as configured in the openttd.cfg file under `[network]`: `admin_password`
     
 User's Manual
 -------------
