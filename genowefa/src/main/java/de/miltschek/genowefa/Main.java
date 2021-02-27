@@ -21,7 +21,7 @@
  *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  *  SOFTWARE.
  */
-package de.miltschek.openttdadmin;
+package de.miltschek.genowefa;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -38,6 +38,10 @@ import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import de.miltschek.integrations.GeoIp;
+import de.miltschek.integrations.GoogleTranslate;
+import de.miltschek.integrations.SlackRTMClient;
+import de.miltschek.openttdadmin.OttdAdminClient;
 import de.miltschek.openttdadmin.data.ChatMessage;
 import de.miltschek.openttdadmin.data.ChatMessage.Recipient;
 import de.miltschek.openttdadmin.data.ClientInfo;
@@ -49,16 +53,12 @@ import de.miltschek.openttdadmin.data.CompanyListenerAdapter;
 import de.miltschek.openttdadmin.data.ErrorCode;
 import de.miltschek.openttdadmin.data.ServerInfo;
 import de.miltschek.openttdadmin.data.ServerListenerAdapter;
-import de.miltschek.openttdadmin.integration.GeoIp;
-import de.miltschek.openttdadmin.integration.GoogleTranslate;
-import de.miltschek.openttdadmin.integration.SlackClient;
-import de.miltschek.openttdadmin.integration.SlackRTMClient;
 
 /**
  * Basic game administration tool.
  */
-public class BasicTool {
-	private static final Logger LOGGER = LoggerFactory.getLogger(BasicTool.class);
+public class Main {
+	private static final Logger LOGGER = LoggerFactory.getLogger(Main.class);
 
 	private static OttdAdminClient admin;
 	private static SlackRTMClient slack;
@@ -220,7 +220,7 @@ public class BasicTool {
 			password = args[2];
 		} else {
 			System.err.println("Usage:");
-			System.err.println(BasicTool.class.getName() + " <address> <port> <admin_password>");
+			System.err.println(Main.class.getName() + " <address> <port> <admin_password>");
 			return;
 		}
 		
@@ -229,7 +229,7 @@ public class BasicTool {
 		if (System.getenv("SLACK_CHANNEL") != null) {
 			LOGGER.debug("Starting slack connector.");
 			try {
-				slack = new SlackRTMClient(BasicTool::onMessage);
+				slack = new SlackRTMClient(Main::onMessage);
 			} catch (IOException e) {
 				LOGGER.error("Failed to initialize the Slack client.", e);
 			}
@@ -726,6 +726,10 @@ public class BasicTool {
 					serverInfo.getStartingYear(),
 					serverInfo.getMapSizeX(),
 					serverInfo.getMapSizeY());
+			
+			if (slack != null) {
+				slack.sendMessage(":star: Connected to " + serverInfo.getServerName());
+			}
 			
 			System.out.println(" - server name = " + serverInfo.getServerName());
 			System.out.println(" - network revision = " + serverInfo.getNetworkRevision());

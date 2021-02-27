@@ -1,4 +1,4 @@
-package de.miltschek.openttdadmin.integration;
+package de.miltschek.integrations;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 
 import com.slack.api.bolt.App;
 import com.slack.api.bolt.AppConfig;
+import com.slack.api.bolt.response.Response;
 import com.slack.api.bolt.socket_mode.SocketModeApp;
 import com.slack.api.methods.MethodsClient;
 import com.slack.api.methods.SlackApiException;
@@ -190,7 +191,7 @@ public class SlackRTMClient implements Closeable {
 	public static void main(String[] args) throws Exception {
 		Random rnd = new Random();
 		SlackRTMClient client = new SlackRTMClient(text -> {
-			return rnd.nextBoolean();
+			return false;//rnd.nextBoolean();
 		});
 		
 		System.out.println("Hit enter to close the client...");
