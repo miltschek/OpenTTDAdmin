@@ -8,7 +8,7 @@ A fully functional admin app ready to use out of the box:
 Building
 --------
 
-Either take a [pre-generated JAR file](https://github.com/miltschek/OpenTTDAdmin/releases/latest) or compile it by yourself. The project is Maven-enabled and this library depends on two other artifacts: the [OpenTTD Client](../openttdclient/) and the [Integrations](../integrations/). It means, the dependencies have to be built and installed in your Maven repository first to be able to build this app. To compile, make sure you use JDK 11 or newer and request the following build targets:
+Either take a [pre-generated JAR file](https://github.com/miltschek/OpenTTDAdmin/releases/latest) or compile it by yourself. The project is Maven-enabled and this library depends on two other artifacts: the [OpenTTD Client](https://github.com/miltschek/OpenTTDAdmin/tree/main/ottdclient) and the [Integrations](https://github.com/miltschek/OpenTTDAdmin/tree/main/integrations). It means, the dependencies have to be built and installed in your Maven repository first to be able to build this app. To compile, make sure you use JDK 11 or newer and request the following build targets:
 ```
 mvn clean compile package assembly:single
 ```
@@ -29,12 +29,12 @@ You may use an official release of the app (as a JAR file):
     - optionally, an [Slf4j](http://www.slf4j.org/manual.html) library for logging purposes
 - The GeoIP functions will work automatically as no special account is needed for (ip-api.com)[https://ip-api.com]
 - The Google Translate requires a service account or the function will be deactivated
-    - Instructions to be found in the [Integrations How-To Google Translator](../integrations)
+    - Instructions to be found in the [Integrations How-To Google Translator](https://github.com/miltschek/OpenTTDAdmin/tree/main/integrations)
     - Set the environment variable `GOOGLE_APPLICATION_CREDENTIALS` to contain the path to the JSON key file:
       - Linux-like: `export GOOGLE_APPLICATION_CREDENTIALS=/home/you/mykey.json`
       - Windows-like: `set GOOGLE_APPLICATION_CREDENTIALS=C:\Folder\mykey.json`
 - The Slack integration requires registration of the app as a bot or the function will be deactivated
-    - Instructions to be found in the [Integrations How-To Slack (two-way)](../integrations)
+    - Instructions to be found in the [Integrations How-To Slack (two-way)](https://github.com/miltschek/OpenTTDAdmin/tree/main/integrations)
     - Set the environment variable `SLACK_APP_TOKEN` to the application's token
       - Linux-like: `export SLACK_APP_TOKEN=xapp-...`
       - Windows-like: `set SLACK_APP_TOKEN=xapp-...`
@@ -130,7 +130,7 @@ The Google Translation Service **does cost real money**. Please refer to the cur
 ### Geolocation
 
 For the geographical location of a network address, the service of [ip-api.com](https://ip-api.com/). There is no configuration needed.
-For license details, see the project [Integrations](../integrations).
+For license details, see the project [Integrations](https://github.com/miltschek/OpenTTDAdmin/tree/main/integrations).
 
 Further Development
 -------------------
