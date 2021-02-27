@@ -20,9 +20,9 @@ New Project Structure
 ---------------------
 
 Please note, with the version 1.3, the project has been restructured and partially renamed:
-- The library itself is located under [OpenTTD Client](openttdclient/)
-- Connectors to external services (GeoIP, Slack, Google etc.) are located under [Integrations](integrations/)
-- A fully functional admin app got a new name **Genowefa** and is locates under [Genowefa](genowefa/)
+- The library itself is located under [OpenTTD Client](https://github.com/miltschek/OpenTTDAdmin/tree/main/ottdclient)
+- Connectors to external services (GeoIP, Slack, Google etc.) are located under [Integrations](https://github.com/miltschek/OpenTTDAdmin/tree/main/integrations)
+- A fully functional admin app got a new name **Genowefa** and is locates under [Genowefa](https://github.com/miltschek/OpenTTDAdmin/tree/main/genowefa)
 
 Respective manuals are available in each project's main folder as a README file.
 
@@ -34,12 +34,12 @@ How To
     - Looking up the geo location of client IP addresses, e.g. to identify proxies or to create customized welcome messages.
     - Translating international messages, e.g. to make it easier for people coming from all around the world.
     - Forwarding chat messages to a Slack channel and back to the game, e.g. to be 'always online' as an admin.
-    you may use the [Integrations](integrations/) library to speed up the development.
-- If you just want to have a ready-to-use admin tool, you may use [Genowefa](genowefa/) out of the box.
+    you may use the [Integrations](https://github.com/miltschek/OpenTTDAdmin/tree/main/integrations) library to speed up the development.
+- If you just want to have a ready-to-use admin tool, you may use [Genowefa](https://github.com/miltschek/OpenTTDAdmin/tree/main/genowefa) out of the box.
 
 Demo App
 --------
-A simple app presenting how to use the library is to be found under [Demo](openttdclient/src/main/java/de/miltschek/openttdadmin/Demo.java). It shows on how to use all offered functions.
+A simple app presenting how to use the library is to be found under [Demo](https://github.com/miltschek/OpenTTDAdmin/blob/main/ottdclient/src/main/java/de/miltschek/openttdadmin/Demo.java). It shows on how to use all offered functions.
 This is the default app that is started if you just execute the jar file.
 
 
