@@ -54,19 +54,19 @@ C:\> java -jar genowefa-VERSION-jar-with-dependencies.jar 127.0.0.1 3977 OPENTTD
 - Windows, with console logging
 
 ```
-C:\> java -cp slf4j-simple-1.7.30.jar -Dorg.slf4j.simpleLogger.log.de.miltschek=debug -jar genowefa-VERSION-jar-with-dependencies.jar 127.0.0.1 3977 OPENTTD_ADMIN_PASSWORD
+C:\> java -cp genowefa-VERSION-jar-with-dependencies.jar;slf4j-simple-1.7.30.jar -Dorg.slf4j.simpleLogger.log.de.miltschek=debug de.miltschek.genowefa.Main 127.0.0.1 3977 OPENTTD_ADMIN_PASSWORD
 ```
 
 - Linux, without logging
 
 ```
-~$ java -cp -jar ./genowefa-VERSION-jar-with-dependencies.jar 127.0.0.1 3977 OPENTTD_ADMIN_PASSWORD
+~$ java -jar ./genowefa-VERSION-jar-with-dependencies.jar 127.0.0.1 3977 OPENTTD_ADMIN_PASSWORD
 ```
 
 - Linux, with logging
 
 ```
-~$ java -cp ./slf4j-simple-1.7.30.jar -Dorg.slf4j.simpleLogger.log.de.miltschek=debug -jar ./genowefa-VERSION-jar-with-dependencies.jar 127.0.0.1 3977 OPENTTD_ADMIN_PASSWORD
+~$ java -cp ./genowefa-VERSION-jar-with-dependencies.jar:./slf4j-simple-1.7.30.jar -Dorg.slf4j.simpleLogger.log.de.miltschek=debug de.miltschek.genowefa.Main  127.0.0.1 3977 OPENTTD_ADMIN_PASSWORD
 ```
 
 - `127.0.0.1` should be the address of the OpenTTD server
