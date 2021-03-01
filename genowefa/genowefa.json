@@ -1,0 +1,135 @@
+{
+  "slack": {
+    "app_token": "xapp-",
+    "bot_token": "xoxb-"
+  },
+  "google": {
+    "key_file": "/home/user/google.json"
+  },
+  "games": [
+    {
+      "address": "127.0.0.1",
+      "port": 3977,
+      "password": "PASSWORD"
+    },
+    {
+      "address": "192.168.1.20",
+      "port": 3977,
+      "password": "PASSWORD"
+    }
+  ],
+  "welcome_messages": [
+    {
+      "country": "*",
+      "message": "-> Warm welcome to ${USERNAME} coming from ${COUNTRY}! <-"
+    },
+    {
+      "country": "DE",
+      "message": "-> Moin moin, ${USERNAME} aus Deutschland! <-"
+    },
+    {
+      "country": "AT",
+      "message": "-> Servus, ${USERNAME} aus Österreich! <-"
+    },
+    {
+      "country": "AU",
+      "message": "-> Hey, how are you, ${USERNAME} from Australia? <-"
+    },
+    {
+      "country": "BE",
+      "message": "-> Hoe gaat het, ${USERNAME} uit België? <-"
+    },
+    {
+      "country": "BR",
+      "message": "-> Como vai, ${USERNAME} do Brasil? <-"
+    },
+    {
+      "country": "CH",
+      "message": "-> Grüezi, ${USERNAME} aus der Schweiz! <-"
+    },
+    {
+      "country": "CZ",
+      "message": "-> Jak se máš, ${USERNAME} z Čech? <-"
+    },
+    {
+      "country": "DK",
+      "message": "-> Hvordan har du det, ${USERNAME} fra Danmark? <-"
+    },
+    {
+      "country": "ES",
+      "message": "-> ¿Cómo estás, ${USERNAME} de España? <-"
+    },
+    {
+      "country": "FI",
+      "message": "-> Kuinka voit, ${USERNAME} Suomesta? <-"
+    },
+    {
+      "country": "FR",
+      "message": "-> Comment vas-tu, ${USERNAME} de France? <-"
+    },
+    {
+      "country": "GB",
+      "message": "-> Pleased to meet you, ${USERNAME} from ${COUNTRY}! <-"
+    },
+    {
+      "country": "HU",
+      "message": "-> Hogy vagy, ${USERNAME}  Magyarországról? <-"
+    },
+    {
+      "country": "IE",
+      "message": "-> Conas atá tú, ${USERNAME} as Éirinn? <-"
+    },
+    {
+      "country": "IT",
+      "message": "-> Come stai, ${USERNAME} dall'Italia? <-"
+    },
+    {
+      "country": "LI",
+      "message": "-> Hoi Du, ${USERNAME} aus Lichtenstein! <-"
+    },
+    {
+      "country": "LU",
+      "message": "-> Wéi geet et dir, ${USERNAME} aus Lëtzebuerg? <-"
+    },
+    {
+      "country": "NO",
+      "message": "-> Hvordan har du det, ${USERNAME} fra Norge? <-"
+    },
+    {
+      "country": "PL",
+      "message": "-> Siema, ${USERNAME} z Polski! <-"
+    },
+    {
+      "country": "PT",
+      "message": "-> Como está você, ${USERNAME} de Portugal? <-"
+    },
+    {
+      "country": "RU",
+      "message": "-> Как дела, ${USERNAME} из России? <-"
+    },
+    {
+      "country": "SE",
+      "message": "-> Hur mår du, ${USERNAME} från Sverige? <-"
+    },
+    {
+      "country": "SI",
+      "message": "-> Kako si, ${USERNAME} iz Slovaške? <-"
+    },
+    {
+      "country": "SK",
+      "message": "-> Ako sa máš, ${USERNAME} zo Slovenska? <-"
+    },
+    {
+      "country": "UA",
+      "message": "-> Як справи, ${USERNAME} з України? <-"
+    },
+    {
+      "country": "US",
+      "message": "-> What’s up, ${USERNAME} coming from the US? <-"
+    },
+	{
+      "country": "EE",
+      "message": "-> Kuidas läheb, ${USERNAME} Eestist? <-"
+    }
+  ]
+}
