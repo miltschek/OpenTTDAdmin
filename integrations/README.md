@@ -41,33 +41,55 @@ The current version of the app [Genowefa](https://github.com/miltschek/OpenTTDAd
 
 How-To Slack (Two-Way)
 ----------------------
-The two-way variant is implemented as a new [SlackRTMClient](https://github.com/miltschek/OpenTTDAdmin/blob/main/integrations/src/main/java/de/miltschek/integrations/SlackRTMClient.java) class. It provides the same push function from the game to the Slack channel plus a possibility to write back from Slack to the game. There are still a few issues explained below.
+The two-way variant is implemented as a new [SlackRTMClient](https://github.com/miltschek/OpenTTDAdmin/blob/main/integrations/src/main/java/de/miltschek/integrations/SlackRTMClient.java) class. It provides the same push function from the game to the Slack channel plus a possibility to write back from Slack to the game.
 
 1. Go to your [Slack Apps](https://api.slack.com/apps/)
 2. Click 'Create New App' button, decide on the name and merge it with one of your workspaces.
+
+![](../doc/slack-your-apps.png =150x)
+
 3. Go to the 'Socket Mode' page in the 'Settings' group.
     - enable the 'Socket Mode'.
     - it will automatically create an app-level token (connections:write scope)
     - name the token however you like to, it does not matter at all
-    - copy the token (xapp-...) - this is your `SLACK_APP_TOKEN`.
+    - copy the token (xapp-...) - this is your `app_token`.
+    
+![](../doc/slack-socket-mode.png =150x)
+
+![](../doc/slack-app-token.png =150x)
+    
 4. Go to the 'OAuth & Permissions' page in the 'Features' group. In the 'Bot Token Scopes' section add the scopes:
     - `chat:write` to allow the bot to post messages to the channels it will be invited to
     - `reactions:write` to allow the bot to mark your messages as processed/failed
     - `channels:read` to allow the bot to get a list of channels and match the required ID
+
+![](../doc/slack-scopes.png =150x)
+    
 5. Go to the 'Event Subscriptions' page in the 'Features' group.
     - enable the 'Events'
     - in the 'Subscribe to bot events section' add:
       - `message.channels` to make the bot receive messages from the channels
-6. Scroll up and hit the button 'Install to Workspace', followed by allowing the access for the purpose.
-7. Copy the value 'Bot User OAuth Access Token' (xoxb-...) from the 'OAuth & Permissions' page - this is your `SLACK_BOT_TOKEN`.
-8. Set the following environment variables:
-    - `SLACK_APP_TOKEN` to the respective value noted above
-    - `SLACK_BOT_TOKEN` to the respective value noted above
-    - `SLACK_CHANNEL` to either a channel name #channel or to a channel ID Cxxxxxxxxxx.
-9. Start the [Genowefa](https://github.com/miltschek/OpenTTDAdmin/tree/main/genowefa) app. That's it!
+      
+![](../doc/slack-events.png =150x)
 
-#### Known Issues
-If using more than one instance of the app with the same workspace, the messages will be randomly delivered to one of the running instances. Still investigating, whether it can be solved somehow.
+6. Go to the 'Slash Commands' page in the 'Features' group.
+    - hit 'Create New Command' for each command that you wish to be supported by the library
+    - commands not listed here will not be delivered to the library
+    - a list of required commands for the [Genowefa](https://github.com/miltschek/OpenTTDAdmin/tree/main/genowefa) app is published in Genowefa's README.
+    
+![](../doc/slack-slash-commands.png =150x)
+    
+7. Scroll up and hit the button 'Install to Workspace', followed by allowing the access for the purpose.
+8. Copy the value 'Bot User OAuth Access Token' (xoxb-...) from the 'OAuth & Permissions' page - this is your `bot_token`.
+
+![](../doc/slack-oauth-bot-token.png =150x)
+
+9. Invite the app to the channel(s) that you wish to use for the game server(s). One channel per game server.
+8. Configure the [Genowefa](https://github.com/miltschek/OpenTTDAdmin/tree/main/genowefa) app with the tokens in the `genowefa.json` file:
+    - `slack`/`app_token` to the respective value noted above
+    - `slack`/`bot_token` to the respective value noted above
+    - `game`/.../`slack_channel` to a channel name #channel for a respective game server
+9. Start the [Genowefa](https://github.com/miltschek/OpenTTDAdmin/tree/main/genowefa) app. That's it!
 
 How-To GeoIp
 ------------
@@ -90,9 +112,12 @@ How-To Google Translator
     - Grant this service account access to project: select the role 'Cloud Translation API User'.
 8. If not directed automatically, click on the newly created account and select 'Add Key'.
 9. Choose the 'JSON' format and download the key in a **secure place**.
-10. Set the environment variable `GOOGLE_APPLICATION_CREDENTIALS` to contain the path to the JSON key file:
+10. If using the library by your own, you may either use the default constructor that looks for the environment variable `GOOGLE_APPLICATION_CREDENTIALS` that contains the path to the JSON key file:
     - Linux-like: `export GOOGLE_APPLICATION_CREDENTIALS=/home/you/mykey.json`
     - Windows-like: `set GOOGLE_APPLICATION_CREDENTIALS=C:\Folder\mykey.json`
+11. Or the constructor accepting a path to the JSON key file as an argument.
+12. Or if you use [Genowefa](https://github.com/miltschek/OpenTTDAdmin/tree/main/genowefa) app, make sure to add the path to the `genowefa.json` configuration file:
+    - `google`/`key_file` to an absolute path or relative (of the current working directory) path to the JSON key file.
 
 **Caution**
 The Google Translation Service **does cost real money**. Please refer to the current price list.
