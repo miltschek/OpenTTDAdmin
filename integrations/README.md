@@ -46,7 +46,7 @@ The two-way variant is implemented as a new [SlackRTMClient](https://github.com/
 1. Go to your [Slack Apps](https://api.slack.com/apps/)
 2. Click 'Create New App' button, decide on the name and merge it with one of your workspaces.
 
-![](../doc/slack-your-apps.png =150x)
+![](../doc/slack-your-apps.png)
 
 3. Go to the 'Socket Mode' page in the 'Settings' group.
     - enable the 'Socket Mode'.
@@ -54,35 +54,35 @@ The two-way variant is implemented as a new [SlackRTMClient](https://github.com/
     - name the token however you like to, it does not matter at all
     - copy the token (xapp-...) - this is your `app_token`.
     
-![](../doc/slack-socket-mode.png =150x)
+![](../doc/slack-socket-mode.png)
 
-![](../doc/slack-app-token.png =150x)
+![](../doc/slack-app-token.png)
     
 4. Go to the 'OAuth & Permissions' page in the 'Features' group. In the 'Bot Token Scopes' section add the scopes:
     - `chat:write` to allow the bot to post messages to the channels it will be invited to
     - `reactions:write` to allow the bot to mark your messages as processed/failed
     - `channels:read` to allow the bot to get a list of channels and match the required ID
 
-![](../doc/slack-scopes.png =150x)
+![](../doc/slack-scopes.png)
     
 5. Go to the 'Event Subscriptions' page in the 'Features' group.
     - enable the 'Events'
     - in the 'Subscribe to bot events section' add:
       - `message.channels` to make the bot receive messages from the channels
       
-![](../doc/slack-events.png =150x)
+![](../doc/slack-events.png)
 
 6. Go to the 'Slash Commands' page in the 'Features' group.
     - hit 'Create New Command' for each command that you wish to be supported by the library
     - commands not listed here will not be delivered to the library
     - a list of required commands for the [Genowefa](https://github.com/miltschek/OpenTTDAdmin/tree/main/genowefa) app is published in Genowefa's README.
     
-![](../doc/slack-slash-commands.png =150x)
+![](../doc/slack-slash-commands.png)
     
 7. Scroll up and hit the button 'Install to Workspace', followed by allowing the access for the purpose.
 8. Copy the value 'Bot User OAuth Access Token' (xoxb-...) from the 'OAuth & Permissions' page - this is your `bot_token`.
 
-![](../doc/slack-oauth-bot-token.png =150x)
+![](../doc/slack-oauth-bot-token.png)
 
 9. Invite the app to the channel(s) that you wish to use for the game server(s). One channel per game server.
 8. Configure the [Genowefa](https://github.com/miltschek/OpenTTDAdmin/tree/main/genowefa) app with the tokens in the `genowefa.json` file:
