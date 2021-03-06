@@ -212,6 +212,8 @@ Slash forwards messages and commands to the app only if configured to do so. Bot
     - Add a command `/unpause`: Continues the game.
     - Add a command `/setting`: Prints a setting's value or sets a new value. Optional usage hint: Setting_Name \[New_Value\].
     - Add a command `/resetcompany`: Resets a company. Optional usage hint: Company_ID.
+    - Add a command `/quit`: Quits the game. Optional usage hint: confirmation.
+      - This command will be executed only if the word `roger` is typed in as an argument. This is to avoid closing the game by a mistake, since you will not be able to start it again from Slack.
 
 ### Slack interaction
 
