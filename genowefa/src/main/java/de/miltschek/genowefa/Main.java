@@ -194,7 +194,7 @@ public class Main {
 			//admin.setDeliveryCommandLogs(true); // TODO test
 			
 			ResetLock resetLock = new ResetLock();
-			Context context = new Context(configuration, resetLock, admin, slack, game.getSlackChannel(), googleTranslate);
+			Context context = new Context(configuration, game, resetLock, admin, slack, game.getSlackChannel(), googleTranslate);
 			admin.addChatListener(new ChatListener(context));
 			admin.addClientListener(new CustomClientListener(context));
 			admin.addCompanyListener(new CustomCompanyListener(context));

@@ -133,7 +133,7 @@ public class CustomClientListener extends ClientListenerAdapter {
 		this.context.notifyAdmin(":bust_in_silhouette: new user " + clientId);
 
 		try {
-			File onNewClient = new File("on_new_client.txt");
+			File onNewClient = new File(this.context.getWelcomeMessagePath());
 			if (onNewClient.exists()) {
 				for (String line : Files.readAllLines(onNewClient.toPath())) {
 					this.context.notifyUser(clientId, line);

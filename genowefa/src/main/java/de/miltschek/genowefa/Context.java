@@ -37,6 +37,7 @@ import de.miltschek.openttdadmin.data.ChatMessage.Recipient;
  */
 public class Context {
 	private final Configuration configuration;
+	private final Configuration.Game thisGame;
 	private final ResetLock resetLock;
 	private final OttdAdminClient admin;
 	private final SlackRTMClient slack;
@@ -52,8 +53,9 @@ public class Context {
 	 * @param channel slack channel name (including hash-symbol) to bind with the given game server. 
 	 * @param googleTranslate Google Translate service or null if not available.
 	 */
-	public Context(Configuration configuration, ResetLock resetLock, OttdAdminClient admin, SlackRTMClient slack, String channel, GoogleTranslate googleTranslate) {
+	public Context(Configuration configuration, Configuration.Game thisGame, ResetLock resetLock, OttdAdminClient admin, SlackRTMClient slack, String channel, GoogleTranslate googleTranslate) {
 		this.configuration = configuration;
+		this.thisGame = thisGame;
 		this.resetLock = resetLock;
 		this.admin = admin;
 		this.slack = slack;
@@ -68,6 +70,14 @@ public class Context {
 	 */
 	public String getWelcomeMessage(String countryCode) {
 		return this.configuration.getWelcomeMessage(countryCode, true);
+	}
+	
+	/**
+	 * Retrieves a path to a text file containing a customized server-welcome message. 
+	 * @return a file path
+	 */
+	public String getWelcomeMessagePath() {
+		return this.thisGame.getWelcomeMessagePath();
 	}
 	
 	/**

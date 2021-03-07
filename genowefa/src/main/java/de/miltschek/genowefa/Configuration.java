@@ -108,6 +108,7 @@ public class Configuration {
 		private final String password;
 		
 		private String slackChannel;
+		private String welcomeMessagePath = "on_new_client.txt";
 
 		/**
 		 * Creates settings of an OTTD game server.
@@ -128,6 +129,14 @@ public class Configuration {
 		 */
 		public void setSlackChannel(String slackChannel) {
 			this.slackChannel = slackChannel;
+		}
+		
+		/**
+		 * Sets the welcome message file path.
+		 * @param welcomeMessagePath the welcome message file path.
+		 */
+		public void setWelcomeMessagePath(String welcomeMessagePath) {
+			this.welcomeMessagePath = welcomeMessagePath;
 		}
 		
 		/**
@@ -160,6 +169,14 @@ public class Configuration {
 		 */
 		public String getSlackChannel() {
 			return slackChannel;
+		}
+		
+		/**
+		 * Gets the welcome message file path.
+		 * @return the welcome message file path.
+		 */
+		public String getWelcomeMessagePath() {
+			return welcomeMessagePath;
 		}
 	}
 	
@@ -203,6 +220,10 @@ public class Configuration {
 	
 					if (gameJson.has("slack_channel")) {
 						game.setSlackChannel(gameJson.getString("slack_channel"));
+					}
+					
+					if (gameJson.has("welcome_msg_path")) {
+						game.setWelcomeMessagePath(gameJson.getString("welcome_msg_path"));
 					}
 					
 					this.games.add(game);
