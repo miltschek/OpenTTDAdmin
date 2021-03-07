@@ -81,15 +81,15 @@ public class CustomCompanyListener extends CompanyListenerAdapter {
 	public void companyCreated(byte companyId) {
 		LOGGER.info("New company created {}.", companyId);
 		
-		this.context.notifyAdmin(":new: company " + companyId);
+		this.context.notifyAdmin(":new: company ID " + (companyId + 1));
 	}
 	
 	@Override
 	public void companyInfoReceived(CompanyInfo companyInfo) {
 		LOGGER.info("Company info received {}, name {}, color {}, password-protected {}.", companyInfo.getIndex(), companyInfo.getCompanyName(), companyInfo.getColor(), companyInfo.isPasswordProtected());
 		
-		this.context.notifyAdmin(":office: company info "
-				+ companyInfo.getIndex()
+		this.context.notifyAdmin(":office: company ID "
+				+ (companyInfo.getIndex() + 1)
 				+ " " + getColor(companyInfo.getColor())
 				+ ": " + companyInfo.getCompanyName()
 				+ ", manager " + companyInfo.getManagerName()
@@ -100,8 +100,8 @@ public class CustomCompanyListener extends CompanyListenerAdapter {
 	public void companyRemoved(byte companyId, ClosureReason closureReason) {
 		LOGGER.info("Company removed {}, reason {}.", companyId, closureReason);
 		
-		this.context.notifyAdmin(":hammer: company "
-				+ companyId
+		this.context.notifyAdmin(":hammer: company ID "
+				+ (companyId + 1)
 				+ " closed " + closureReason);
 	}
 	
@@ -109,9 +109,9 @@ public class CustomCompanyListener extends CompanyListenerAdapter {
 	public void companyUpdated(CompanyInfo companyInfo) {
 		LOGGER.info("Company updated received {}, name {}, color {}, password-protected {}.", companyInfo.getIndex(), companyInfo.getCompanyName(), companyInfo.getColor(), companyInfo.isPasswordProtected());
 		
-		this.context.notifyAdmin(":office: company update "
-				+ companyInfo.getIndex()
-				+ " " + getColor(companyInfo.getColor())
+		this.context.notifyAdmin(":office: company ID "
+				+ (companyInfo.getIndex() + 1)
+				+ " update " + getColor(companyInfo.getColor())
 				+ ": " + companyInfo.getCompanyName()
 				+ ", manager " + companyInfo.getManagerName()
 				+ ", pwd " + (companyInfo.isPasswordProtected() ? "yes" : "no"));

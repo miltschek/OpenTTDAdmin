@@ -33,6 +33,7 @@ import org.slf4j.LoggerFactory;
 import de.miltschek.integrations.GeoIp;
 import de.miltschek.openttdadmin.data.ClientInfo;
 import de.miltschek.openttdadmin.data.ClientListenerAdapter;
+import de.miltschek.openttdadmin.data.CompanyInfo;
 import de.miltschek.openttdadmin.data.ErrorCode;
 
 /**
@@ -60,6 +61,24 @@ public class CustomClientListener extends ClientListenerAdapter {
 			this.clientInfo = clientInfo;
 			this.geoIp = geoIp;
 		}
+	}
+	
+	/**
+	 * Returns a 1-based company identifier or a name for special cases (e.g. a spectator).
+	 * @param company 0-based company identifier (as from playAs).
+	 * @return 1-based company identifier or a name for special cases (e.g. a spectator).
+	 */
+	private String getCompanyId(byte company) {
+		switch (company) {
+		case CompanyInfo.DEITY: return "deity";
+		case CompanyInfo.INACTIVE_CLIENT: return "inactive";
+		case CompanyInfo.NEW_COMPANY: return "new";
+		case CompanyInfo.NONE: return "none";
+		case CompanyInfo.SPECTATOR: return "spectator";
+		case CompanyInfo.TOWN: return "town";
+		case CompanyInfo.WATER: return "water";
+		default: return String.valueOf((company & 0xff) + 1);
+		}		
 	}
 	
 	/**
@@ -99,9 +118,12 @@ public class CustomClientListener extends ClientListenerAdapter {
 		this.context.notifyAdmin(":bust_in_silhouette: user "
 				+ clientInfo.getClientId()
 				+ " " + clientInfo.getClientName()
-				+ " " + clientInfo.getNetworkAddress()
-				+ ((geoIp != null) ? (" " + geoIp.getCountry() + ", " + geoIp.getCity()) + (geoIp.isProxy() ? ", proxy" : ""): ""));
-
+				+ ", " + clientInfo.getNetworkAddress()
+				+ ", company " + getCompanyId(clientInfo.getPlayAs())
+				+ ", joined " + clientInfo.getJoinDate()
+				+ ", lang " + clientInfo.getLanguage()
+				+ ((geoIp != null) ? (" from " + geoIp.getCountry() + ", " + geoIp.getCity()) + (geoIp.isProxy() ? ", proxy" : ""): ""));
+		
 		synchronized (newClients) {
 			newClients.put(clientInfo.getClientId(), new ClientData(clientInfo, geoIp));
 		}
@@ -165,6 +187,6 @@ public class CustomClientListener extends ClientListenerAdapter {
 		this.context.notifyAdmin(":bust_in_silhouette: user "
 				+ clientId
 				+ " username " + clientName
-				+ " plays " + playAs);
+				+ " plays " + getCompanyId(playAs));
 	}
 }

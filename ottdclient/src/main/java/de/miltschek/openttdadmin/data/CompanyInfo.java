@@ -39,6 +39,21 @@ public class CompanyInfo {
 	private byte monthsOfBankruptcy;
 	private byte[] shareOwners;
 	
+	/** Special company ID denoting a town. */
+	public static final byte TOWN = 0x0f;
+	/** Special company ID denoting none/nobody/no company. */
+	public static final byte NONE = 0x10;
+	/** Special company ID denoting water. */
+	public static final byte WATER = 0x11;
+	/** Special company ID denoting deity (the game admin/server). */
+	public static final byte DEITY = 0x12;
+	/** Special company ID denoting an client that is joining a game. */
+	public static final byte INACTIVE_CLIENT = (byte)253;
+	/** Special company ID denoting a client that requests a new company. */
+	public static final byte NEW_COMPANY = (byte)254;
+	/** Special company ID denoting a spectator. */
+	public static final byte SPECTATOR = (byte)255;
+	
 	/**
 	 * Creates company information data (full record).
 	 * @param index index of the company (ID minus one)

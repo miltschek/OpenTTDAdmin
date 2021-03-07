@@ -106,15 +106,15 @@ public abstract class ServerListenerAdapter {
 	public void rconFinished(String command) {}
 	
 	/**
-	 * TODO: unknown what these events actually are
-	 * @param clientId TODO: ID of the client that triggered the event?
-	 * @param companyId TODO: ID of the company that triggered the event?
-	 * @param commandId TODO: ID of the executed command?
-	 * @param p1 TODO: parameter one?
-	 * @param p2 TODO: paramter two?
-	 * @param tile TODO: tile xy-address? 
-	 * @param text TODO: associated message?
-	 * @param frame TODO: no idea
+	 * Called whenever a player performs any in-game action (command).
+	 * @param clientId the client that generated the command
+	 * @param companyId the company ID that generated the command
+	 * @param commandId a command identifier as defined in the game's command_type.h file as the enum Commands
+	 * @param p1 the first parameter of the command
+	 * @param p2 the second parameter of the command
+	 * @param tile the tile identifier the command has been executed for, calculated as y * MapSizeX + x 
+	 * @param text the text parameter of the command if available
+	 * @param frame the frame number, in which the command has been executed
 	 */
 	public void logging(int clientId, byte companyId, int commandId, int p1, int p2, int tile, String text, int frame) {}
 	
