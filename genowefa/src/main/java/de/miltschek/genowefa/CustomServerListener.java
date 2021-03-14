@@ -50,6 +50,7 @@ public class CustomServerListener extends ServerListenerAdapter {
 	public void newGame() {
 		LOGGER.info("New game started.");
 		
+		this.context.clearCache();
 		this.context.notifyAdmin(":checkered_flag: new game");
 	}
 	

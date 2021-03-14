@@ -52,7 +52,8 @@ public class ChatListener implements Consumer<ChatMessage> {
 	 * Receives messages and decides on what to do.
 	 */
 	public void accept(ChatMessage t) {
-		String senderId = String.valueOf(t.getSenderId());
+		ClientData senderData = this.context.getClient(t.getSenderId());
+		String senderId = (senderData == null) ? String.valueOf(t.getSenderId()) : (senderData.getClientInfo().getClientName() + "(" + t.getSenderId() + ")");
 		
 		if (t.getMessage() == null) {
 			// nix

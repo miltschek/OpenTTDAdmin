@@ -43,6 +43,43 @@ public class Context {
 	private final SlackRTMClient slack;
 	private final String channel;
 	private final GoogleTranslate googleTranslate;
+	
+	private ClientDataProvider clientDataProvider;
+	private CompanyDataProvider companyDataProvider;
+	
+	/**
+	 * Client data provider for participants of the context.
+	 */
+	public interface ClientDataProvider {
+		/**
+		 * Gets the client data for a requested client ID.
+		 * @param clientId client ID to look up for
+		 * @return client data or null if not available
+		 */
+		ClientData get(int clientId);
+		
+		/**
+		 * Clears any cached data.
+		 */
+		void clearCache();
+	}
+	
+	/**
+	 * Company data provider for participants of the context.
+	 */
+	public interface CompanyDataProvider {
+		/**
+		 * Gets the company data for a requested company ID (0-based).
+		 * @param companyId company ID to look up for (0-based).
+		 * @return company data or null if not available
+		 */
+		CompanyData get(byte companyId);
+		
+		/**
+		 * Clears any cached data.
+		 */
+		void clearCache();
+	}
 
 	/**
 	 * Creates an application's context object.
@@ -181,6 +218,53 @@ public class Context {
 		} else {
 			Result result = this.googleTranslate.translate(input.getStatement(), input.getTargetLanguage());
 			return new Statement(result.getSourceLanguage(), result.getTargetLanguage(), result.getTranslatedText());
+		}
+	}
+	
+	/**
+	 * Gets cached client data if available.
+	 * @param clientId client ID to look up for
+	 * @return cached client data or null if not available
+	 */
+	public ClientData getClient(int clientId) {
+		return this.clientDataProvider == null ? null : this.clientDataProvider.get(clientId);
+	}
+	
+	/**
+	 * Gets cached company data if available.
+	 * @param companyId company ID to look up for
+	 * @return cached company data or null if not available
+	 */
+	public CompanyData getCompany(byte companyId) {
+		return this.companyDataProvider == null ? null : this.companyDataProvider.get(companyId);
+	}
+	
+	/**
+	 * Registers a client data provider.
+	 * @param provider client data provider
+	 */
+	public void registerClientDataProvider(ClientDataProvider provider) {
+		this.clientDataProvider = provider;
+	}
+	
+	/**
+	 * Registers a company data provider.
+	 * @param provider company data provider
+	 */
+	public void registerCompanyDataProvider(CompanyDataProvider provider) {
+		this.companyDataProvider = provider;
+	}
+	
+	/**
+	 * Clears cache (clients, companies).
+	 */
+	public void clearCache() {
+		if (this.clientDataProvider != null) {
+			this.clientDataProvider.clearCache();
+		}
+		
+		if (this.companyDataProvider != null) {
+			this.companyDataProvider.clearCache();
 		}
 	}
 }

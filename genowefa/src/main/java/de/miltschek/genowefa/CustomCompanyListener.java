@@ -23,9 +23,12 @@
  */
 package de.miltschek.genowefa;
 
+import java.util.HashMap;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import de.miltschek.genowefa.Context.CompanyDataProvider;
 import de.miltschek.openttdadmin.data.ClosureReason;
 import de.miltschek.openttdadmin.data.Color;
 import de.miltschek.openttdadmin.data.CompanyInfo;
@@ -34,74 +37,66 @@ import de.miltschek.openttdadmin.data.CompanyListenerAdapter;
 /**
  * Handler of company-specific events.
  */
-public class CustomCompanyListener extends CompanyListenerAdapter {
+public class CustomCompanyListener extends CompanyListenerAdapter implements CompanyDataProvider {
 	private static final Logger LOGGER = LoggerFactory.getLogger(CustomCompanyListener.class);
 	
 	private final Context context;
-
-	/**
-	 * Returns a simple name of a color.
-	 * @param colorId color ID
-	 * @return English name of the color
-	 */
-	private String getColor(Color colorId) {
-		String color;
-		switch (colorId) {
-		case COLOUR_BLUE: color = "blue"; break;
-		case COLOUR_BROWN: color = "brown"; break;
-		case COLOUR_CREAM: color = "cream"; break;
-		case COLOUR_DARK_BLUE: color = "dark_blue"; break;
-		case COLOUR_DARK_GREEN: color = "dark_green"; break;
-		case COLOUR_GREEN: color = "green"; break;
-		case COLOUR_GREY: color = "grey"; break;
-		case COLOUR_LIGHT_BLUE: color = "light_blue"; break;
-		case COLOUR_MAUVE: color = "mauve"; break;
-		case COLOUR_ORANGE: color = "orange"; break;
-		case COLOUR_PALE_GREEN: color = "pale_green"; break;
-		case COLOUR_PINK: color = "pink"; break;
-		case COLOUR_PURPLE: color = "purple"; break;
-		case COLOUR_RED: color = "red"; break;
-		case COLOUR_WHITE: color = "white"; break;
-		case COLOUR_YELLOW: color = "yellow"; break;
-		default: color = String.valueOf(colorId); break;
-		}
-		
-		return color;
-	}
+	private final HashMap<Byte, CompanyData> newCompanies = new HashMap<>();
 	
+	@Override
+	public void clearCache() {
+		synchronized (newCompanies) {
+			newCompanies.clear();
+		}
+	}
+
 	/**
 	 * Creates the handler.
 	 * @param context application's context
 	 */
 	public CustomCompanyListener(Context context) {
 		this.context = context;
+		context.registerCompanyDataProvider(this);
 	}
 	
 	@Override
 	public void companyCreated(byte companyId) {
 		LOGGER.info("New company created {}.", companyId);
 		
-		this.context.notifyAdmin(":new: company ID " + (companyId + 1));
+		this.context.notifyAdmin(":new: ID " + (companyId + 1) + " created");
 	}
 	
 	@Override
 	public void companyInfoReceived(CompanyInfo companyInfo) {
 		LOGGER.info("Company info received {}, name {}, color {}, password-protected {}.", companyInfo.getIndex(), companyInfo.getCompanyName(), companyInfo.getColor(), companyInfo.isPasswordProtected());
 		
-		this.context.notifyAdmin(":office: company ID "
+		synchronized (newCompanies) {
+			newCompanies.put(companyInfo.getIndex(), new CompanyData(companyInfo));
+		}
+		
+		this.context.notifyAdmin(":office: ID "
 				+ (companyInfo.getIndex() + 1)
-				+ " " + getColor(companyInfo.getColor())
-				+ ": " + companyInfo.getCompanyName()
+				+ ", color " + CompanyData.getColorName(companyInfo.getColor())
+				+ ", name " + companyInfo.getCompanyName()
 				+ ", manager " + companyInfo.getManagerName()
-				+ ", pwd " + (companyInfo.isPasswordProtected() ? "yes" : "no"));
+				+ ", " + (companyInfo.isPasswordProtected() ? "protected" : "unprotected"));
 	}
 	
 	@Override
 	public void companyRemoved(byte companyId, ClosureReason closureReason) {
 		LOGGER.info("Company removed {}, reason {}.", companyId, closureReason);
 		
-		this.context.notifyAdmin(":hammer: company ID "
+		CompanyData companyData;
+		synchronized (newCompanies) {
+			companyData = newCompanies.get(companyId);
+			if (companyData != null) {
+				companyData.setClosureReason(closureReason);
+			}
+		}
+		
+		this.context.notifyAdmin(":hammer: ID "
 				+ (companyId + 1)
+				+ (companyData != null && companyData.getCompanyInfo() != null ? ", color " + companyData.getColorName() + ", name " + companyData.getCompanyInfo().getCompanyName() : "")
 				+ " closed " + closureReason);
 	}
 	
@@ -109,11 +104,32 @@ public class CustomCompanyListener extends CompanyListenerAdapter {
 	public void companyUpdated(CompanyInfo companyInfo) {
 		LOGGER.info("Company updated received {}, name {}, color {}, password-protected {}.", companyInfo.getIndex(), companyInfo.getCompanyName(), companyInfo.getColor(), companyInfo.isPasswordProtected());
 		
-		this.context.notifyAdmin(":office: company ID "
+		CompanyData companyData;
+		CompanyInfo previousCompanyInfo = null;
+		synchronized (newCompanies) {
+			companyData = newCompanies.get(companyInfo.getIndex());
+			if (companyData == null) {
+				companyData = new CompanyData(companyInfo);
+				newCompanies.put(companyInfo.getIndex(), companyData);
+			} else {
+				previousCompanyInfo = companyData.getCompanyInfo();
+				companyData.setCompanyInfo(companyInfo);
+			}
+		}
+		
+		this.context.notifyAdmin(":office: ID "
 				+ (companyInfo.getIndex() + 1)
-				+ " update " + getColor(companyInfo.getColor())
-				+ ": " + companyInfo.getCompanyName()
-				+ ", manager " + companyInfo.getManagerName()
-				+ ", pwd " + (companyInfo.isPasswordProtected() ? "yes" : "no"));
+				+ " updated"
+				+ (previousCompanyInfo == null || previousCompanyInfo.getColor() != companyInfo.getColor() ? ", new color " + CompanyData.getColorName(companyInfo.getColor()) : "")
+				+ (previousCompanyInfo == null || !companyInfo.getCompanyName().equals(previousCompanyInfo.getCompanyName()) ? ", new name " + companyInfo.getCompanyName() : "")
+				+ (previousCompanyInfo == null || !companyInfo.getManagerName().equals(previousCompanyInfo.getManagerName()) ? ", new manager " + companyInfo.getManagerName() : "")
+				+ (previousCompanyInfo == null || previousCompanyInfo.isPasswordProtected() != companyInfo.isPasswordProtected() ? ", " + (companyInfo.isPasswordProtected() ? "protected" : "unprotected") : ""));
+	}
+	
+	@Override
+	public CompanyData get(byte companyId) {
+		synchronized (newCompanies) {
+			return newCompanies.get(companyId);
+		}
 	}
 }

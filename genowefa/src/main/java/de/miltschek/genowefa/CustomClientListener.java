@@ -30,6 +30,7 @@ import java.util.HashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import de.miltschek.genowefa.Context.ClientDataProvider;
 import de.miltschek.integrations.GeoIp;
 import de.miltschek.openttdadmin.data.ClientInfo;
 import de.miltschek.openttdadmin.data.ClientListenerAdapter;
@@ -39,36 +40,18 @@ import de.miltschek.openttdadmin.data.ErrorCode;
 /**
  * Handler of client-specific events.
  */
-public class CustomClientListener extends ClientListenerAdapter {
+public class CustomClientListener extends ClientListenerAdapter implements ClientDataProvider {
 	private static final Logger LOGGER = LoggerFactory.getLogger(CustomClientListener.class);
 
 	private final Context context;
 	private final HashMap<Integer, ClientData> newClients = new HashMap<>();
 
 	/**
-	 * Local cache of client data.
-	 */
-	private static class ClientData {
-		private ClientInfo clientInfo;
-		private GeoIp geoIp;
-		
-		/**
-		 * Stores client info object and geolocation data.
-		 * @param clientInfo client info object
-		 * @param geoIp geolocation data
-		 */
-		private ClientData(ClientInfo clientInfo, GeoIp geoIp) {
-			this.clientInfo = clientInfo;
-			this.geoIp = geoIp;
-		}
-	}
-	
-	/**
 	 * Returns a 1-based company identifier or a name for special cases (e.g. a spectator).
 	 * @param company 0-based company identifier (as from playAs).
 	 * @return 1-based company identifier or a name for special cases (e.g. a spectator).
 	 */
-	private String getCompanyId(byte company) {
+	private String getCompanyDescription(byte company) {
 		switch (company) {
 		case CompanyInfo.DEITY: return "deity";
 		case CompanyInfo.INACTIVE_CLIENT: return "inactive";
@@ -77,8 +60,23 @@ public class CustomClientListener extends ClientListenerAdapter {
 		case CompanyInfo.SPECTATOR: return "spectator";
 		case CompanyInfo.TOWN: return "town";
 		case CompanyInfo.WATER: return "water";
-		default: return String.valueOf((company & 0xff) + 1);
-		}		
+		default:
+			{
+				CompanyData companyData = this.context.getCompany(company);
+				if (companyData == null) {
+					return String.valueOf((company & 0xff) + 1);
+				} else {
+					return companyData.getColorName() + " (" + String.valueOf((company & 0xff) + 1) + ")";
+				}
+			}
+		}
+	}
+	
+	@Override
+	public void clearCache() {
+		synchronized (newClients) {
+			newClients.clear();
+		}
 	}
 	
 	/**
@@ -87,6 +85,7 @@ public class CustomClientListener extends ClientListenerAdapter {
 	 */
 	public CustomClientListener(Context context) {
 		this.context = context;
+		context.registerClientDataProvider(this);
 	}
 	
 	@Override
@@ -115,14 +114,14 @@ public class CustomClientListener extends ClientListenerAdapter {
 			LOGGER.info("User info {} IP {} from {}, {} proxy {}.", clientInfo.getClientId(), clientInfo.getNetworkAddress(), geoIp.getCountry(), geoIp.getCity(), geoIp.isProxy());
 		}
 		
-		this.context.notifyAdmin(":bust_in_silhouette: user "
+		this.context.notifyAdmin(":bust_in_silhouette: ID "
 				+ clientInfo.getClientId()
-				+ " " + clientInfo.getClientName()
-				+ ", " + clientInfo.getNetworkAddress()
-				+ ", company " + getCompanyId(clientInfo.getPlayAs())
+				+ ", name " + clientInfo.getClientName()
+				+ ", IP " + clientInfo.getNetworkAddress()
+				+ ", plays as " + getCompanyDescription(clientInfo.getPlayAs())
 				+ ", joined " + clientInfo.getJoinDate()
-				+ ", lang " + clientInfo.getLanguage()
-				+ ((geoIp != null) ? (" from " + geoIp.getCountry() + ", " + geoIp.getCity()) + (geoIp.isProxy() ? ", proxy" : ""): ""));
+				// + ", lang " + clientInfo.getLanguage() // it's always 'Any'
+				+ ((geoIp != null) ? (", from " + geoIp.getCountry() + ", " + geoIp.getCity()) + (geoIp.isProxy() ? ", proxy" : ""): ""));
 		
 		synchronized (newClients) {
 			newClients.put(clientInfo.getClientId(), new ClientData(clientInfo, geoIp));
@@ -139,20 +138,21 @@ public class CustomClientListener extends ClientListenerAdapter {
 		}
 
 		String welcomeMessage;
-		if (clientData.geoIp == null) {
+		if (clientData == null || clientData.getGeoIp() == null) {
 			welcomeMessage = this.context.getWelcomeMessage("*")
 					.replaceAll("[$][{]COUNTRY[}]", "the Universe")
 					.replaceAll("[$][{]CITY[}]", "the beautiful City");
 		} else {
-			welcomeMessage = this.context.getWelcomeMessage(clientData.geoIp.getCountryCode())
-					.replaceAll("[$][{]COUNTRY[}]", clientData.geoIp.getCountry())
-					.replaceAll("[$][{]CITY[}]", clientData.geoIp.getCity());
+			welcomeMessage = this.context.getWelcomeMessage(clientData.getGeoIp().getCountryCode())
+					.replaceAll("[$][{]COUNTRY[}]", clientData.getGeoIp().getCountry())
+					.replaceAll("[$][{]CITY[}]", clientData.getGeoIp().getCity());
 		}
 		
-		welcomeMessage = welcomeMessage.replaceAll("[$][{]USERNAME[}]", clientData.clientInfo.getClientName());
+		welcomeMessage = welcomeMessage.replaceAll("[$][{]USERNAME[}]", clientData.getClientInfo().getClientName());
 		this.context.notifyAll(welcomeMessage);
 		
-		this.context.notifyAdmin(":bust_in_silhouette: new user " + clientId);
+		this.context.notifyAdmin(":bust_in_silhouette: new ID " + clientId
+				+ (clientData != null && clientData.getClientInfo() != null ? ", name " + clientData.getClientInfo().getClientName() : ""));
 
 		try {
 			File onNewClient = new File(this.context.getWelcomeMessagePath());
@@ -170,23 +170,61 @@ public class CustomClientListener extends ClientListenerAdapter {
 	public void clientDisconnected(int clientId) {
 		LOGGER.info("User {} disconnected.", clientId);
 		
-		this.context.notifyAdmin(":runner: user " + clientId + " left");
+		ClientData clientData;
+		synchronized (newClients) {
+			clientData = newClients.get((Integer)clientId);
+			if (clientData != null) {
+				clientData.setLeft(true);
+			}
+		}
+		
+		this.context.notifyAdmin(":runner: ID " + clientId
+				+ (clientData != null && clientData.getClientInfo() != null ? ", name " + clientData.getClientInfo().getClientName() : "")
+				+ " left");
 	}
 	
 	@Override
 	public void clientError(int clientId, ErrorCode errorCode) {
 		LOGGER.info("Client {} error {}.", clientId, errorCode);
 		
-		this.context.notifyAdmin(":punch: user " + clientId + " error " + errorCode);
+		ClientData clientData;
+		synchronized (newClients) {
+			clientData = newClients.get((Integer)clientId);
+			if (clientData != null) {
+				clientData.setErrorCode(errorCode);
+			}
+		}
+
+		this.context.notifyAdmin(":punch: ID " + clientId
+				+ (clientData != null && clientData.getClientInfo() != null ? ", name " + clientData.getClientInfo().getClientName() : "")
+				+ " error " + errorCode);
 	}
 	
 	@Override
 	public void clientUpdated(int clientId, String clientName, byte playAs) {
 		LOGGER.info("Client {} update name {}, update company {}.", clientId, clientName, playAs);
 		
-		this.context.notifyAdmin(":bust_in_silhouette: user "
+		synchronized (newClients) {
+			ClientData clientData = newClients.get((Integer)clientId);
+			if (clientData == null) {
+				clientData = new ClientData(new ClientInfo(clientId, null, clientName, null, null, playAs), null);
+				newClients.put(clientId, clientData);
+			} else {
+				ClientInfo original = clientData.getClientInfo();
+				clientData.setClientInfo(new ClientInfo(clientId, original.getNetworkAddress(), clientName, original.getLanguage(), original.getJoinDate(), playAs));
+			}
+		}
+		
+		this.context.notifyAdmin(":bust_in_silhouette: ID "
 				+ clientId
-				+ " username " + clientName
-				+ " plays " + getCompanyId(playAs));
+				+ ", name " + clientName
+				+ ", plays as " + getCompanyDescription(playAs));
+	}
+
+	@Override
+	public ClientData get(int clientId) {
+		synchronized (this.newClients) {
+			return this.newClients.get(clientId);
+		}
 	}
 }
