@@ -53,6 +53,7 @@ import de.miltschek.openttdadmin.data.Date;
 import de.miltschek.openttdadmin.data.ErrorCode;
 import de.miltschek.openttdadmin.data.Frequency;
 import de.miltschek.openttdadmin.data.FrequencyLong;
+import de.miltschek.openttdadmin.data.Language;
 import de.miltschek.openttdadmin.data.ServerInfo;
 import de.miltschek.openttdadmin.data.ServerListenerAdapter;
 import de.miltschek.openttdadmin.packets.AdminChat;
@@ -64,6 +65,7 @@ import de.miltschek.openttdadmin.packets.AdminRcon;
 import de.miltschek.openttdadmin.packets.AdminUpdateFrequency;
 import de.miltschek.openttdadmin.packets.DestinationType;
 import de.miltschek.openttdadmin.packets.NetworkAction;
+import de.miltschek.openttdadmin.packets.NetworkLanguage;
 import de.miltschek.openttdadmin.packets.OttdPacket;
 import de.miltschek.openttdadmin.packets.ServerBanned;
 import de.miltschek.openttdadmin.packets.ServerChat;
@@ -197,6 +199,7 @@ public class OttdAdminClient implements Closeable
     
     /**
      * Registers a chat listener.
+     * Works only if enabled by {@link #setDeliveryChatMessages(boolean)}
      * TODO: make it thread-safe
      * @param consumer chat listener
      */
@@ -206,6 +209,7 @@ public class OttdAdminClient implements Closeable
     
     /**
      * Registers a client info listener.
+     * Works only if enabled by {@link #setUpdateClientInfos(boolean)}
      * TODO: make it thread-safe
      * @param listener client info listener
      */
@@ -215,6 +219,10 @@ public class OttdAdminClient implements Closeable
     
     /**
      * Registers a company info listener.
+     * Creation and update work only if enabled by {@link #setUpdateCompanyInfos(boolean)}
+     * Removal works always TODO: test it.
+     * Economy works only if subscribed by {@link #setUpdateCompanyEconomyInfos(FrequencyLong)}
+     * Statistics works only if subscribed by {@link #setUpdateCompanyStatistics(FrequencyLong)}
      * TODO: make it thread-safe
      * @param listener company info listener
      */
@@ -224,6 +232,11 @@ public class OttdAdminClient implements Closeable
     
     /**
      * Registers a server info listener.
+     * Console works only if enabled by {@link #setDeliveryConsole(boolean)}
+     * Game script works only if enabled by {@link #setDeliveryGameScripts(boolean)}
+     * Command logging works only if enabled by {@link #setDeliveryCommandLogs(boolean)}
+     * RCon works always TODO: test it.
+     * Dates are delivered only if subscribed by {@link #setUpdateDates(Frequency)}
      * TODO: make it thread-safe
      * @param listener server info listener
      */
@@ -728,55 +741,9 @@ public class OttdAdminClient implements Closeable
 			    			} else if (packetReceived instanceof ServerClientError) {
 			    				ServerClientError p = (ServerClientError)packetReceived;
 			    				
-			    				ErrorCode errorCode;
-			    				switch (p.getErrorCode()) {
-			    				case NETWORK_ERROR_GENERAL:
-			    					errorCode = ErrorCode.GeneralError; break;
-			    				case NETWORK_ERROR_DESYNC:
-			    					errorCode = ErrorCode.Desync; break;
-			    				case NETWORK_ERROR_SAVEGAME_FAILED:
-			    					errorCode = ErrorCode.SavegameFailed; break;
-			    				case NETWORK_ERROR_CONNECTION_LOST:
-			    					errorCode = ErrorCode.ConnectionLost; break;
-			    				case NETWORK_ERROR_ILLEGAL_PACKET:
-			    					errorCode = ErrorCode.IllegalNetworkPacket; break;
-			    				case NETWORK_ERROR_NEWGRF_MISMATCH:
-			    					errorCode = ErrorCode.NewGRFMismatch; break;
-			    				case NETWORK_ERROR_NOT_AUTHORIZED:
-			    					errorCode = ErrorCode.NotAuthorized; break;
-			    				case NETWORK_ERROR_NOT_EXPECTED:
-			    					errorCode = ErrorCode.NotExpected; break;
-			    				case NETWORK_ERROR_WRONG_REVISION:
-			    					errorCode = ErrorCode.WrongRevision; break;
-			    				case NETWORK_ERROR_NAME_IN_USE:
-			    					errorCode = ErrorCode.NameInUse; break;
-			    				case NETWORK_ERROR_WRONG_PASSWORD:
-			    					errorCode = ErrorCode.WrongPassword; break;
-			    				case NETWORK_ERROR_COMPANY_MISMATCH:
-			    					errorCode = ErrorCode.CompanyMismatch; break;
-			    				case NETWORK_ERROR_KICKED:
-			    					errorCode = ErrorCode.Kicked; break;
-			    				case NETWORK_ERROR_CHEATER:
-			    					errorCode = ErrorCode.Cheater; break;
-			    				case NETWORK_ERROR_FULL:
-			    					errorCode = ErrorCode.ServerFull; break;
-			    				case NETWORK_ERROR_TOO_MANY_COMMANDS:
-			    					errorCode = ErrorCode.TooManyCommands; break;
-			    				case NETWORK_ERROR_TIMEOUT_PASSWORD:
-			    					errorCode = ErrorCode.TimeoutPassword; break;
-			    				case NETWORK_ERROR_TIMEOUT_COMPUTER:
-			    					errorCode = ErrorCode.TimeoutComputer; break;
-			    				case NETWORK_ERROR_TIMEOUT_MAP:
-			    					errorCode = ErrorCode.TimeoutMap; break;
-			    				case NETWORK_ERROR_TIMEOUT_JOIN:
-			    					errorCode = ErrorCode.TimeoutJoin; break;
-			    					default:
-			    						errorCode = ErrorCode.UnknownError; break;
-			    				}
-			    				
 			    				try {
 			    					for (ClientListenerAdapter listener : clientListeners) {
-			    						listener.clientError(p.getClientId(), errorCode);
+			    						listener.clientError(p.getClientId(), ErrorCode.get(p.getErrorCode()));
 			    					}
 			    				} catch (Exception ex) {
 			    					LOGGER.error("failed to call client error listener(s)", ex);
@@ -788,7 +755,7 @@ public class OttdAdminClient implements Closeable
 			    						p.getClientId(),
 			    						p.getNetworkAddress(),
 			    						p.getClientName(),
-			    						p.getLanguage(),
+			    						Language.get(p.getLanguage()),
 			    						new Date(p.getJoinDate()),
 			    						p.getPlayAs());
 			    				

@@ -30,7 +30,8 @@ public class ServerClientInfo extends OttdPacket {
 	private int clientId;
 	private String networkAddress;
 	private String clientName;
-	private byte language;
+	private byte rawLanguage;
+	private NetworkLanguage language;
 	private int joinDate;
 	private byte playAs;
 	
@@ -41,7 +42,8 @@ public class ServerClientInfo extends OttdPacket {
 		this.clientId = readInt32();
 		this.networkAddress = readString();
 		this.clientName = readString();
-		this.language = readByte();
+		this.rawLanguage = readByte();
+		this.language = NetworkLanguage.getEnum(rawLanguage);
 		this.joinDate = readInt32();
 		this.playAs = readByte();
 	}
@@ -58,7 +60,11 @@ public class ServerClientInfo extends OttdPacket {
 		return clientName;
 	}
 
-	public byte getLanguage() {
+	public byte getRawLanguage() {
+		return rawLanguage;
+	}
+	
+	public NetworkLanguage getLanguage() {
 		return language;
 	}
 

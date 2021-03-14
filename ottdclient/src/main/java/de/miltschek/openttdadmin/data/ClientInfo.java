@@ -30,7 +30,7 @@ public class ClientInfo {
 	private int clientId;
 	private String networkAddress;
 	private String clientName;
-	private byte language;
+	private Language language;
 	private Date joinDate;
 	private byte playAs;
 	
@@ -43,7 +43,7 @@ public class ClientInfo {
 	 * @param joinDate game-date when the client joined
 	 * @param playAs ID of the company
 	 */
-	public ClientInfo(int clientId, String networkAddress, String clientName, byte language, Date joinDate,
+	public ClientInfo(int clientId, String networkAddress, String clientName, Language language, Date joinDate,
 			byte playAs) {
 		super();
 		this.clientId = clientId;
@@ -80,10 +80,9 @@ public class ClientInfo {
 	
 	/**
 	 * Gets the ID of the language of the client.
-	 * TODO: create a dictionary of languages
 	 * @return ID of the language of the client
 	 */
-	public byte getLanguage() {
+	public Language getLanguage() {
 		return language;
 	}
 	
