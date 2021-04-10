@@ -30,6 +30,7 @@ import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import de.miltschek.genowefa.Context.EventType;
 import de.miltschek.openttdadmin.data.ChatMessage;
 
 /**
@@ -53,14 +54,16 @@ public class ChatListener implements Consumer<ChatMessage> {
 	 */
 	public void accept(ChatMessage t) {
 		ClientData senderData = this.context.getClient(t.getSenderId());
-		String senderId = (senderData == null) ? String.valueOf(t.getSenderId()) : (senderData.getClientInfo().getClientName() + "(" + t.getSenderId() + ")");
+		String senderId = (senderData == null) ? String.valueOf(t.getSenderId()) : (senderData.getName() + "(" + t.getSenderId() + ")");
 		
 		if (t.getMessage() == null) {
 			// nix
 			LOGGER.debug("A null chat message has been received from {} to {} private {} company {} public {}.", t.getSenderId(), t.getRecipientId(), t.isPrivate(), t.isCompany(), t.isPublic());
 		} else if (t.getMessage().startsWith("!admin")) {
 			LOGGER.warn("Admin action has been requested by {}: {}.", t.getSenderId(), t.getMessage());
-	    	if (this.context.notifyAdmin(":boom: " + senderId + " " + t.getMessage())) {
+	    	if (this.context.notifyAdmin(
+	    			EventType.AdminRequest,
+	    			":boom: " + senderId + " " + t.getMessage())) {
 	    		this.context.notifyUser(t.getSenderId(), "Your message has been sent to the admin. Thank you!");
 	    	} else {
 	    		this.context.notifyUser(t.getSenderId(), "No connection to the administrator at the moment, please try again later.");
@@ -79,7 +82,9 @@ public class ChatListener implements Consumer<ChatMessage> {
 			
 			this.context.requestAllClientsInfo();
 			
-			this.context.notifyAdmin(":recycle: user " + senderId + " requested a reset");
+			this.context.notifyAdmin(
+					EventType.Client,
+					":recycle: user " + senderId + " requested a reset");
 		} else if (t.getMessage().startsWith("!name")) {
 			LOGGER.info("Name change has been requested by {} raw {}.", t.getSenderId(), t.getMessage());
 
@@ -87,7 +92,9 @@ public class ChatListener implements Consumer<ChatMessage> {
 			if (m.find()) {
 				String newName = m.group("value");
 				this.context.renameUser(t.getSenderId(), newName);
-				this.context.notifyAdmin(":name_badge: user " + senderId + " requested a rename to " + newName);
+				this.context.notifyAdmin(
+						EventType.Client,
+						":name_badge: user " + senderId + " requested a rename to " + newName);
 			}
 		} else if (t.getMessage().equals("!help")) {
 			LOGGER.info("User {} requested help.", t.getSenderId());
@@ -106,11 +113,15 @@ public class ChatListener implements Consumer<ChatMessage> {
 					this.context.notifyUser(t.getSenderId(), "It was English already. Nothing to translate.");
 				} else {
 					this.context.notifyAll("[translation/" + translation.getSourceLanguage() + "] " + translation.getStatement());
-					this.context.notifyAdmin(":flags: user " + senderId + " [" + translation.getSourceLanguage() + "] from: " + t.getMessage() + " to: " + translation.getStatement());
+					this.context.notifyAdmin(
+							EventType.Chat,
+							":flags: user " + senderId + " [" + translation.getSourceLanguage() + "] from: " + t.getMessage() + " to: " + translation.getStatement());
 				}
 			} else {
 				this.context.notifyUser(t.getSenderId(), "Sorry, translation did not work.");
-				this.context.notifyAdmin(":exclamation: user " + senderId + " failed translation from: " + t.getMessage());
+				this.context.notifyAdmin(
+						EventType.Chat,
+						":exclamation: user " + senderId + " failed translation from: " + t.getMessage());
 			}
 		} else if (t.getMessage().startsWith("!")) {
 			LOGGER.debug("User {} entered an invalid command {}.", t.getSenderId(), t.getMessage());
@@ -124,10 +135,14 @@ public class ChatListener implements Consumer<ChatMessage> {
 
 			Statement translation = this.context.translate(new Statement(t.getMessage()));
 			if (translation != null && !"en".equals(translation.getSourceLanguage())) {
-				this.context.notifyAdmin(":pencil: " + senderId + " " + t.getMessage() + "\r\n"
+				this.context.notifyAdmin(
+						EventType.Chat,
+						":pencil: " + senderId + " " + t.getMessage() + "\r\n"
 						+ ":flags: " + translation.getStatement());
 			} else {
-				this.context.notifyAdmin(":pencil: " + senderId + " " + t.getMessage());
+				this.context.notifyAdmin(
+						EventType.Chat,
+						":pencil: " + senderId + " " + t.getMessage());
 			}
 		}
 	}

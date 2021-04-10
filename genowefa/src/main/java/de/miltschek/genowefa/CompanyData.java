@@ -25,28 +25,76 @@ package de.miltschek.genowefa;
 
 import de.miltschek.openttdadmin.data.ClosureReason;
 import de.miltschek.openttdadmin.data.Color;
+import de.miltschek.openttdadmin.data.CompanyEconomy;
 import de.miltschek.openttdadmin.data.CompanyInfo;
+import de.miltschek.openttdadmin.data.CompanyStatistics;
+import de.miltschek.openttdadmin.data.Date;
 
 /**
  * Local cache of company data.
  */
 public class CompanyData {
-	private CompanyInfo companyInfo;
+	//private static final Logger LOGGER = LoggerFactory.getLogger(CompanyData.class);
+	
+	private byte companyId;
+	private int inauguratedYear;
+	private Color color;
+	private String name;
+	private String managerName;
+	private boolean passwordProtected;
 	private ClosureReason closureReason;
+
+	private long income, loan, money, value;
+	private int performance;
+	
+	private int airports,
+		planes,
+		trains,
+		trainStations,
+		ships,
+		harbours,
+		busses,
+		busStops,
+		lorries,
+		lorryDepots;
 	
 	/**
-	 * Stores company information. 
-	 * @param companyInfo company information object
+	 * Creates a company data object. 
+	 * @param companyId company ID
 	 */
-	public CompanyData(CompanyInfo companyInfo) {
-		this.companyInfo = companyInfo;
+	public CompanyData(byte companyId) {
+		this.companyId = companyId;
+	}
+	
+	/**
+	 * Returns the company's name.
+	 * @return the company's name
+	 */
+	public String getName() {
+		return name;
+	}
+	
+	/**
+	 * Returns the company ID.
+	 * @return company ID
+	 */
+	public byte getCompanyId() {
+		return companyId;
+	}
+	
+	/**
+	 * Returns the year of company's establishment.
+	 * @return year of company's establishment
+	 */
+	public int getInauguratedYear() {
+		return inauguratedYear;
 	}
 	
 	/**
 	 * Marks the company as closed.
 	 * @param closureReason closure reason
 	 */
-	public void setClosureReason(ClosureReason closureReason) {
+	public void closed(ClosureReason closureReason) {
 		this.closureReason = closureReason;
 	}
 	
@@ -54,16 +102,165 @@ public class CompanyData {
 	 * Updates the company information.
 	 * @param companyInfo company information
 	 */
-	public void setCompanyInfo(CompanyInfo companyInfo) {
-		this.companyInfo = companyInfo;
+	public void updateData(CompanyInfo companyInfo) {
+		this.color = companyInfo.getColor();
+		this.name = companyInfo.getCompanyName();
+		this.managerName = companyInfo.getManagerName();
+		this.passwordProtected = companyInfo.isPasswordProtected();
+		if (companyInfo.isInauguratedYearSet()) {
+			this.inauguratedYear = companyInfo.getInauguratedYear();
+		}
 	}
 	
 	/**
-	 * Gets the company information.
-	 * @return company information
+	 * Returns the number of airplanes.
+	 * @return the number of airplanes
 	 */
-	public CompanyInfo getCompanyInfo() {
-		return companyInfo;
+	public int getPlanes() {
+		return planes;
+	}
+	
+	/**
+	 * Returns the number of airports.
+	 * @return the number of airports
+	 */
+	public int getAirports() {
+		return airports;
+	}
+	
+	/**
+	 * Returns the number of busses.
+	 * @return the number of busses
+	 */
+	public int getBusses() {
+		return busses;
+	}
+	
+	/**
+	 * Returns the number of lorry depots.
+	 * @return the number of lorry depots
+	 */
+	public int getLorryDepots() {
+		return lorryDepots;
+	}
+	
+	/**
+	 * Returns the number of harbours.
+	 * @return the number of harbours
+	 */
+	public int getHarbours() {
+		return harbours;
+	}
+	
+	/**
+	 * Returns the number of lorries.
+	 * @return the number of lorries
+	 */
+	public int getLorries() {
+		return lorries;
+	}
+	
+	/**
+	 * Returns the number of ships.
+	 * @return the number of ships
+	 */
+	public int getShips() {
+		return ships;
+	}
+	
+	/**
+	 * Returns the number of train stations.
+	 * @return the number of train stations
+	 */
+	public int getTrainStations() {
+		return trainStations;
+	}
+	
+	/**
+	 * Returns the number of bus stops.
+	 * @return the number of bus stops
+	 */
+	public int getBusStops() {
+		return busStops;
+	}
+	
+	/**
+	 * Returns the number of trains.
+	 * @return the number of trains
+	 */
+	public int getTrains() {
+		return trains;
+	}
+	
+	/**
+	 * Returns the current year's balance.
+	 * @return the current year's balance, in GBP.
+	 */
+	public long getIncome() {
+		return income;
+	}
+	
+	/**
+	 * Returns the loan amount.
+	 * @return the loan amount, in GBP.
+	 */
+	public long getLoan() {
+		return loan;
+	}
+	
+	/**
+	 * Returns the possessed money amount, excluding loan.
+	 * @return the possessed money amount, excluding load, in GBP.
+	 */
+	public long getMoney() {
+		return money;
+	}
+	
+	/**
+	 * Returns the company's value.
+	 * @return the company's value, in GBP.
+	 */
+	public long getValue() {
+		return value;
+	}
+	
+	/**
+	 * Returns the company's performance score.
+	 * @return the company's performance score, unitless.
+	 */
+	public int getPerformance() {
+		return performance;
+	}
+	
+	/**
+	 * Stores/updates economical data of the company.
+	 * @param economy economical data of the company
+	 */
+	public void updateData(CompanyEconomy economy) {
+		this.income = economy.getIncome();
+		this.loan = economy.getLoan();
+		this.money = economy.getMoney();
+		
+		this.value = economy.getPastCompanyValue()[0];
+		//economy.getPastDeliveredCargo()[0];
+		this.performance = economy.getPastPerformance()[0];
+	}
+	
+	/**
+	 * Stores/updates statistical data of the company.
+	 * @param stats statistical data of the company
+	 */
+	public void updateData(CompanyStatistics stats) {
+		this.airports = stats.getNumberOfAirports();
+		this.planes = stats.getNumberOfPlanes();
+		this.trains = stats.getNumberOfTrains();
+		this.trainStations = stats.getNumberOfTrainStations();
+		this.ships = stats.getNumberOfShips();
+		this.harbours = stats.getNumberOfHarbours();
+		this.busses = stats.getNumberOfBusses();
+		this.busStops = stats.getNumberOfBusStops();
+		this.lorries = stats.getNumberOfLorries();
+		this.lorryDepots = stats.getNumberOfLorryDepots();
 	}
 	
 	/**
@@ -97,14 +294,38 @@ public class CompanyData {
 	}
 	
 	/**
+	 * Returns a color of the company.
+	 * @return color of the company or null if not available
+	 */
+	public Color getColor() {
+		return color;
+	}
+	
+	/**
 	 * Returns a color name of the company.
 	 * @return color name of the company or null if not available
 	 */
 	public String getColorName() {
-		if (companyInfo == null) {
+		if (color == null) {
 			return null;
 		} else {
-			return getColorName(companyInfo.getColor());
+			return getColorName(color);
 		}
+	}
+	
+	/**
+	 * Returns a name of the manager.
+	 * @return name of the manager or null if not available
+	 */
+	public String getManagerName() {
+		return managerName;
+	}
+	
+	/**
+	 * Returns a value denoting whether a password has been set.
+	 * @return true if the company is password-protected, false otherwise
+	 */
+	public boolean isPasswordProtected() {
+		return passwordProtected;
 	}
 }

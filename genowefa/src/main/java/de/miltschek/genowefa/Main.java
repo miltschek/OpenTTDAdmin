@@ -26,21 +26,36 @@ package de.miltschek.genowefa;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.sql.SQLException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.miltschek.genowefa.Configuration.Game;
+import de.miltschek.integrations.GeoIp;
 import de.miltschek.integrations.GoogleTranslate;
 import de.miltschek.integrations.SlackMessage;
 import de.miltschek.integrations.SlackRTMClient;
 import de.miltschek.openttdadmin.OttdAdminClient;
 import de.miltschek.openttdadmin.data.ChatMessage;
 import de.miltschek.openttdadmin.data.ChatMessage.Recipient;
+import de.miltschek.openttdadmin.data.ClientInfo;
+import de.miltschek.openttdadmin.data.ClosureReason;
+import de.miltschek.openttdadmin.data.CompanyEconomy;
+import de.miltschek.openttdadmin.data.CompanyStatistics;
+import de.miltschek.openttdadmin.data.Frequency;
+import de.miltschek.openttdadmin.data.FrequencyLong;
+import de.miltschek.openttdadmin.data.Language;
 
 /**
  * Main class of Genowefa, a cool admin tool for OpenTTD.
@@ -49,9 +64,10 @@ public class Main {
 	private static final Logger LOGGER = LoggerFactory.getLogger(Main.class);
 
 	private static final Collection<OttdAdminClient> ottdAdminClients = new ArrayList<>();
-	private static final Map<String, OttdAdminClient> slackToAdminClients = new HashMap<>();
+	private static final Map<String, Context> slackToContext = new HashMap<>();
 	private static SlackRTMClient slack;
 	private static GoogleTranslate googleTranslate;
+	private static DatabaseConnector db;
 	
 	/**
 	 * Handles incoming slack messages.
@@ -59,12 +75,12 @@ public class Main {
 	 * @return true if forwarded to the game, false otherwise
 	 */
 	private static Boolean onMessage(SlackMessage slackMessage) {
-		OttdAdminClient admin = slackToAdminClients.get(slackMessage.getChannelName());
-		if (admin == null) {
+		Context context = slackToContext.get(slackMessage.getChannelName());
+		if (context == null) {
 			return false;
 		} else {
 			try {
-				admin.sendChat(new ChatMessage(0, Recipient.All, 0, slackMessage.getText()));
+				context.notifyAll(slackMessage.getText());
 				return true;
 			} catch (Exception ex) {
 				LOGGER.error("Failed to forward a chat {}.", slackMessage, ex);
@@ -79,37 +95,206 @@ public class Main {
 	 * @return true if identified and processed (independent of a processing result - this one is asynchronous), false otherwise
 	 */
 	private static Boolean onCommand(SlackMessage slackMessage) {
-		OttdAdminClient admin = slackToAdminClients.get(slackMessage.getChannelName());
-		if (admin == null) {
+		Context context = slackToContext.get(slackMessage.getChannelName());
+		if (context == null) {
 			return false;
 		} else {
 			try {
+				String[] params = parameters(slackMessage.getText());
+				
 				if ("/date".equals(slackMessage.getCommand())) {
-					admin.requestDate();
+					slack.sendMessage(slackMessage.getChannelName(), ":computer: Game date " + context.getCurrentDate());
+					
 				} else if ("/getclients".equals(slackMessage.getCommand())) {
-					admin.requestAllClientsInfo();
+					context.requestAllClientsInfo();
+					
 				} else if ("/getcompanies".equals(slackMessage.getCommand())) {
-					admin.requestAllCompaniesInfo();
+					context.requestAllCompaniesInfo();
+					
 				} else if ("/kickuser".equals(slackMessage.getCommand())) {
-					admin.executeRCon("kick " + slackMessage.getText());
+					if (params.length == 2) {
+						if (params[0].matches("[1-9][0-9]*")) {
+							context.kickClient(Integer.parseInt(params[0]), params[1]);
+						} else {
+							context.kickClient(params[0], params[1]);
+						}
+					} else {
+						slack.sendMessage(slackMessage.getChannelName(), "Usage: /kickuser <client_id|ip_address> \"<reason>\"");
+					}
+					
 				} else if ("/ban".equals(slackMessage.getCommand())) {
-					admin.executeRCon("ban " + slackMessage.getText());
+					if (params.length == 2) {
+						if (params[0].matches("[1-9][0-9]*")) {
+							context.banClient(Integer.parseInt(params[0]), params[1]);
+						} else {
+							context.banClient(params[0], params[1]);
+						}
+					} else {
+						slack.sendMessage(slackMessage.getChannelName(), "Usage: /ban <client_id|ip_address> \"<reason>\"");
+					}
+					
 				} else if ("/pause".equals(slackMessage.getCommand())) {
-					admin.executeRCon("pause");
+					context.pauseGame();
+					
 				} else if ("/quit".equals(slackMessage.getCommand())) {
 					if ("roger".equals(slackMessage.getText())) {
-						admin.executeRCon("quit");
+						context.quitGame();
 					} else {
 						slack.sendMessage(slackMessage.getChannelName(), "In order to quit the game, provide the word 'roger' as an argument to the quit command.");
 					}
+					
 				} else if ("/unban".equals(slackMessage.getCommand())) {
-					admin.executeRCon("unban " + slackMessage.getText());
+					if (params.length == 1) {
+						if (params[0].matches("[1-9][0-9]*")) {
+							context.unbanClient(Integer.parseInt(params[0]));
+						} else {
+							context.unbanClient(params[0]);
+						}
+					} else {
+						slack.sendMessage(slackMessage.getChannelName(), "Usage: /unban <ip_address|banlist_index>");
+					}
+					
 				} else if ("/unpause".equals(slackMessage.getCommand())) {
-					admin.executeRCon("unpause");
+					context.restoreGame();
+					
 				} else if ("/setting".equals(slackMessage.getCommand())) {
-					admin.executeRCon("setting " + slackMessage.getText());
+					if (params.length == 1) {
+						context.getParameter(params[0]);
+					} else if (params.length == 2) {
+						context.setParameter(params[0], params[1]);
+					} else {
+						slack.sendMessage(slackMessage.getChannelName(), "Usage: /setting <name> \"[value]\"");
+					}
+					
 				} else if ("/resetcompany".equals(slackMessage.getCommand())) {
-					admin.executeRCon("resetcompany " + slackMessage.getText());
+					if (params.length == 1 && params[0].matches("[1-9][0-9]*")) {
+						context.resetCompanyOneBased(Integer.parseInt(params[0]));
+					} else {
+						slack.sendMessage(slackMessage.getChannelName(), "Usage: /resetcompany <company_id_1_based>");
+					}
+					
+				} else if ("/companies".equals(slackMessage.getCommand())) {
+					StringBuffer sb = new StringBuffer();
+					for (CompanyData company : context.getCompanies()) {
+						sb.append(":office: ");
+						sb.append(company.getCompanyId() + 1);
+						sb.append(" ");
+						sb.append(company.getName());
+						sb.append(" (");
+						sb.append(company.getColorName());
+						sb.append(")");
+						
+						sb.append("\n");
+						
+						sb.append(" - loan ");
+						sb.append(company.getLoan());
+						sb.append("\n - income ");
+						sb.append(company.getIncome());
+						sb.append("\n - money ");
+						sb.append(company.getMoney());
+						sb.append("\n - value ");
+						sb.append(company.getValue());
+						sb.append("\n - performance ");
+						sb.append(company.getPerformance());
+						sb.append("\n");
+						
+						sb.append(" - ");
+						
+						sb.append(company.getBusses());
+						sb.append("/");
+						sb.append(company.getBusStops());
+						sb.append(" :bus: ");
+						
+						sb.append(company.getTrains());
+						sb.append("/");
+						sb.append(company.getTrainStations());
+						sb.append(" :bullettrain_front: ");
+						
+						sb.append(company.getShips());
+						sb.append("/");
+						sb.append(company.getHarbours());
+						sb.append(" :boat: ");
+						
+						sb.append(company.getLorries());
+						sb.append("/");
+						sb.append(company.getLorryDepots());
+						sb.append(" :truck: ");
+						
+						sb.append(company.getPlanes());
+						sb.append("/");
+						sb.append(company.getAirports());
+						sb.append(" :airplane:");
+
+						sb.append("\n");
+					}
+					
+					slack.sendMessage(slackMessage.getChannelName(), sb.toString());
+					
+				} else if ("/clients".equals(slackMessage.getCommand())) {
+					StringBuffer sb = new StringBuffer();
+
+					for (ClientData client : context.getClients()) {
+						if (client.getLeftTs() > 0) {
+							continue;
+						}
+						
+						sb.append(":bust_in_silhouette: ");
+						sb.append(client.getClientId());
+						
+						if (client.getName() != null) {
+							sb.append(" ");
+							sb.append(client.getName());
+						}
+						
+						sb.append("\n");
+						
+						if (client.getCountry() != null) {
+							sb.append(" - ");
+							sb.append(client.getCountry());
+							sb.append(", ");
+							sb.append(client.getCity());
+							sb.append("\n");
+						}
+						
+						if (client.getNetworkAddress() != null) {
+							sb.append(" - ");
+							sb.append(client.getNetworkAddress());
+							if (client.isProxy()) {
+								sb.append(" proxy");
+							}
+							sb.append("\n");
+						}
+						
+						sb.append(" - joined ");
+						sb.append(SDF.format(new Date(client.getJoinedTs())));
+						sb.append(" UTC");
+						
+						if (client.getJoinDate() != null) {
+							sb.append(" - joined ");
+							sb.append(client.getJoinDate().getDay());
+							sb.append("-");
+							sb.append(client.getJoinDate().getMonth());
+							sb.append("-");
+							sb.append(client.getJoinDate().getYear());
+							sb.append(" game time \n");
+						}
+						
+						/*if (client.getLeftTs() > 0) {
+							sb.append(" - left ");
+							sb.append(SDF.format(new Date(client.getJoinedTs())));
+							sb.append(" UTC");
+							sb.append(" - left ");
+							sb.append(client.getLeftGameDate().getDay());
+							sb.append("-");
+							sb.append(client.getLeftGameDate().getMonth());
+							sb.append("-");
+							sb.append(client.getLeftGameDate().getYear());
+							sb.append(" game time");
+						}*/
+					}
+					
+					slack.sendMessage(slackMessage.getChannelName(), sb.toString());
+					
 				} else {
 					return false;
 				}
@@ -121,7 +306,24 @@ public class Main {
 			}
 		}
 	}
-
+	
+	private static final SimpleDateFormat SDF = new SimpleDateFormat("HH:mm:ss dd.MM.yyyy", Locale.ROOT);
+	private static final Pattern P_PARAM = Pattern.compile("\\\"(?<v1>[^\"]*)\\\"|(?<v2>[^ \t\"]+)");
+	private static String[] parameters(String line) {
+		List<String> result = new ArrayList<String>();
+		
+		Matcher m = P_PARAM.matcher(line);
+		while (m.find()) {
+			if (m.group("v1") != null) {
+				result.add(m.group("v1"));
+			} else {
+				result.add(m.group("v2"));
+			}
+		}
+		
+		return result.toArray(new String[result.size()]);
+	}
+	
 	/**
 	 * Entry point of the application.
 	 * @param args arguments in the fixed order: OTTD server address, port number, admin password, slack channel name, slack token
@@ -166,6 +368,8 @@ public class Main {
 				slack.registerCommand("/unpause", Main::onCommand);
 				slack.registerCommand("/setting", Main::onCommand);
 				slack.registerCommand("/resetcompany", Main::onCommand);
+				slack.registerCommand("/clients", Main::onCommand);
+				slack.registerCommand("/companies", Main::onCommand);
 			} catch (IOException e) {
 				LOGGER.error("Failed to initialize the Slack client.", e);
 			}
@@ -183,6 +387,14 @@ public class Main {
 			}
 		}
 		
+		if (configuration.getDatabase() != null) {
+			try {
+				db = new DatabaseConnector(configuration.getDatabase());
+			} catch (SQLException ex) {
+				LOGGER.error("Failed to initialize the database.", ex);
+			}
+		}
+		
 		for (Game game : configuration.getGames()) {
 			LOGGER.info("Configuring OTTD Admin client to connect to {} on port {}.", game.getAddress(), game.getPort());
 			
@@ -192,9 +404,12 @@ public class Main {
 			admin.setUpdateClientInfos(true);
 			admin.setUpdateCompanyInfos(true);
 			//admin.setDeliveryCommandLogs(true); // TODO test
+			admin.setUpdateCompanyEconomyInfos(FrequencyLong.Quarterly);
+			admin.setUpdateCompanyStatistics(FrequencyLong.Quarterly);
+			admin.setUpdateDates(Frequency.Daily);
 			
 			ResetLock resetLock = new ResetLock();
-			Context context = new Context(configuration, game, resetLock, admin, slack, game.getSlackChannel(), googleTranslate);
+			Context context = new Context(configuration, game, resetLock, admin, slack, game.getSlackChannel(), googleTranslate, db);
 			admin.addChatListener(new ChatListener(context));
 			admin.addClientListener(new CustomClientListener(context));
 			admin.addCompanyListener(new CustomCompanyListener(context));
@@ -206,12 +421,34 @@ public class Main {
 			ottdAdminClients.add(admin);
 			
 			if (game.getSlackChannel() != null) {
-				if (slackToAdminClients.put(game.getSlackChannel(), admin) != null) {
+				if (slackToContext.put(game.getSlackChannel(), context) != null) {
 					LOGGER.warn("More than one game is using the same Slack channel {}. Undefined behavior.", game.getSlackChannel());
 					System.err.println("More than one game is using the same Slack channel " + game.getSlackChannel() + ". Undefined behavior.");
 				}
 			}
 		}
+		
+		//long key = db.createNewGame(new GameData("127.0.0.1", 12345, "serwer", "mapa", 12345, 2019, 1024, 2048));
+		//db.getGames(true);
+		//LOGGER.warn("Key {}", key);
+		//LOGGER.info("closed {}", db.closeGame(4));
+		/*CompanyData cmp = new CompanyData((byte)7);
+		cmp.updateData(new CompanyEconomy(10, 20, 30, 40, new long[] { 60,  70}, new int[] { 80, 90}, new int[] {100, 110}));
+		cmp.updateData(new CompanyStatistics(1, 3, 5, 7, 9, 11, 13, 15, 17, 19));
+		long key = db.createNewGame(new GameData("serwer", "mapa", 12345, 2019, 1024, 2048));
+		LOGGER.info("result1 {}", db.createOrUpdateCompany(key, cmp));
+		//LOGGER.info("result2 {}", db.closeCompany(4, (byte)7, new de.miltschek.openttdadmin.data.Date(12345), ClosureReason.Bankrupt));
+		LOGGER.info("result3 {}", db.storeEconomicData(key, cmp));
+		LOGGER.info("result4 {}", db.storeStatisticalData(key, cmp));
+		
+		ClientData clientData = new ClientData(77, GeoIp.lookup("4.4.4.4"));
+		clientData.setClientInfo(new ClientInfo(77, "4.4.4.4", "john", Language.Afrikaans, new de.miltschek.openttdadmin.data.Date(1234), cmp.getCompanyId()));
+		
+		LOGGER.info("result4 {}", db.createOrUpdatePlayer(key, clientData));
+		LOGGER.info("result4 {}", db.storePlayer(key, clientData.getClientId(), cmp.getCompanyId()));
+		LOGGER.info("result4 {}", db.playerQuit(key, clientData.getClientId()));
+		*/
+		//if (true) return;
 		
 		System.out.println("enter q/quit/exit to quit");
 		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
@@ -230,6 +467,14 @@ public class Main {
 					admin.close();
 			} catch (IOException e) {
 				LOGGER.warn("Failed to close the OTTD Admin client.", e);
+			}
+		}
+		
+		if (db != null) {
+			try {
+				db.close();
+			} catch (IOException e) {
+				LOGGER.warn("Failed to close the database connection.", e);
 			}
 		}
 	}

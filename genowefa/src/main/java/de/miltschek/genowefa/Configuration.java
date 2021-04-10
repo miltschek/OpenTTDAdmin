@@ -47,6 +47,11 @@ public class Configuration {
 		private final String appToken;
 		private final String botToken;
 		
+		private boolean reportServerEvents = true;
+		private boolean reportCompanyEvents = true;
+		private boolean reportClientEvents = true;
+		private boolean reportChatMessages = true;
+		
 		/**
 		 * Creates settings for a Slack connector.
 		 * @param appToken application token
@@ -72,6 +77,70 @@ public class Configuration {
 		 */
 		public String getBotToken() {
 			return botToken;
+		}
+		
+		/**
+		 * Gets a value indicating whether to report chat messages to the slack channel.
+		 * @return true to turn reporting on, false to turn reporting off
+		 */
+		public boolean isReportChatMessages() {
+			return reportChatMessages;
+		}
+		
+		/**
+		 * Gets a value indicating whether to report client-related events to the slack channel.
+		 * @return true to turn reporting on, false to turn reporting off
+		 */
+		public boolean isReportClientEvents() {
+			return reportClientEvents;
+		}
+		
+		/**
+		 * Gets a value indicating whether to report company-related events to the slack channel.
+		 * @return true to turn reporting on, false to turn reporting off
+		 */
+		public boolean isReportCompanyEvents() {
+			return reportCompanyEvents;
+		}
+		
+		/**
+		 * Gets a value indicating whether to report server-related events to the slack channel.
+		 * @return true to turn reporting on, false to turn reporting off
+		 */
+		public boolean isReportServerEvents() {
+			return reportServerEvents;
+		}
+		
+		/**
+		 * Sets a value indicating whether to report chat messages to the slack channel.
+		 * @param reportChatMessages true to turn reporting on, false to turn reporting off
+		 */
+		public void setReportChatMessages(boolean reportChatMessages) {
+			this.reportChatMessages = reportChatMessages;
+		}
+		
+		/**
+		 * Sets a value indicating whether to report client-related events to the slack channel.
+		 * @param reportClientEvents true to turn reporting on, false to turn reporting off
+		 */
+		public void setReportClientEvents(boolean reportClientEvents) {
+			this.reportClientEvents = reportClientEvents;
+		}
+		
+		/**
+		 * Sets a value indicating whether to report company-related events to the slack channel.
+		 * @param reportCompanyEvents true to turn reporting on, false to turn reporting off
+		 */
+		public void setReportCompanyEvents(boolean reportCompanyEvents) {
+			this.reportCompanyEvents = reportCompanyEvents;
+		}
+		
+		/**
+		 * Sets a value indicating whether to report server-related events to the slack channel.
+		 * @param reportServerEvents true to turn reporting on, false to turn reporting off
+		 */
+		public void setReportServerEvents(boolean reportServerEvents) {
+			this.reportServerEvents = reportServerEvents;
 		}
 	}
 
@@ -180,10 +249,78 @@ public class Configuration {
 		}
 	}
 	
+	/**
+	 * Holds settings of a database connection.
+	 */
+	public static class Database {
+		private final String url;
+		private final String dbName;
+		private final String username;
+		private final String password;
+		private boolean dropTables;
+
+		/**
+		 * Creates settings of a database connection.
+		 * @param url database URL
+		 * @param dbName database name
+		 * @param username username
+		 * @param password password
+		 */
+		public Database(String url, String dbName, String username, String password) {
+			super();
+			this.url = url;
+			this.dbName = dbName;
+			this.username = username;
+			this.password = password;
+		}
+		
+		/**
+		 * Gets the database URL.
+		 * @return database URL
+		 */
+		public String getUrl() {
+			return url;
+		}
+		
+		/**
+		 * Gets the database name.
+		 * @return database name
+		 */
+		public String getDbName() {
+			return dbName;
+		}
+		
+		/**
+		 * Gets the username.
+		 * @return the username
+		 */
+		public String getUsername() {
+			return username;
+		}
+		
+		/**
+		 * Gets the password.
+		 * @return the password
+		 */
+		public String getPassword() {
+			return password;
+		}
+		
+		/**
+		 * Gets a value indicating whether to drop all database tables on startup.
+		 * Default false.
+		 * @return a value indicating whether to drop all database tables on startup
+		 */
+		public boolean isDropTables() {
+			return dropTables;
+		}
+	}
+	
 	private final Slack slack;
 	private final Google google;
 	private final List<Game> games;
 	private final Map<String, String> welcomeMessages;
+	private final Database database;
 	
 	/**
 	 * Loads the configuration out of a JSON file.
@@ -198,6 +335,11 @@ public class Configuration {
 				JSONObject slackJson = json.getJSONObject("slack");
 				this.slack = new Slack(slackJson.getString("app_token"),
 						slackJson.getString("bot_token"));
+				
+				this.slack.setReportChatMessages(!slackJson.has("report_chat_messages") || slackJson.getBoolean("report_chat_messages"));
+				this.slack.setReportClientEvents(!slackJson.has("report_client_events") || slackJson.getBoolean("report_client_events"));
+				this.slack.setReportCompanyEvents(!slackJson.has("report_company_events") || slackJson.getBoolean("report_company_events"));
+				this.slack.setReportServerEvents(!slackJson.has("report_server_events") || slackJson.getBoolean("report_server_events"));
 			} else {
 				this.slack = null;
 			}
@@ -230,6 +372,22 @@ public class Configuration {
 				}
 			} else {
 				this.games = null;
+			}
+			
+			if (json.has("database")) {
+				JSONObject dbJson = json.getJSONObject("database");
+				
+				this.database = new Database(
+						dbJson.getString("url"),
+						dbJson.getString("db_name"),
+						dbJson.getString("username"),
+						dbJson.getString("password"));
+				
+				if (dbJson.has("drop_tables") && dbJson.getBoolean("drop_tables")) {
+					this.database.dropTables = true;
+				}
+			} else {
+				this.database = null;
 			}
 			
 			if (json.has("welcome_messages")) {
@@ -270,6 +428,14 @@ public class Configuration {
 	 */
 	public Collection<? extends Game> getGames() {
 		return games;
+	}
+	
+	/**
+	 * Gets settings of a database connection.
+	 * @return settings of a database connection.
+	 */
+	public Database getDatabase() {
+		return database;
 	}
 	
 	/**

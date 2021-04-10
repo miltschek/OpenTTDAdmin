@@ -25,15 +25,20 @@ package de.miltschek.genowefa;
 
 import de.miltschek.integrations.GeoIp;
 import de.miltschek.openttdadmin.data.ClientInfo;
+import de.miltschek.openttdadmin.data.Date;
 import de.miltschek.openttdadmin.data.ErrorCode;
+import de.miltschek.openttdadmin.data.Language;
 
 /**
  * Local cache of client data.
  */
 public class ClientData {
+	private final int clientId;
 	private ClientInfo clientInfo;
 	private GeoIp geoIp;
-	private boolean left;
+	private final long joinedTs;
+	private long leftTs;
+	private Date leftGameDate;
 	private ErrorCode errorCode;
 	
 	/**
@@ -41,17 +46,82 @@ public class ClientData {
 	 * @param clientInfo client info object
 	 * @param geoIp geolocation data
 	 */
-	public ClientData(ClientInfo clientInfo, GeoIp geoIp) {
-		this.clientInfo = clientInfo;
+	public ClientData(int clientId, GeoIp geoIp) {
+		this.clientId = clientId;
 		this.geoIp = geoIp;
+		this.joinedTs = System.currentTimeMillis();
 	}
 	
 	/**
-	 * Gets the client info.
-	 * @return the client info
+	 * Returns the client ID.
+	 * @return the client ID
 	 */
-	public ClientInfo getClientInfo() {
-		return clientInfo;
+	public int getClientId() {
+		return this.clientId;
+	}
+	
+	/**
+	 * Returns the name of the client or null if unknown.
+	 * @return the name of the client or null if unknown
+	 */
+	public String getName() {
+		return this.clientInfo == null ? null : this.clientInfo.getClientName();
+	}
+	
+	/**
+	 * Returns the network address of the client or null if unknown.
+	 * @return the network address of the client or null if unknown
+	 */
+	public String getNetworkAddress() {
+		return this.clientInfo == null ? null : this.clientInfo.getNetworkAddress();
+	}
+	
+	/**
+	 * Returns the country code of the client or null if unknown.
+	 * @return the country code (ISO 3166-1 alpha-2) of the client or null if unknown
+	 */
+	public String getCountryCode() {
+		return this.geoIp == null ? null : this.geoIp.getCountryCode();
+	}
+	
+	/**
+	 * Returns the English name of the country of the client or null if unknown
+	 * @return the English name of the country of the client or null if unknown
+	 */
+	public String getCountry() {
+		return this.geoIp == null ? null : this.geoIp.getCountry();
+	}
+	
+	/**
+	 * Returns the English name of the city of the client or null if unknown.
+	 * @return the English name of the city of the client or null if unknown.
+	 */
+	public String getCity() {
+		return this.geoIp == null ? null : this.geoIp.getCity();
+	}
+	
+	/**
+	 * Returns a value denoting whether the address of the client is considered to be a proxy/VPN or false if unknown.
+	 * @return true if the address is consideres as a proxy/VPN, false otherwise (including unknown)
+	 */
+	public boolean isProxy() {
+		return this.geoIp == null ? false : this.geoIp.isProxy();
+	}
+	
+	/**
+	 * Returns the language setting of the client or null if unknown.
+	 * @return the language setting of the client or null if unknown
+	 */
+	public Language getLanguage() {
+		return this.clientInfo == null ? null : this.clientInfo.getLanguage();
+	}
+	
+	/**
+	 * Returns the in-game date of joining the game of the client or null if unknown.
+	 * @return the in-game date of joining the game of the client or null if unknown
+	 */
+	public Date getJoinDate() {
+		return this.clientInfo == null ? null : this.clientInfo.getJoinDate();
 	}
 	
 	/**
@@ -85,20 +155,36 @@ public class ClientData {
 	public void setErrorCode(ErrorCode errorCode) {
 		this.errorCode = errorCode;
 	}
-	
+
 	/**
-	 * Gets a value indicating whether the client has left the game.
-	 * @return true if the client has left the game, false otherwise
+	 * Returns a timestamp when the client joined the server.
+	 * @return a timestamp (milliseconds since Jan, 1st 1970 UTC)
 	 */
-	public boolean isLeft() {
-		return left;
+	public long getJoinedTs() {
+		return joinedTs;
 	}
 	
 	/**
-	 * Sets the value indicating whether the client has left the game.
-	 * @param left true if the client has left the game, false otherwise
+	 * Returns a timestamp when the client left the server or 0 if still active.
+	 * @return a timestamp (milliseconds since Jan, 1st 1970 UTC) or 0 if still active
 	 */
-	public void setLeft(boolean left) {
-		this.left = left;
+	public long getLeftTs() {
+		return leftTs;
+	}
+	
+	/**
+	 * Returns a game date when the client left the server or null if still active.
+	 * @return a game date when the client left the server or null if still active
+	 */
+	public Date getLeftGameDate() {
+		return leftGameDate;
+	}
+	
+	/**
+	 * Marks the client as left and stores the current timestamp for the event.
+	 */
+	public void left(Date gameDate) {
+		this.leftTs = System.currentTimeMillis();
+		this.leftGameDate = gameDate;
 	}
 }

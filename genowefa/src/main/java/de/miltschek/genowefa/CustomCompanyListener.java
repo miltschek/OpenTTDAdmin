@@ -23,16 +23,24 @@
  */
 package de.miltschek.genowefa;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.miltschek.genowefa.Context.CompanyDataProvider;
+import de.miltschek.genowefa.Context.EventType;
 import de.miltschek.openttdadmin.data.ClosureReason;
 import de.miltschek.openttdadmin.data.Color;
+import de.miltschek.openttdadmin.data.CompanyEconomy;
 import de.miltschek.openttdadmin.data.CompanyInfo;
 import de.miltschek.openttdadmin.data.CompanyListenerAdapter;
+import de.miltschek.openttdadmin.data.CompanyStatistics;
+import de.miltschek.openttdadmin.data.Date;
 
 /**
  * Handler of company-specific events.
@@ -42,11 +50,16 @@ public class CustomCompanyListener extends CompanyListenerAdapter implements Com
 	
 	private final Context context;
 	private final HashMap<Byte, CompanyData> newCompanies = new HashMap<>();
+	private final Collection<CompanyData> oldCompanies = new ArrayList<>();
 	
 	@Override
 	public void clearCache() {
 		synchronized (newCompanies) {
 			newCompanies.clear();
+		}
+		
+		synchronized (oldCompanies) {
+			oldCompanies.clear();
 		}
 	}
 
@@ -63,18 +76,31 @@ public class CustomCompanyListener extends CompanyListenerAdapter implements Com
 	public void companyCreated(byte companyId) {
 		LOGGER.info("New company created {}.", companyId);
 		
-		this.context.notifyAdmin(":new: ID " + (companyId + 1) + " created");
+		this.context.notifyAdmin(
+			EventType.Company,
+			":new: ID " + (companyId + 1) + " created");
 	}
 	
 	@Override
 	public void companyInfoReceived(CompanyInfo companyInfo) {
 		LOGGER.info("Company info received {}, name {}, color {}, password-protected {}.", companyInfo.getIndex(), companyInfo.getCompanyName(), companyInfo.getColor(), companyInfo.isPasswordProtected());
 		
+		CompanyData companyData;
 		synchronized (newCompanies) {
-			newCompanies.put(companyInfo.getIndex(), new CompanyData(companyInfo));
+			companyData = newCompanies.get(companyInfo.getIndex());
+			if (companyData == null) {
+				companyData = new CompanyData(companyInfo.getIndex());
+				newCompanies.put(companyInfo.getIndex(), companyData);
+			}
+
+			companyData.updateData(companyInfo);
 		}
 		
-		this.context.notifyAdmin(":office: ID "
+		this.context.companyUpdate(companyData);
+		
+		this.context.notifyAdmin(
+			EventType.Company,
+			":office: ID "
 				+ (companyInfo.getIndex() + 1)
 				+ ", color " + CompanyData.getColorName(companyInfo.getColor())
 				+ ", name " + companyInfo.getCompanyName()
@@ -88,15 +114,25 @@ public class CustomCompanyListener extends CompanyListenerAdapter implements Com
 		
 		CompanyData companyData;
 		synchronized (newCompanies) {
-			companyData = newCompanies.get(companyId);
+			companyData = newCompanies.remove(companyId);
 			if (companyData != null) {
-				companyData.setClosureReason(closureReason);
+				companyData.closed(closureReason);
 			}
 		}
 		
-		this.context.notifyAdmin(":hammer: ID "
+		if (companyData != null) {
+			synchronized (oldCompanies) {
+				oldCompanies.add(companyData);
+			}
+		}
+		
+		this.context.companyClose(companyId, this.context.getCurrentDate(), closureReason);
+		
+		this.context.notifyAdmin(
+			EventType.Company,
+			":hammer: ID "
 				+ (companyId + 1)
-				+ (companyData != null && companyData.getCompanyInfo() != null ? ", color " + companyData.getColorName() + ", name " + companyData.getCompanyInfo().getCompanyName() : "")
+				+ (companyData != null ? ", color " + companyData.getColorName() + ", name " + companyData.getName() : "")
 				+ " closed " + closureReason);
 	}
 	
@@ -105,25 +141,74 @@ public class CustomCompanyListener extends CompanyListenerAdapter implements Com
 		LOGGER.info("Company updated received {}, name {}, color {}, password-protected {}.", companyInfo.getIndex(), companyInfo.getCompanyName(), companyInfo.getColor(), companyInfo.isPasswordProtected());
 		
 		CompanyData companyData;
-		CompanyInfo previousCompanyInfo = null;
+
+		boolean newColor = false, newName = false, newManager = false, newPassword = false;
 		synchronized (newCompanies) {
 			companyData = newCompanies.get(companyInfo.getIndex());
 			if (companyData == null) {
-				companyData = new CompanyData(companyInfo);
+				companyData = new CompanyData(companyInfo.getIndex());
 				newCompanies.put(companyInfo.getIndex(), companyData);
+				
+				newColor = true;
+				newName = true;
+				newManager = true;
+				newPassword = true;
 			} else {
-				previousCompanyInfo = companyData.getCompanyInfo();
-				companyData.setCompanyInfo(companyInfo);
+				newColor = companyData.getColor() != companyInfo.getColor();
+				newName = !companyInfo.getCompanyName().equals(companyData.getName());
+				newManager = !companyInfo.getManagerName().equals(companyData.getManagerName());
+				newPassword = companyData.isPasswordProtected() != companyInfo.isPasswordProtected();
 			}
+
+			companyData.updateData(companyInfo);
 		}
 		
-		this.context.notifyAdmin(":office: ID "
+		this.context.companyUpdate(companyData);
+		
+		this.context.notifyAdmin(
+			EventType.Company,
+			":office: ID "
 				+ (companyInfo.getIndex() + 1)
 				+ " updated"
-				+ (previousCompanyInfo == null || previousCompanyInfo.getColor() != companyInfo.getColor() ? ", new color " + CompanyData.getColorName(companyInfo.getColor()) : "")
-				+ (previousCompanyInfo == null || !companyInfo.getCompanyName().equals(previousCompanyInfo.getCompanyName()) ? ", new name " + companyInfo.getCompanyName() : "")
-				+ (previousCompanyInfo == null || !companyInfo.getManagerName().equals(previousCompanyInfo.getManagerName()) ? ", new manager " + companyInfo.getManagerName() : "")
-				+ (previousCompanyInfo == null || previousCompanyInfo.isPasswordProtected() != companyInfo.isPasswordProtected() ? ", " + (companyInfo.isPasswordProtected() ? "protected" : "unprotected") : ""));
+				+ (newColor ? ", new color " + companyData.getColorName() : "")
+				+ (newName ? ", new name " + companyData.getName() : "")
+				+ (newManager ? ", new manager " + companyData.getManagerName() : "")
+				+ (newPassword ? ", " + (companyData.isPasswordProtected() ? "protected" : "unprotected") : ""));
+	}
+	
+	@Override
+	public void companyEconomy(byte companyId, CompanyEconomy companyEconomy) {
+		CompanyData companyData;
+		
+		synchronized (newCompanies) {
+			companyData = newCompanies.get(companyId);
+			
+			if (companyData == null) {
+				companyData = new CompanyData(companyId);
+				newCompanies.put(companyId, companyData);
+			}
+
+			companyData.updateData(companyEconomy);
+		}
+		
+		this.context.companyEconomyUpdate(companyId, companyEconomy);
+	}
+	
+	@Override
+	public void companyStatistics(byte companyId, CompanyStatistics companyStatistics) {
+		CompanyData companyData;
+		
+		synchronized (newCompanies) {
+			companyData = newCompanies.get(companyId);
+			if (companyData == null) {
+				companyData = new CompanyData(companyId);
+				newCompanies.put(companyId, companyData);
+			}
+
+			companyData.updateData(companyStatistics);
+		}
+		
+		this.context.companyStatisticsUpdate(companyId, companyStatistics);
 	}
 	
 	@Override
@@ -131,5 +216,23 @@ public class CustomCompanyListener extends CompanyListenerAdapter implements Com
 		synchronized (newCompanies) {
 			return newCompanies.get(companyId);
 		}
+	}
+	
+	@Override
+	public Collection<CompanyData> getAll() {
+		List<CompanyData> result = new ArrayList<CompanyData>();
+		
+		synchronized (newCompanies) {
+			result.addAll(newCompanies.values());
+		}
+		
+		result.sort(new Comparator<CompanyData>() {
+			@Override
+			public int compare(CompanyData o1, CompanyData o2) {
+				return Byte.compare(o1.getCompanyId(), o2.getCompanyId());
+			}
+		});
+		
+		return result;
 	}
 }

@@ -26,6 +26,7 @@ package de.miltschek.genowefa;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import de.miltschek.genowefa.Context.EventType;
 import de.miltschek.openttdadmin.data.Date;
 import de.miltschek.openttdadmin.data.ServerInfo;
 import de.miltschek.openttdadmin.data.ServerListenerAdapter;
@@ -51,7 +52,11 @@ public class CustomServerListener extends ServerListenerAdapter {
 		LOGGER.info("New game started.");
 		
 		this.context.clearCache();
-		this.context.notifyAdmin(":checkered_flag: new game");
+		this.context.newGame();
+		
+		this.context.notifyAdmin(
+			EventType.Server,
+			":checkered_flag: new game");
 	}
 	
 	@Override
@@ -67,7 +72,9 @@ public class CustomServerListener extends ServerListenerAdapter {
 				serverInfo.getMapSizeX(),
 				serverInfo.getMapSizeY());
 		
-		this.context.notifyAdmin(":star: Connected to " + serverInfo.getServerName());
+		this.context.notifyAdmin(
+			EventType.Server,
+			":star: Connected to " + serverInfo.getServerName());
 		
 		System.out.println(" - server name = " + serverInfo.getServerName());
 		System.out.println(" - network revision = " + serverInfo.getNetworkRevision());
@@ -78,20 +85,43 @@ public class CustomServerListener extends ServerListenerAdapter {
 		System.out.println(" - starting year = " + serverInfo.getStartingYear());
 		System.out.println(" - map size x = " + serverInfo.getMapSizeX());
 		System.out.println(" - map size y = " + serverInfo.getMapSizeY());
+		
+		this.context.gameUpdate(new GameData(
+				context.getAddress(),
+				context.getPort(),
+				serverInfo.getServerName(),
+				serverInfo.getMapName(),
+				serverInfo.getGenerationSeed(),
+				serverInfo.getStartingYear().getYear(),
+				serverInfo.getMapSizeX(),
+				serverInfo.getMapSizeY()));
+
+		// it is useful to request all companies and clients after connecting to a server
+		// in order to properly link data entities together
+		// it is tricky to find the right event to hook up to
+		// it should be at the beginning of a session, but the game ID of the database must be already known
+		// so the connected() event is normally too early for that
+		this.context.requestAllCompaniesInfo();
+		this.context.requestAllClientsInfo();
+	}
+	
+	@Override
+	public void connected() {
+		LOGGER.info("Connected to a server {}:{}.", this.context.getAddress(), this.context.getPort());
 	}
 	
 	@Override
 	public void rcon(int color, String result) {
 		LOGGER.debug("RCon({}): {}.", color, result);
 		
-		this.context.notifyAdmin(":computer: " + result);
+		this.context.notifyAdmin(
+			EventType.Server,
+			":computer: " + result);
 	}
 	
 	@Override
 	public void newDate(Date date) {
-		LOGGER.debug("Date {}.", date);
-		
-		this.context.notifyAdmin(":computer: Game date " + date);
+		this.context.setCurrentDate(date);
 	}
 	
 	@Override
