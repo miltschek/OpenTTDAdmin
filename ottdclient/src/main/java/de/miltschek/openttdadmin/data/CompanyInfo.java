@@ -33,7 +33,7 @@ public class CompanyInfo {
 	private Color color;
 	private boolean passwordProtected;
 	private boolean inauguratedYearSet;
-	private Date inauguratedYear;
+	private int inauguratedYear;
 	private boolean aiSet;
 	private boolean ai;
 	private byte monthsOfBankruptcy;
@@ -61,13 +61,13 @@ public class CompanyInfo {
 	 * @param managerName name of the company's manager
 	 * @param color color of the company
 	 * @param passwordProtected true if the company is password protected, false otherwise
-	 * @param inauguratedYear year of the company's opening (day seems to be nulled)
+	 * @param inauguratedYear year of the company's opening
 	 * @param ai true if it's an AI player, false otherwise
 	 * @param monthsOfBankruptcy months of bankruptcy TODO: check how it is calculated
 	 * @param shareOwners owners of company's shares (4 times 25%)
 	 */
 	public CompanyInfo(byte index, String companyName, String managerName, Color color, boolean passwordProtected,
-			Date inauguratedYear, boolean ai, byte monthsOfBankruptcy, byte[] shareOwners) {
+			int inauguratedYear, boolean ai, byte monthsOfBankruptcy, byte[] shareOwners) {
 		super();
 		this.index = index;
 		this.companyName = companyName;
@@ -155,11 +155,11 @@ public class CompanyInfo {
 	}
 
 	/**
-	 * Gets the year of the company's opening (day seems to be nulled).
+	 * Gets the year of the company's opening.
 	 * Please check {@link #isInauguratedYearSet()} whether this value is valid.
-	 * @return year of the company's opening (day seems to be nulled)
+	 * @return year of the company's opening
 	 */
-	public Date getInauguratedYear() {
+	public int getInauguratedYear() {
 		return inauguratedYear;
 	}
 	

@@ -805,7 +805,7 @@ public class OttdAdminClient implements Closeable
 			    						p.getManagerName(),
 			    						Color.getEnum(p.getColor()),
 			    						p.isPasswordProtected(),
-			    						new Date(p.getInauguratedYear()),
+			    						p.getInauguratedYear(),
 			    						p.isAi(),
 			    						p.getMonthsOfBankruptcy(),
 			    						new byte[] { p.getShareOwners(0), p.getShareOwners(1), p.getShareOwners(2), p.getShareOwners(3) });
