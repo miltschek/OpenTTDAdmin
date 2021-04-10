@@ -18,6 +18,12 @@
       "password": "PASSWORD"
     }
   ],
+  "database": {
+    "url": "mariadb://localhost:3306/",
+    "db_name": "genowefa",
+    "username": "genowefa",
+    "password": "PASSWORD"
+  },
   "welcome_messages": [
     {
       "country": "*",
