@@ -10,8 +10,10 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.slf4j.Logger;
@@ -752,6 +754,58 @@ public class DatabaseConnector implements Closeable {
 		} catch (SQLException ex) {
 			LOGGER.error("Failed to log player {} quitting game {}.", playerId, gameId, ex);
 			return false;
+		} finally {
+			try {
+				statement.close();
+			} catch (Exception e) {}
+		}
+	}
+	
+	public List<TopPlayer> getTopList(long gameId, int limit) {
+		PreparedStatement statement = null;
+		try {
+			ArrayList<TopPlayer> result = new ArrayList<>(limit);
+			
+			statement = connection.prepareStatement(
+					"SELECT c.name, "
+							+ " MAX(e.income), MAX(e.loan), MAX(e.money), MAX(e.`value`) AS here, MAX(e.performance),"
+							+ " g.started, g.finished"
+							+ " FROM genowefa_economy AS e"
+							+ " LEFT JOIN genowefa_companies AS c ON (e.company_id = c.id)"
+							+ " LEFT JOIN genowefa_games AS g ON (c.game_id = g.id)"
+							+ " WHERE g.server_name = (SELECT server_name FROM genowefa_games WHERE id = ?)"
+							+ " GROUP BY e.company_id"
+							+ " ORDER BY here DESC"
+							+ " LIMIT ?");
+			
+			int n = 1;
+			statement.setLong(n++, gameId);
+			statement.setInt(n++, limit);
+			
+			ResultSet resultSet = statement.executeQuery();
+			
+			while (resultSet.next()) {
+				Timestamp ts;
+				
+				n = 1;
+				TopPlayer topPlayer = new TopPlayer(
+						resultSet.getString(n++),
+						resultSet.getLong(n++),
+						resultSet.getLong(n++),
+						resultSet.getLong(n++),
+						resultSet.getLong(n++),
+						resultSet.getInt(n++),
+						(ts = resultSet.getTimestamp(n++)) == null ? 0 : ts.getTime(),
+						(ts = resultSet.getTimestamp(n++)) == null ? 0 : ts.getTime());
+				
+				result.add(topPlayer);
+			}
+		
+			return result;
+			
+		} catch (SQLException ex) {
+			LOGGER.error("Failed to get a top list of the game {}.", gameId, ex);
+			return null;
 		} finally {
 			try {
 				statement.close();

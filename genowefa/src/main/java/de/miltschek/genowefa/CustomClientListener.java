@@ -153,16 +153,9 @@ public class CustomClientListener extends ClientListenerAdapter implements Clien
 			}
 		}
 
-		String welcomeMessage;
-		if (clientData.getGeoIp() == null) {
-			welcomeMessage = this.context.getWelcomeMessage("*")
-					.replaceAll("[$][{]COUNTRY[}]", "the Universe")
-					.replaceAll("[$][{]CITY[}]", "the beautiful City");
-		} else {
-			welcomeMessage = this.context.getWelcomeMessage(clientData.getGeoIp().getCountryCode())
-					.replaceAll("[$][{]COUNTRY[}]", clientData.getGeoIp().getCountry())
-					.replaceAll("[$][{]CITY[}]", clientData.getGeoIp().getCity());
-		}
+		String welcomeMessage = this.context.getWelcomeMessage(clientData.getCountryCode() == null ? "*" : clientData.getCountryCode())
+					.replaceAll("[$][{]COUNTRY[}]", clientData.getCountry() == null ? "the Universe" : clientData.getCountry())
+					.replaceAll("[$][{]CITY[}]", clientData.getCity() == null ? "the beautiful City" : clientData.getCity());
 		
 		if (clientData.getName() == null) {
 			welcomeMessage = welcomeMessage.replaceAll("[$][{]USERNAME[}]", "player");
@@ -201,13 +194,13 @@ public class CustomClientListener extends ClientListenerAdapter implements Clien
 			}
 		}
 		
+		context.playerLeft(clientId);
+
 		this.context.notifyAdmin(
 			EventType.Client,
 			":runner: ID " + clientId
 				+ (clientData == null || clientData.getName() == null ? "" : (", name " + clientData.getName()))
 				+ " left");
-		
-		context.playerLeft(clientId);
 	}
 	
 	@Override
@@ -219,8 +212,11 @@ public class CustomClientListener extends ClientListenerAdapter implements Clien
 			clientData = newClients.get((Integer)clientId);
 			if (clientData != null) {
 				clientData.setErrorCode(errorCode);
+				clientData.left(this.context.getCurrentDate());
 			}
 		}
+
+		context.playerLeft(clientId);
 
 		this.context.notifyAdmin(
 			EventType.Client,
@@ -245,15 +241,15 @@ public class CustomClientListener extends ClientListenerAdapter implements Clien
 			}
 		}
 		
+		context.clientUpdate(clientData);
+		context.playerJoined(clientId, playAs);
+
 		this.context.notifyAdmin(
 			EventType.Client,
 			":bust_in_silhouette: ID "
 				+ clientId
 				+ ", name " + clientName
 				+ ", plays as " + getCompanyDescription(playAs));
-		
-		context.clientUpdate(clientData);
-		context.playerJoined(clientId, playAs);
 	}
 
 	@Override

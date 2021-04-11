@@ -25,6 +25,7 @@ package de.miltschek.genowefa;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.function.BiConsumer;
@@ -627,6 +628,18 @@ public class Context {
 				LOGGER.error("Failed to create/update a player ID {} for the game {}.", clientData.getClientId(), dbGameId);
 			}
 		}
+	}
+	
+	/**
+	 * Retrieves a top players list for the current server.
+	 * @return an ordered list of top players
+	 */
+	public List<TopPlayer> getTopList() {
+		if (this.db != null && dbGameId > 0) {
+			return db.getTopList(dbGameId, 5);
+		}
+		
+		return null;
 	}
 	
 	/**

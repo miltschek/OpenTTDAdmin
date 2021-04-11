@@ -25,6 +25,7 @@ package de.miltschek.genowefa;
 
 import de.miltschek.integrations.GeoIp;
 import de.miltschek.openttdadmin.data.ClientInfo;
+import de.miltschek.openttdadmin.data.CompanyInfo;
 import de.miltschek.openttdadmin.data.Date;
 import de.miltschek.openttdadmin.data.ErrorCode;
 import de.miltschek.openttdadmin.data.Language;
@@ -125,19 +126,19 @@ public class ClientData {
 	}
 	
 	/**
+	 * Returns the company ID of the player or a spectator identifier if unknown.
+	 * @return the company ID of the player or a spectator identifier if unknown
+	 */
+	public byte getPlaysAs() {
+		return this.clientInfo == null ? CompanyInfo.SPECTATOR : this.clientInfo.getPlayAs();
+	}
+	
+	/**
 	 * Sets the client info.
 	 * @param clientInfo client info to be set
 	 */
 	public void setClientInfo(ClientInfo clientInfo) {
 		this.clientInfo = clientInfo;
-	}
-	
-	/**
-	 * Gets the geolocalization.
-	 * @return the geolocalization
-	 */
-	public GeoIp getGeoIp() {
-		return geoIp;
 	}
 	
 	/**
