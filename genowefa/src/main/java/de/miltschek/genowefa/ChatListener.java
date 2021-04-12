@@ -106,13 +106,18 @@ public class ChatListener implements Consumer<ChatMessage> {
 		} else if (t.getMessage().equals("!help") || t.getMessage().equals("/help")) {
 			LOGGER.info("User {} requested help.", t.getSenderId());
 			
-			this.context.notifyUser(t.getSenderId(), "Available commands:");
+			this.context.notifyUser(t.getSenderId(), "((Powered by github::Genowefa)) - Available commands:");
 			this.context.notifyUser(t.getSenderId(), "!admin <message>: sends the message to the server's admin");
 			this.context.notifyUser(t.getSenderId(), "!reset: resets your company; you will be kicked of the server, so please re-join");
 			this.context.notifyUser(t.getSenderId(), "!name <new_name>: changes your name; surround multiple words with double quotes");
 			this.context.notifyUser(t.getSenderId(), "!dict <message>: tries to translate your message to English");
 			this.context.notifyUser(t.getSenderId(), "!top: shows a short Hall of Fame list");
 			this.context.notifyUser(t.getSenderId(), "!who: shows a list of players");
+			
+			String info;
+			if ((info = this.context.getHelpMessage()) != null) {
+				this.context.notifyUser(t.getSenderId(), info);
+			}
 		} else if (t.getMessage().startsWith("!dict ") && t.getMessage().length() > 6) {
 			LOGGER.info("User {} requested translation.", t.getSenderId());
 			
@@ -150,12 +155,14 @@ public class ChatListener implements Consumer<ChatMessage> {
 						this.context.notifyUser(t.getSenderId(), message);
 					}
 				}
-				
-				String info = "::: Complete Hall of Fame available on https://miltschek.de/ottd :::"; // todo TODO temp
-				if (t.isPublic()) {
-					this.context.notifyAll(info);
-				} else {
-					this.context.notifyUser(t.getSenderId(), info);
+
+				String info;
+				if ((info = this.context.getHallOfFameLink()) != null) {
+					if (t.isPublic()) {
+						this.context.notifyAll(info);
+					} else {
+						this.context.notifyUser(t.getSenderId(), info);
+					}
 				}
 			}
 		} else if (t.getMessage().equals("!who")) {

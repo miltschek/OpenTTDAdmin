@@ -247,6 +247,22 @@ public class Context {
 	}
 	
 	/**
+	 * Gets the message shown as a link to the hall of fame.
+	 * @return the message shown as a link to the hall of fame
+	 */
+	public String getHallOfFameLink() {
+		return this.configuration.getChat().getHallOfFameLink();
+	}
+	
+	/**
+	 * Gets the additional help message shown when a user requests help.
+	 * @return the additional help message shown when a user requests help
+	 */
+	public String getHelpMessage() {
+		return this.configuration.getChat().getHelpMessage();
+	}
+	
+	/**
 	 * Sends a message to administrator (over Slack).
 	 * @param eventType type of the event for filtering purposes
 	 * @param message message text

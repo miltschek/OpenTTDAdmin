@@ -767,16 +767,16 @@ public class DatabaseConnector implements Closeable {
 			ArrayList<TopPlayer> result = new ArrayList<>(limit);
 			
 			statement = connection.prepareStatement(
-					"SELECT c.name, "
-							+ " MAX(e.income), MAX(e.loan), MAX(e.money), MAX(e.`value`) AS here, MAX(e.performance),"
-							+ " g.started, g.finished"
-							+ " FROM genowefa_economy AS e"
-							+ " LEFT JOIN genowefa_companies AS c ON (e.company_id = c.id)"
-							+ " LEFT JOIN genowefa_games AS g ON (c.game_id = g.id)"
-							+ " WHERE g.server_name = (SELECT server_name FROM genowefa_games WHERE id = ?)"
-							+ " GROUP BY e.company_id"
-							+ " ORDER BY here DESC"
-							+ " LIMIT ?");
+					"SELECT c." + F_NAME + ", "
+							+ "MAX(e." + F_INCOME + "), MAX(e." + F_LOAN + "), MAX(e." + F_MONEY + "), MAX(e." + F_VALUE + ") AS here, MAX(e." + F_PERFORMANCE + "), "
+							+ "g." + F_STARTED + ", g." + F_FINISHED + " "
+							+ "FROM " + TABLE_ECONOMY + " AS e"
+							+ "LEFT JOIN " + TABLE_COMPANIES + " AS c ON (e." + F_COMPANY_ID + " = c." + F_ID + ")"
+							+ "LEFT JOIN " + TABLE_GAMES + " AS g ON (c." + F_GAME_ID + " = g." + F_ID + ") "
+							+ "WHERE g." + F_SERVER_NAME + " = (SELECT " + F_SERVER_NAME + " FROM " + TABLE_GAMES + " WHERE " + F_ID + " = ?) "
+							+ "GROUP BY e." + F_COMPANY_ID + " "
+							+ "ORDER BY here DESC"
+							+ "LIMIT ?");
 			
 			int n = 1;
 			statement.setLong(n++, gameId);

@@ -316,11 +316,52 @@ public class Configuration {
 		}
 	}
 	
+	/**
+	 * Settings of chat functions.
+	 */
+	public static class Chat {
+		private String hallOfFameLink;
+		private String helpMessage;
+		
+		/**
+		 * Sets the message shown as a link to the hall of fame.
+		 * @param hallOfFameLink the message shown as a link to the hall of fame
+		 */
+		public void setHallOfFameLink(String hallOfFameLink) {
+			this.hallOfFameLink = hallOfFameLink;
+		}
+		
+		/**
+		 * Gets the message shown as a link to the hall of fame.
+		 * @return the message shown as a link to the hall of fame
+		 */
+		public String getHallOfFameLink() {
+			return hallOfFameLink;
+		}
+		
+		/**
+		 * Sets the additional help message shown when a user requests help.
+		 * @param helpMessage the additional help message shown when a user requests help.
+		 */
+		public void setHelpMessage(String helpMessage) {
+			this.helpMessage = helpMessage;
+		}
+		
+		/**
+		 * Gets the additional help message shown when a user requests help.
+		 * @return the additional help message shown when a user requests help
+		 */
+		public String getHelpMessage() {
+			return helpMessage;
+		}
+	}
+	
 	private final Slack slack;
 	private final Google google;
 	private final List<Game> games;
 	private final Map<String, String> welcomeMessages;
 	private final Database database;
+	private final Chat chat = new Chat();
 	
 	/**
 	 * Loads the configuration out of a JSON file.
@@ -390,6 +431,18 @@ public class Configuration {
 				this.database = null;
 			}
 			
+			if (json.has("chat")) {
+				JSONObject chatJson = json.getJSONObject("chat");
+				
+				if (chatJson.has("hall_of_fame")) {
+					this.chat.setHallOfFameLink(chatJson.getString("hall_of_fame"));
+				}
+				
+				if (chatJson.has("help_message")) {
+					this.chat.setHelpMessage(chatJson.getString("help_message"));
+				}
+			}
+			
 			if (json.has("welcome_messages")) {
 				this.welcomeMessages = new HashMap<>();
 				
@@ -436,6 +489,14 @@ public class Configuration {
 	 */
 	public Database getDatabase() {
 		return database;
+	}
+	
+	/**
+	 * Gets settings of chat functions.
+	 * @return settings of chat functions
+	 */
+	public Chat getChat() {
+		return chat;
 	}
 	
 	/**
