@@ -41,6 +41,7 @@ public class ClientData {
 	private long leftTs;
 	private Date leftGameDate;
 	private ErrorCode errorCode;
+	private String translationLanguage;
 	
 	/**
 	 * Stores client info object and geolocation data.
@@ -187,5 +188,21 @@ public class ClientData {
 	public void left(Date gameDate) {
 		this.leftTs = System.currentTimeMillis();
 		this.leftGameDate = gameDate;
+	}
+	
+	/**
+	 * Gets the language code for translations.
+	 * @return the language code for translations
+	 */
+	public String getTranslationLanguage() {
+		return translationLanguage;
+	}
+	
+	/**
+	 * Sets the language code for translations.
+	 * @param translationLanguage the language code for translations
+	 */
+	public void setTranslationLanguage(String translationLanguage) {
+		this.translationLanguage = translationLanguage;
 	}
 }

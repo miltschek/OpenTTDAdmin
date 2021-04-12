@@ -325,10 +325,15 @@ public class CustomClientListener extends ClientListenerAdapter implements Clien
 			LOGGER.info("User info {} IP {} from {}, {} proxy {}.", clientInfo.getClientId(), clientInfo.getNetworkAddress(), geoIp.getCountry(), geoIp.getCity(), geoIp.isProxy());
 		}
 		
-		ClientData clientData = new ClientData(clientInfo.getClientId(), geoIp);
-		clientData.setClientInfo(clientInfo);
+		ClientData clientData;
 		synchronized (newClients) {
-			newClients.put(clientInfo.getClientId(), clientData);
+			clientData = newClients.get(clientInfo.getClientId());
+			if (clientData == null) {
+				clientData = new ClientData(clientInfo.getClientId(), geoIp);
+				newClients.put(clientInfo.getClientId(), clientData);
+			}
+			
+			clientData.setClientInfo(clientInfo);
 		}
 		
 		this.context.clientUpdate(clientData);
@@ -427,11 +432,13 @@ public class CustomClientListener extends ClientListenerAdapter implements Clien
 		
 		ClientData clientData;
 		synchronized (newClients) {
-			clientData = newClients.get((Integer)clientId);
+			clientData = newClients.remove((Integer)clientId);
 			if (clientData != null) {
 				clientData.left(this.context.getCurrentDate());
 			}
 		}
+		
+		// todo TODO optionally put the clientData in a separate collection, oldClients
 		
 		context.playerLeft(clientId);
 
@@ -448,13 +455,15 @@ public class CustomClientListener extends ClientListenerAdapter implements Clien
 		
 		ClientData clientData;
 		synchronized (newClients) {
-			clientData = newClients.get((Integer)clientId);
+			clientData = newClients.remove((Integer)clientId);
 			if (clientData != null) {
 				clientData.setErrorCode(errorCode);
 				clientData.left(this.context.getCurrentDate());
 			}
 		}
 
+		// todo TODO optionally put the clientData in a separate collection, oldClients
+		
 		context.playerLeft(clientId);
 
 		this.context.notifyAdmin(
