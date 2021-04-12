@@ -263,6 +263,14 @@ public class Context {
 	}
 	
 	/**
+	 * Gets a value indicating whether a non-name Players should be forced to change their names.
+	 * @return forceNameChange true to generate names for no-named players, false otherwise
+	 */
+	public boolean isForceNameChange() {
+		return this.thisGame.isForceNameChange();
+	}
+	
+	/**
 	 * Sends a message to administrator (over Slack).
 	 * @param eventType type of the event for filtering purposes
 	 * @param message message text

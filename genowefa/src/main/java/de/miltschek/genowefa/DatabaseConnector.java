@@ -770,12 +770,12 @@ public class DatabaseConnector implements Closeable {
 					"SELECT c." + F_NAME + ", "
 							+ "MAX(e." + F_INCOME + "), MAX(e." + F_LOAN + "), MAX(e." + F_MONEY + "), MAX(e." + F_VALUE + ") AS here, MAX(e." + F_PERFORMANCE + "), "
 							+ "g." + F_STARTED + ", g." + F_FINISHED + " "
-							+ "FROM " + TABLE_ECONOMY + " AS e"
-							+ "LEFT JOIN " + TABLE_COMPANIES + " AS c ON (e." + F_COMPANY_ID + " = c." + F_ID + ")"
+							+ "FROM " + TABLE_ECONOMY + " AS e "
+							+ "LEFT JOIN " + TABLE_COMPANIES + " AS c ON (e." + F_COMPANY_ID + " = c." + F_ID + ") "
 							+ "LEFT JOIN " + TABLE_GAMES + " AS g ON (c." + F_GAME_ID + " = g." + F_ID + ") "
 							+ "WHERE g." + F_SERVER_NAME + " = (SELECT " + F_SERVER_NAME + " FROM " + TABLE_GAMES + " WHERE " + F_ID + " = ?) "
 							+ "GROUP BY e." + F_COMPANY_ID + " "
-							+ "ORDER BY here DESC"
+							+ "ORDER BY here DESC "
 							+ "LIMIT ?");
 			
 			int n = 1;

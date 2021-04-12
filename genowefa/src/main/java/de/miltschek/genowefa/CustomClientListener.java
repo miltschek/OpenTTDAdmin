@@ -30,6 +30,7 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,6 +48,211 @@ import de.miltschek.openttdadmin.data.ErrorCode;
  */
 public class CustomClientListener extends ClientListenerAdapter implements ClientDataProvider {
 	private static final Logger LOGGER = LoggerFactory.getLogger(CustomClientListener.class);
+	
+	private static Pattern NO_NAME_PLAYER = Pattern.compile("^Player( [#][0-9]+)?$");
+	
+	private static final String[] NAMES = new String[] {
+			"Aaron",
+			"Abigail",
+			"Adam",
+			"Alan",
+			"Albert",
+			"Alexander",
+			"Alexis",
+			"Alice",
+			"Amanda",
+			"Amber",
+			"Amy",
+			"Andrea",
+			"Andrew",
+			"Angela",
+			"Ann",
+			"Anna",
+			"Anthony",
+			"Arthur",
+			"Ashley",
+			"Austin",
+			"Barbara",
+			"Benjamin",
+			"Betty",
+			"Beverly",
+			"Billy",
+			"Bobby",
+			"Bradley",
+			"Brandon",
+			"Brenda",
+			"Brian",
+			"Brittany",
+			"Bruce",
+			"Bryan",
+			"Carl",
+			"Carol",
+			"Carolyn",
+			"Catherine",
+			"Charles",
+			"Charlotte",
+			"Cheryl",
+			"Christian",
+			"Christina",
+			"Christine",
+			"Christopher",
+			"Cynthia",
+			"Daniel",
+			"Danielle",
+			"David",
+			"Deborah",
+			"Debra",
+			"Denise",
+			"Dennis",
+			"Diana",
+			"Diane",
+			"Donald",
+			"Donna",
+			"Doris",
+			"Dorothy",
+			"Douglas",
+			"Dylan",
+			"Edward",
+			"Elizabeth",
+			"Emily",
+			"Emma",
+			"Eric",
+			"Ethan",
+			"Eugene",
+			"Evelyn",
+			"Frances",
+			"Frank",
+			"Gabriel",
+			"Gary",
+			"George",
+			"Gerald",
+			"Gloria",
+			"Grace",
+			"Gregory",
+			"Hannah",
+			"Harold",
+			"Heather",
+			"Helen",
+			"Henry",
+			"Isabella",
+			"Jack",
+			"Jacob",
+			"Jacqueline",
+			"James",
+			"Janet",
+			"Janice",
+			"Jason",
+			"Jean",
+			"Jeffrey",
+			"Jennifer",
+			"Jeremy",
+			"Jerry",
+			"Jesse",
+			"Jessica",
+			"Joan",
+			"Joe",
+			"John",
+			"Johnny",
+			"Jonathan",
+			"Jordan",
+			"Jose",
+			"Joseph",
+			"Joshua",
+			"Joyce",
+			"Juan",
+			"Judith",
+			"Judy",
+			"Julia",
+			"Julie",
+			"Justin",
+			"Karen",
+			"Katherine",
+			"Kathleen",
+			"Kathryn",
+			"Kayla",
+			"Keith",
+			"Kelly",
+			"Kenneth",
+			"Kevin",
+			"Kimberly",
+			"Kyle",
+			"Larry",
+			"Laura",
+			"Lauren",
+			"Lawrence",
+			"Linda",
+			"Lisa",
+			"Logan",
+			"Louis",
+			"Madison",
+			"Margaret",
+			"Maria",
+			"Marie",
+			"Marilyn",
+			"Mark",
+			"Martha",
+			"Mary",
+			"Matthew",
+			"Megan",
+			"Melissa",
+			"Michael",
+			"Michelle",
+			"Nancy",
+			"Natalie",
+			"Nathan",
+			"Nicholas",
+			"Nicole",
+			"Noah",
+			"Olivia",
+			"Pamela",
+			"Patricia",
+			"Patrick",
+			"Paul",
+			"Peter",
+			"Philip",
+			"Rachel",
+			"Ralph",
+			"Randy",
+			"Raymond",
+			"Rebecca",
+			"Richard",
+			"Robert",
+			"Roger",
+			"Ronald",
+			"Rose",
+			"Roy",
+			"Russell",
+			"Ruth",
+			"Ryan",
+			"Samantha",
+			"Samuel",
+			"Sandra",
+			"Sara",
+			"Sarah",
+			"Scott",
+			"Sean",
+			"Sharon",
+			"Shirley",
+			"Sophia",
+			"Stephanie",
+			"Stephen",
+			"Steven",
+			"Susan",
+			"Teresa",
+			"Terry",
+			"Theresa",
+			"Thomas",
+			"Timothy",
+			"Tyler",
+			"Victoria",
+			"Vincent",
+			"Virginia",
+			"Walter",
+			"Wayne",
+			"William",
+			"Willie",
+			"Zachary",
+	};
 
 	private final Context context;
 	private final HashMap<Integer, ClientData> newClients = new HashMap<>();
@@ -138,6 +344,39 @@ public class CustomClientListener extends ClientListenerAdapter implements Clien
 				+ ", joined " + clientInfo.getJoinDate()
 				// + ", lang " + clientInfo.getLanguage() // it's always 'Any'
 				+ ((geoIp != null) ? (", from " + geoIp.getCountry() + ", " + geoIp.getCity()) + (geoIp.isProxy() ? ", proxy" : ""): ""));
+		
+		if (this.context.isForceNameChange() && NO_NAME_PLAYER.matcher(clientInfo.getClientName()).matches()) {
+			int hash = clientInfo.getNetworkAddress().hashCode() & 0x7fffffff;
+
+			int index = hash % NAMES.length;
+			final int loopDetection = index;
+			
+			boolean free = true;
+			do {
+				index++;
+				if (index >= NAMES.length) {
+					index = 0;
+				}
+				
+				if (index == loopDetection) {
+					LOGGER.error("Could not find a new name for the client {} IP {}.", clientInfo.getClientId(), clientInfo.getNetworkAddress());
+					break;
+				}
+				
+				for (ClientData otherClient : newClients.values()) {
+					if (NAMES[index].equals(otherClient.getName())) {
+						free = false;
+						break;
+					}
+				}
+			} while (!free);
+			
+			if (free) {
+				LOGGER.info("Forcing the player {} to get a new name {}.", clientInfo.getClientId(), NAMES[index]);
+				this.context.notifyUser(clientInfo.getClientId(), "You will get a new nice name. Feel free to change it via !name or in multiplayer settings.");
+				this.context.renameUser(clientInfo.getClientId(), NAMES[index]);
+			}
+		}
 	}
 	
 	@Override

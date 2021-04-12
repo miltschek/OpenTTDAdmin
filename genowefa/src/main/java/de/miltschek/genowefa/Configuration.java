@@ -178,6 +178,7 @@ public class Configuration {
 		
 		private String slackChannel;
 		private String welcomeMessagePath = "on_new_client.txt";
+		private boolean forceNameChange;
 
 		/**
 		 * Creates settings of an OTTD game server.
@@ -246,6 +247,22 @@ public class Configuration {
 		 */
 		public String getWelcomeMessagePath() {
 			return welcomeMessagePath;
+		}
+		
+		/**
+		 * Sets a value indicating whether a non-name Players should be forced to change their names.
+		 * @param forceNameChange true to generate names for no-named players, false otherwise
+		 */
+		public void setForceNameChange(boolean forceNameChange) {
+			this.forceNameChange = forceNameChange;
+		}
+		
+		/**
+		 * Gets a value indicating whether a non-name Players should be forced to change their names.
+		 * @return true to generate names for no-named players, false otherwise
+		 */
+		public boolean isForceNameChange() {
+			return forceNameChange;
 		}
 	}
 	
@@ -408,6 +425,8 @@ public class Configuration {
 					if (gameJson.has("welcome_msg_path")) {
 						game.setWelcomeMessagePath(gameJson.getString("welcome_msg_path"));
 					}
+					
+					game.setForceNameChange(gameJson.has("force_name_change") && gameJson.getBoolean("force_name_change")); 
 					
 					this.games.add(game);
 				}
