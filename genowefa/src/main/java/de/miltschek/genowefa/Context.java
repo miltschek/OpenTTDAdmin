@@ -62,8 +62,10 @@ public class Context {
 	private ClientDataProvider clientDataProvider;
 	private CompanyDataProvider companyDataProvider;
 	
+	private boolean gameConnected;
 	private long dbGameId;
 	private Date currentDate = new Date(0);
+	private long performance;
 	
 	/**
 	 * Describes type of an event for filtering purposes.
@@ -185,6 +187,46 @@ public class Context {
 	 */
 	public Date getCurrentDate() {
 		return currentDate;
+	}
+	
+	/**
+	 * Sets the duration of one in-game day expressed as real-time milliseconds.
+	 * @param performance the duration of one in-game day expressed as real-time milliseconds
+	 */
+	public void setPerformance(long performance) {
+		this.performance = performance;
+	}
+	
+	/**
+	 * Gets the duration of one in-game day expressed as real-time milliseconds.
+	 * @return the duration of one in-game day expressed as real-time milliseconds
+	 */
+	public long getPerformance() {
+		return performance;
+	}
+	
+	/**
+	 * Gets the database ID of the game.
+	 * @return the database ID of the game
+	 */
+	public long getDbGameId() {
+		return dbGameId;
+	}
+	
+	/**
+	 * Sets a value denoting whether there is a connection to the game server.
+	 * @param gameConnected true if there is a connection to the game server, false otherwise
+	 */
+	public void setGameConnected(boolean gameConnected) {
+		this.gameConnected = gameConnected;
+	}
+	
+	/**
+	 * Gets a value denoting whether there is a connection to the game server.
+	 * @return true if there is a connection to the game server, false otherwise
+	 */
+	public boolean isGameConnected() {
+		return gameConnected;
 	}
 	
 	/**

@@ -105,12 +105,6 @@ public class Main {
 				if ("/date".equals(slackMessage.getCommand())) {
 					slack.sendMessage(slackMessage.getChannelName(), ":computer: Game date " + context.getCurrentDate());
 					
-				} else if ("/getclients".equals(slackMessage.getCommand())) {
-					context.requestAllClientsInfo();
-					
-				} else if ("/getcompanies".equals(slackMessage.getCommand())) {
-					context.requestAllCompaniesInfo();
-					
 				} else if ("/kickuser".equals(slackMessage.getCommand())) {
 					if (params.length == 2) {
 						if (params[0].matches("[1-9][0-9]*")) {
@@ -294,6 +288,15 @@ public class Main {
 					}
 					
 					slack.sendMessage(slackMessage.getChannelName(), sb.toString());
+				
+				} else if ("/server".equals(slackMessage.getCommand())) {
+					
+					slack.sendMessage(slackMessage.getChannelName(),
+							":computer: Server " + context.getAddress() + ":" + context.getPort() + "\n"
+							+ "Currently " + (context.isGameConnected() ? "connected" : "disconnected") + "\n"
+							+ "Database ID " + context.getDbGameId() + "\n"
+							+ "Game-Date " + context.getCurrentDate() + "\n"
+							+ "Performance " + context.getPerformance() + " ms/game-day");
 					
 				} else {
 					return false;
@@ -358,8 +361,6 @@ public class Main {
 				slack = new SlackRTMClient(configuration.getSlack().getAppToken(), configuration.getSlack().getBotToken());
 				slack.registerChatHandler(Main::onMessage);
 				slack.registerCommand("/date", Main::onCommand);
-				slack.registerCommand("/getclients", Main::onCommand);
-				slack.registerCommand("/getcompanies", Main::onCommand);
 				slack.registerCommand("/kickuser", Main::onCommand);
 				slack.registerCommand("/ban", Main::onCommand);
 				slack.registerCommand("/pause", Main::onCommand);
@@ -370,6 +371,7 @@ public class Main {
 				slack.registerCommand("/resetcompany", Main::onCommand);
 				slack.registerCommand("/clients", Main::onCommand);
 				slack.registerCommand("/companies", Main::onCommand);
+				slack.registerCommand("/server", Main::onCommand);
 			} catch (IOException e) {
 				LOGGER.error("Failed to initialize the Slack client.", e);
 			}

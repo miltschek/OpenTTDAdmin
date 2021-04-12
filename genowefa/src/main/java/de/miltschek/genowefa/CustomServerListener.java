@@ -107,7 +107,14 @@ public class CustomServerListener extends ServerListenerAdapter {
 	
 	@Override
 	public void connected() {
-		LOGGER.info("Connected to a server {}:{}.", this.context.getAddress(), this.context.getPort());
+		LOGGER.info("Connected to the server {}:{}.", this.context.getAddress(), this.context.getPort());
+		this.context.setGameConnected(true);
+	}
+	
+	@Override
+	public void disconnected() {
+		LOGGER.warn("Disconnected from the server {}:{}.", this.context.getAddress(), this.context.getPort());
+		this.context.setGameConnected(false);
 	}
 	
 	@Override
@@ -119,9 +126,23 @@ public class CustomServerListener extends ServerListenerAdapter {
 			":computer: " + result);
 	}
 	
+	private long lastDateTs;
+	private Date lastDate;
+	
 	@Override
 	public void newDate(Date date) {
 		this.context.setCurrentDate(date);
+		
+		if (this.lastDate != null) {
+			int days = date.getRawValue() - this.lastDate.getRawValue();
+			if (days > 0) {
+				long realTime = System.currentTimeMillis() - lastDateTs;
+				this.context.setPerformance(realTime / days);
+			}
+		}
+		
+		this.lastDateTs = System.currentTimeMillis();
+		this.lastDate = date;
 	}
 	
 	@Override
