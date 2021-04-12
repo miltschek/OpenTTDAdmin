@@ -10,6 +10,7 @@ package de.miltschek.openttdadmin.data;
  * Date conversion utility.
  */
 public final class Date {
+	private int rawValue;
 	private int day;
 	private int month;
 	private int year;
@@ -22,6 +23,7 @@ public final class Date {
 	 * specifically the function void ConvertDateToYMD(Date date, YearMonthDay *ymd) from date.cpp-file.
 	 */
 	public Date(int date) {
+		this.rawValue = date;
 		/* Year determination in multiple steps to account for leap
 		 * years. First do the large steps, then the smaller ones.
 		 */
@@ -160,6 +162,14 @@ public final class Date {
 	 */
 	public int getYear() {
 		return year;
+	}
+	
+	/**
+	 * Gets the raw value of the date as reported by the game server.
+	 * @return the raw value of the date as reported by the game server
+	 */
+	public int getRawValue() {
+		return rawValue;
 	}
 	
 	/**
