@@ -542,7 +542,10 @@ public class DatabaseConnector implements Closeable {
 					String.format("%04d-%02d-%02d",
 							closureDate.getYear(),
 							closureDate.getMonth(),
-							closureDate.getDay()));
+							// fix for date issues of the game:
+							// some years in the game are leap-years, while they should NOT be
+							// SQL is complaining about such dates, so we correct ALL end-of-Feb to 28th to be sure
+							(closureDate.getDay() == 29 && closureDate.getMonth() == 2) ? 28 : closureDate.getDay()));
 			statement.setString(n++, closureReason == null ? null : closureReason.toString());
 			
 			statement.setLong(n++, gameId);

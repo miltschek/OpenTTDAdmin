@@ -216,7 +216,8 @@ public class ChatListener implements Consumer<ChatMessage> {
 
 			Statement translation = this.context.translate(new Statement(t.getMessage()));
 			
-			if (translation != null) {
+			// only public chats are to be translated to others
+			if (t.isPublic() && translation != null) {
 				HashMap<String, String> translations = new HashMap<>();
 				translations.put(translation.getTargetLanguage(), translation.getStatement());
 
