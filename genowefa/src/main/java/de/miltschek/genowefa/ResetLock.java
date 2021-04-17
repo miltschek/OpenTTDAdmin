@@ -28,6 +28,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.function.BiConsumer;
 
+import de.miltschek.openttdadmin.data.CompanyInfo;
+
 /**
  * A lock for the subsequent objects for the company-reset process.
  */
@@ -78,7 +80,21 @@ public class ResetLock {
 			this.clientsCompanies.put(clientId, playAs);
 			
 			if (this.resetRequestClientId == clientId) {
-				// found the company to be reset
+				// found the client that requested a reset
+				
+				if (playAs == CompanyInfo.DEITY
+						|| playAs == CompanyInfo.INACTIVE_CLIENT
+						|| playAs == CompanyInfo.NEW_COMPANY
+						|| playAs == CompanyInfo.NONE
+						|| playAs == CompanyInfo.SPECTATOR
+						|| playAs == CompanyInfo.TOWN
+						|| playAs == CompanyInfo.WATER) {
+					// not a valid company - cancel the reset
+					this.lastResetRequest = 0;
+					return false;
+				}
+				
+				// store the company
 				this.companyToReset = playAs;
 				this.companyFound = true;
 			}

@@ -35,6 +35,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -51,7 +52,9 @@ import de.miltschek.openttdadmin.data.ChatMessage;
 import de.miltschek.openttdadmin.data.ChatMessage.Recipient;
 import de.miltschek.openttdadmin.data.ClientInfo;
 import de.miltschek.openttdadmin.data.ClosureReason;
+import de.miltschek.openttdadmin.data.Color;
 import de.miltschek.openttdadmin.data.CompanyEconomy;
+import de.miltschek.openttdadmin.data.CompanyInfo;
 import de.miltschek.openttdadmin.data.CompanyStatistics;
 import de.miltschek.openttdadmin.data.Frequency;
 import de.miltschek.openttdadmin.data.FrequencyLong;
@@ -263,6 +266,28 @@ public class Main {
 						sb.append(SDF.format(new Date(client.getJoinedTs())));
 						sb.append(" UTC");
 						
+						sb.append(" - plays as ");
+						switch (client.getPlaysAs()) {
+						case CompanyInfo.DEITY:
+							sb.append("deity (the server itself)"); break;
+						case CompanyInfo.INACTIVE_CLIENT:
+							sb.append("inactive client (should never happen)"); break;
+						case CompanyInfo.NEW_COMPANY:
+							sb.append("new company (ID not yet assigned)"); break;
+						case CompanyInfo.NONE:
+							sb.append("none (should never happen)"); break;
+						case CompanyInfo.SPECTATOR:
+							sb.append("spectator"); break;
+						case CompanyInfo.TOWN:
+							sb.append("town (should never happen)"); break;
+						case CompanyInfo.WATER:
+							sb.append("water (should never happen)"); break;
+							default:
+								sb.append((int)client.getPlaysAs() + 1);
+						}
+						
+						sb.append("\n");
+						
 						if (client.getJoinDate() != null) {
 							sb.append(" - joined ");
 							sb.append(client.getJoinDate().getDay());
@@ -296,7 +321,9 @@ public class Main {
 							+ "Currently " + (context.isGameConnected() ? "connected" : "disconnected") + "\n"
 							+ "Database ID " + context.getDbGameId() + "\n"
 							+ "Game-Date " + context.getCurrentDate() + "\n"
-							+ "Performance " + context.getPerformance() + " ms/game-day");
+							+ "Performance " + context.getPerformance() + " ms/game-day\n"
+							+ "No. clients " + context.getClients().size() + "\n"
+							+ "No. companies " + context.getCompanies().size());
 					
 				} else {
 					return false;
@@ -397,6 +424,49 @@ public class Main {
 			}
 		}
 		
+		//long dbGameId = 1;//db.createNewGame(new GameData("127.0.0.1", 12345, "serwer", "mapa", 12345, 2019, 1024, 2048));
+		//LOGGER.info("create game {}", dbGameId);
+		//Map<Long, GameData> games = db.getGames(true);
+		/*for (Entry<Long, GameData> entry : games.entrySet()) {
+			System.out.println(entry.getValue().getAddress());
+			System.out.println(new Date(entry.getValue().getStartedTs()));
+			System.out.println(entry.getValue().getFinishedTs());
+		}*/
+		
+		/*CompanyData c0 = new CompanyData((byte)0);
+		c0.updateData(new CompanyInfo((byte)0, "Zero", "Mr. Zero", Color.COLOUR_BLUE, true, (byte)0, new byte[] { 0, 0, 0, 0 }));
+		CompanyEconomy e0 = new CompanyEconomy(1234, 5678, 9012, 345, new long[] { 6789,  2345 }, new int[] { 678, 901 }, new int[] { 234, 567 });
+		c0.updateData(e0);
+		CompanyStatistics s0 = new CompanyStatistics(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
+		c0.updateData(s0);
+		
+		e0 = new CompanyEconomy(1, 2, 3, 4, new long[] { 5,  6 }, new int[] { 7, 8 }, new int[] { 9, 10 });
+		s0 = new CompanyStatistics(11, 2, 3, 4, 5, 6, 7, 8, 9, 10);
+		
+		//LOGGER.info("create comp {}", db.createOrUpdateCompany(dbGameId, c0));
+		LOGGER.info("store econo {}", db.storeEconomicData(dbGameId, c0.getCompanyId(), e0));
+		LOGGER.info("store stats {}", db.storeStatisticalData(dbGameId, c0.getCompanyId(), s0));
+		*/
+		//LOGGER.warn("Key {}", key);
+		//LOGGER.info("closed {}", db.closeGame(4));
+		/*CompanyData cmp = new CompanyData((byte)7);
+		cmp.updateData(new CompanyEconomy(10, 20, 30, 40, new long[] { 60,  70}, new int[] { 80, 90}, new int[] {100, 110}));
+		cmp.updateData(new CompanyStatistics(1, 3, 5, 7, 9, 11, 13, 15, 17, 19));
+		long key = db.createNewGame(new GameData("serwer", "mapa", 12345, 2019, 1024, 2048));
+		LOGGER.info("result1 {}", db.createOrUpdateCompany(key, cmp));
+		//LOGGER.info("result2 {}", db.closeCompany(4, (byte)7, new de.miltschek.openttdadmin.data.Date(12345), ClosureReason.Bankrupt));
+		LOGGER.info("result3 {}", db.storeEconomicData(key, cmp));
+		LOGGER.info("result4 {}", db.storeStatisticalData(key, cmp));
+		
+		ClientData clientData = new ClientData(77, GeoIp.lookup("4.4.4.4"));
+		clientData.setClientInfo(new ClientInfo(77, "4.4.4.4", "john", Language.Afrikaans, new de.miltschek.openttdadmin.data.Date(1234), cmp.getCompanyId()));
+		
+		LOGGER.info("result4 {}", db.createOrUpdatePlayer(key, clientData));
+		LOGGER.info("result4 {}", db.storePlayer(key, clientData.getClientId(), cmp.getCompanyId()));
+		LOGGER.info("result4 {}", db.playerQuit(key, clientData.getClientId()));
+		*/
+		//if (true) return;
+		
 		for (Game game : configuration.getGames()) {
 			LOGGER.info("Configuring OTTD Admin client to connect to {} on port {}.", game.getAddress(), game.getPort());
 			
@@ -429,28 +499,6 @@ public class Main {
 				}
 			}
 		}
-		
-		//long key = db.createNewGame(new GameData("127.0.0.1", 12345, "serwer", "mapa", 12345, 2019, 1024, 2048));
-		//db.getGames(true);
-		//LOGGER.warn("Key {}", key);
-		//LOGGER.info("closed {}", db.closeGame(4));
-		/*CompanyData cmp = new CompanyData((byte)7);
-		cmp.updateData(new CompanyEconomy(10, 20, 30, 40, new long[] { 60,  70}, new int[] { 80, 90}, new int[] {100, 110}));
-		cmp.updateData(new CompanyStatistics(1, 3, 5, 7, 9, 11, 13, 15, 17, 19));
-		long key = db.createNewGame(new GameData("serwer", "mapa", 12345, 2019, 1024, 2048));
-		LOGGER.info("result1 {}", db.createOrUpdateCompany(key, cmp));
-		//LOGGER.info("result2 {}", db.closeCompany(4, (byte)7, new de.miltschek.openttdadmin.data.Date(12345), ClosureReason.Bankrupt));
-		LOGGER.info("result3 {}", db.storeEconomicData(key, cmp));
-		LOGGER.info("result4 {}", db.storeStatisticalData(key, cmp));
-		
-		ClientData clientData = new ClientData(77, GeoIp.lookup("4.4.4.4"));
-		clientData.setClientInfo(new ClientInfo(77, "4.4.4.4", "john", Language.Afrikaans, new de.miltschek.openttdadmin.data.Date(1234), cmp.getCompanyId()));
-		
-		LOGGER.info("result4 {}", db.createOrUpdatePlayer(key, clientData));
-		LOGGER.info("result4 {}", db.storePlayer(key, clientData.getClientId(), cmp.getCompanyId()));
-		LOGGER.info("result4 {}", db.playerQuit(key, clientData.getClientId()));
-		*/
-		//if (true) return;
 		
 		System.out.println("enter q/quit/exit to quit");
 		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));

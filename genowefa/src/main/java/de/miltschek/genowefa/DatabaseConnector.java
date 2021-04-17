@@ -28,8 +28,10 @@ public class DatabaseConnector implements Closeable {
 	private static final Logger LOGGER = LoggerFactory.getLogger(DatabaseConnector.class);
 	
 	private static final String F_ID = "`id`",
-			F_STARTED = "`started`",
-			F_FINISHED = "`finished`",
+			//F_STARTED = "`started`",
+			//F_FINISHED = "`finished`",
+			F_TS_STARTED = "`ts_started`",
+			F_TS_FINISHED = "`ts_finished`",
 			F_SERVER_NAME = "`server_name`",
 			F_MAP_NAME = "`map_name`",
 			F_GENERATION_SEED = "`generation_seed`",
@@ -68,21 +70,24 @@ public class DatabaseConnector implements Closeable {
 			F_PROXY = "`proxy`",
 			F_LEFT_TS = "`left_ts`",
 			F_ADDRESS = "`address`",
-			F_PORT = "`port`";
+			F_PORT = "`port`",
+			F_GAME_DATE = "`game_date`";
 	
 	private static final String TABLE_GAMES = "`genowefa_games`";
 	private static final String CREATE_GAMES = "CREATE TABLE " + TABLE_GAMES + " (" + 
 			F_ID + " BIGINT unsigned NOT NULL AUTO_INCREMENT," +
 			F_ADDRESS + " VARCHAR(255) NOT NULL," +
 			F_PORT + " INT NOT NULL," +
-			F_STARTED + " DATETIME," +
-			F_FINISHED + " DATETIME," +
+			F_TS_STARTED + " TIMESTAMP DEFAULT 0," +
+			F_TS_FINISHED + " TIMESTAMP DEFAULT 0," +
 			F_SERVER_NAME + " VARCHAR(255)," +
 			F_MAP_NAME + " VARCHAR(255)," + 
 			F_GENERATION_SEED + " INT," + 
 			F_STARTING_YEAR + " INT," + 
 			F_MAP_SIZE_X + " INT," + 
 			F_MAP_SIZE_Y + " INT," + 
+			F_GAME_DATE + " DATE," +
+			F_PERFORMANCE + " INT," +
 			"PRIMARY KEY (" + F_ID + ")" + 
 			");";
 	
@@ -105,7 +110,25 @@ public class DatabaseConnector implements Closeable {
 			" ON UPDATE CASCADE" +
 			");";
 	
-	private static final String TABLE_ECONOMY = "`genowefa_economy`";
+	private static final String TABLE_ECONOMICS = "`genowefa_economics`";
+	private static final String CREATE_ECONOMICS = "CREATE TABLE " + TABLE_ECONOMICS + " (" + 
+			F_COMPANY_ID + " BIGINT unsigned NOT NULL PRIMARY KEY," + 
+			//F_TS + " DATETIME NOT NULL," +
+			F_TS + " TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP," +
+			F_INCOME + " BIGINT NOT NULL," + 
+			F_LOAN + " BIGINT NOT NULL," + 
+			F_MONEY + " BIGINT NOT NULL," + 
+			F_VALUE + " BIGINT NOT NULL," + 
+			F_PERFORMANCE + " INT NOT NULL," + 
+			//"KEY `economy_index` (" + F_COMPANY_ID + ") USING BTREE," + 
+			//"CONSTRAINT `fk_economy_company`\r\n" + 
+			"CONSTRAINT `fk_economics_company`\r\n" +
+			"FOREIGN KEY (" + F_COMPANY_ID + ") REFERENCES " + TABLE_COMPANIES + " (" + F_ID + ")" + 
+			" ON DELETE CASCADE\r\n" + 
+			" ON UPDATE CASCADE" +
+			");";
+	
+	/*private static final String TABLE_ECONOMY = "`genowefa_economy`";
 	private static final String CREATE_ECONOMY = "CREATE TABLE " + TABLE_ECONOMY + " (" + 
 			F_COMPANY_ID + " BIGINT unsigned NOT NULL," + 
 			F_TS + " DATETIME NOT NULL," + 
@@ -137,6 +160,26 @@ public class DatabaseConnector implements Closeable {
 			F_NHARBOURS + " INT NOT NULL," + 
 			"KEY `statistics_index` (" + F_COMPANY_ID + ") USING BTREE," + 
 			"CONSTRAINT `fk_stat_company`\r\n" + 
+			"FOREIGN KEY (" + F_COMPANY_ID + ") REFERENCES " + TABLE_COMPANIES + " (" + F_ID + ")" + 
+			" ON DELETE CASCADE\r\n" + 
+			" ON UPDATE CASCADE" +
+			");";*/
+	
+	private static final String TABLE_INFRASTRUCTURE = "`genowefa_infrastructure`";
+	private static final String CREATE_INFRASTRUCTURE = "CREATE TABLE " + TABLE_INFRASTRUCTURE + " (" +
+			F_COMPANY_ID + " BIGINT unsigned NOT NULL PRIMARY KEY," +
+			F_TS + " TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP," +
+			F_NTRAINS + " INT NOT NULL," +
+			F_NLORRIES + " INT NOT NULL," +
+			F_NBUSSES + " INT NOT NULL," +
+			F_NPLANES + " INT NOT NULL," +
+			F_NSHIPS + " INT NOT NULL," +
+			F_NSTATIONS + " INT NOT NULL," +
+			F_NDEPOTS + " INT NOT NULL," +
+			F_NSTOPS + " INT NOT NULL," +
+			F_NAIRPORTS + " INT NOT NULL," +
+			F_NHARBOURS + " INT NOT NULL," +
+			"CONSTRAINT `fk_infrastructure_company`\r\n" + 
 			"FOREIGN KEY (" + F_COMPANY_ID + ") REFERENCES " + TABLE_COMPANIES + " (" + F_ID + ")" + 
 			" ON DELETE CASCADE\r\n" + 
 			" ON UPDATE CASCADE" +
@@ -194,8 +237,8 @@ public class DatabaseConnector implements Closeable {
 			try {
 				statement.executeUpdate("DROP TABLE IF EXISTS " + TABLE_PLAYERS);
 				statement.executeUpdate("DROP TABLE IF EXISTS " + TABLE_CLIENTS);
-				statement.executeUpdate("DROP TABLE IF EXISTS " + TABLE_ECONOMY);
-				statement.executeUpdate("DROP TABLE IF EXISTS " + TABLE_STATISTICS);
+				statement.executeUpdate("DROP TABLE IF EXISTS " + TABLE_ECONOMICS);
+				statement.executeUpdate("DROP TABLE IF EXISTS " + TABLE_INFRASTRUCTURE);
 				statement.executeUpdate("DROP TABLE IF EXISTS " + TABLE_COMPANIES);
 				statement.executeUpdate("DROP TABLE IF EXISTS " + TABLE_GAMES);
 			} catch (SQLException ex) {
@@ -207,7 +250,7 @@ public class DatabaseConnector implements Closeable {
 		ResultSet resultSet;
 		try {
 			resultSet = statement.executeQuery("SELECT * FROM " + TABLE_GAMES + " WHERE " + F_ID + " = 0");
-			if (resultSet.getMetaData().getColumnCount() != 11) {
+			if (resultSet.getMetaData().getColumnCount() != 13) {
 				LOGGER.warn("Table {} contains an unexpected number of columns {}.", TABLE_GAMES, resultSet.getMetaData().getColumnCount());
 			}
 			resultSet.close();
@@ -229,7 +272,7 @@ public class DatabaseConnector implements Closeable {
 			}
 		}
 		
-		try {
+		/*try {
 			resultSet = statement.executeQuery("SELECT * FROM " + TABLE_ECONOMY + " WHERE " + F_COMPANY_ID + " = 0");
 			if (resultSet.getMetaData().getColumnCount() != 7) {
 				LOGGER.warn("Table {} contains an unexpected number of columns {}.", TABLE_ECONOMY, resultSet.getMetaData().getColumnCount());
@@ -239,9 +282,21 @@ public class DatabaseConnector implements Closeable {
 			if (statement.executeUpdate(CREATE_ECONOMY) == 0) {
 				LOGGER.info("Created table {}.", TABLE_ECONOMY);
 			}
-		}
+		}*/
 		
 		try {
+			resultSet = statement.executeQuery("SELECT * FROM " + TABLE_ECONOMICS + " WHERE " + F_COMPANY_ID + " = 0");
+			if (resultSet.getMetaData().getColumnCount() != 7) {
+				LOGGER.warn("Table {} contains an unexpected number of columns {}.", TABLE_ECONOMICS, resultSet.getMetaData().getColumnCount());
+			}
+			resultSet.close();
+		} catch (SQLException ex) {
+			if (statement.executeUpdate(CREATE_ECONOMICS) == 0) {
+				LOGGER.info("Created table {}.", TABLE_ECONOMICS);
+			}
+		}
+		
+		/*try {
 			resultSet = statement.executeQuery("SELECT * FROM " + TABLE_STATISTICS + " WHERE " + F_COMPANY_ID + " = 0");
 			if (resultSet.getMetaData().getColumnCount() != 12) {
 				LOGGER.warn("Table {} contains an unexpected number of columns {}.", TABLE_STATISTICS, resultSet.getMetaData().getColumnCount());
@@ -250,6 +305,18 @@ public class DatabaseConnector implements Closeable {
 		} catch (SQLException ex) {
 			if (statement.executeUpdate(CREATE_STATISTICS) == 0) {
 				LOGGER.info("Created table {}.", TABLE_STATISTICS);
+			}
+		}*/
+		
+		try {
+			resultSet = statement.executeQuery("SELECT * FROM " + TABLE_INFRASTRUCTURE + " WHERE " + F_COMPANY_ID + " = 0");
+			if (resultSet.getMetaData().getColumnCount() != 12) {
+				LOGGER.warn("Table {} contains an unexpected number of columns {}.", TABLE_INFRASTRUCTURE, resultSet.getMetaData().getColumnCount());
+			}
+			resultSet.close();
+		} catch (SQLException ex) {
+			if (statement.executeUpdate(CREATE_INFRASTRUCTURE) == 0) {
+				LOGGER.info("Created table {}.", TABLE_INFRASTRUCTURE);
 			}
 		}
 		
@@ -294,10 +361,10 @@ public class DatabaseConnector implements Closeable {
 							+ F_STARTING_YEAR + ", " // 7
 							+ F_MAP_SIZE_X + ", " // 8
 							+ F_MAP_SIZE_Y + ", " // 9
-							+ F_STARTED + ", " // 10
-							+ F_FINISHED // 11
+							+ F_TS_STARTED + ", " // 10
+							+ F_TS_FINISHED // 11
 							+ " FROM " + TABLE_GAMES
-							+ (activeOnly ? " WHERE " + F_FINISHED + " IS NULL" : ""));
+							+ (activeOnly ? " WHERE " + F_TS_FINISHED + " = 0" : ""));
 
 			while (resultSet.next()) {
 				int n = 1;
@@ -376,7 +443,7 @@ public class DatabaseConnector implements Closeable {
 					"INSERT INTO " + TABLE_GAMES + " ("
 							+ F_ADDRESS + ", "
 							+ F_PORT + ", "
-							+ F_STARTED + ", "
+							+ F_TS_STARTED + ", "
 							+ F_SERVER_NAME + ", "
 							+ F_MAP_NAME + ", "
 							+ F_GENERATION_SEED + ", "
@@ -418,7 +485,7 @@ public class DatabaseConnector implements Closeable {
 		PreparedStatement statement = null;
 		try {
 			statement = connection.prepareStatement(
-					"UPDATE " + TABLE_GAMES + " SET " + F_FINISHED + " = ? WHERE " + F_ID + " = ?");
+					"UPDATE " + TABLE_GAMES + " SET " + F_TS_FINISHED + " = ? WHERE " + F_ID + " = ?");
 			
 			int n = 1;
 			statement.setTimestamp(n++, new Timestamp(System.currentTimeMillis()));
@@ -562,31 +629,151 @@ public class DatabaseConnector implements Closeable {
 		}
 	}
 	
-	public boolean storeEconomicData(long gameId, byte companyId, CompanyEconomy economy) {
+	public CompanyEconomy getEconomicData(long gameId, byte companyId) {
+		long dbCompanyId = getCompanyId(gameId, companyId);
+		if (dbCompanyId == 0) {
+			return null;
+		}
+		
+		return getEconomicData(dbCompanyId);
+	}
+	
+	public CompanyEconomy getEconomicData(long dbCompanyId) {
 		PreparedStatement statement = null;
 		try {
-			statement = connection.prepareStatement(
-					"INSERT INTO " + TABLE_ECONOMY + " ("
-					+ F_COMPANY_ID + ", "
-					+ F_TS + ", "
-					+ F_INCOME + ", "
-					+ F_LOAN + ", "
+			statement = connection.prepareStatement("SELECT "
 					+ F_MONEY + ", "
+					+ F_LOAN + ", "
+					+ F_INCOME + ", "
 					+ F_VALUE + ", "
-					+ F_PERFORMANCE + ") "
-					+ "SELECT " + F_ID + ", ?, ?, ?, ?, ?, ? FROM " + TABLE_COMPANIES
-						+ " WHERE " + F_GAME_ID + " = ? AND " + F_COMPANY_ID + " = ? AND " + F_CLOSED + " IS NULL");
+					+ F_PERFORMANCE + " "
+					+ "FROM " + TABLE_ECONOMICS + " "
+					+ "WHERE " + F_COMPANY_ID + " = ?");
+			
+			statement.setLong(1, dbCompanyId);
+			
+			ResultSet rs = statement.executeQuery();
+			if (rs.next()) {
+				int n = 1;
+				return new CompanyEconomy(
+						rs.getLong(n++), // money
+						rs.getLong(n++), // loan
+						rs.getLong(n++), // income
+						-1, // delivered cargo
+						new long[] { rs.getLong(n++), -1 }, // past company value
+						new int[] { rs.getInt(n++), -1 }, // past performance
+						new int[] { -1, -1 }); // past delivered cargo
+			} else {
+				return null;
+			}
+		} catch (SQLException ex) {
+			LOGGER.error("Failed to get economic data of company db-id {}.", dbCompanyId, ex);
+			return null;
+		} finally {
+			try {
+				statement.close();
+			} catch (Exception e) {}
+		}
+	}
+	
+	public CompanyStatistics getStatisticalData(long gameId, byte companyId) {
+		long dbCompanyId = getCompanyId(gameId, companyId);
+		if (dbCompanyId == 0) {
+			return null;
+		}
+		
+		return getStatisticalData(dbCompanyId);
+	}
+	
+	public CompanyStatistics getStatisticalData(long dbCompanyId) {
+		PreparedStatement statement = null;
+		try {
+			statement = connection.prepareStatement("SELECT "
+					+ F_NTRAINS + ", "
+					+ F_NLORRIES + ", "
+					+ F_NBUSSES + ", "
+					+ F_NPLANES + ", "
+					+ F_NSHIPS + ", "
+					
+					+ F_NSTATIONS + ", "
+					+ F_NDEPOTS + ", "
+					+ F_NSTOPS + ", "
+					+ F_NAIRPORTS + ", "
+					+ F_NHARBOURS + " "
+					+ "FROM " + TABLE_INFRASTRUCTURE + " "
+					+ "WHERE " + F_COMPANY_ID + " = ?");
+			
+			statement.setLong(1, dbCompanyId);
+			
+			ResultSet rs = statement.executeQuery();
+			if (rs.next()) {
+				int n = 1;
+				return new CompanyStatistics(
+						rs.getInt(n++), // numberOfTrains
+						rs.getInt(n++), // numberOfLorries
+						rs.getInt(n++), // numberOfBusses
+						rs.getInt(n++), // numberOfPlanes
+						rs.getInt(n++), // numberOfShips
+						
+						rs.getInt(n++), // numberOfTrainStations
+						rs.getInt(n++), // numberOfLorryDepots
+						rs.getInt(n++), // numberOfBusStops
+						rs.getInt(n++), // numberOfAirports
+						rs.getInt(n++) // numberOfHarbours
+						);
+			} else {
+				return null;
+			}
+		} catch (SQLException ex) {
+			LOGGER.error("Failed to get infrastructure data of company db-id {}.", dbCompanyId, ex);
+			return null;
+		} finally {
+			try {
+				statement.close();
+			} catch (Exception e) {}
+		}
+	}
+	
+	public boolean storeEconomicData(long gameId, byte companyId, CompanyEconomy economy) {
+		long dbCompanyId = getCompanyId(gameId, companyId);
+		if (dbCompanyId == 0) {
+			return false;
+		}
+		
+		CompanyEconomy alreadyThere = getEconomicData(dbCompanyId);
+		
+		PreparedStatement statement = null;
+		try {
+			if (alreadyThere == null) {
+				statement = connection.prepareStatement(
+						"INSERT INTO " + TABLE_ECONOMICS + " ("
+						+ F_INCOME + ", "
+						+ F_LOAN + ", "
+						+ F_MONEY + ", "
+						+ F_VALUE + ", "
+						+ F_PERFORMANCE + ", "
+						+ F_COMPANY_ID + ") "
+						+ "VALUES (?, ?, ?, ?, ?, ?)");
+				
+			} else {
+				statement = connection.prepareStatement(
+						"UPDATE " + TABLE_ECONOMICS + " SET "
+						+ F_INCOME + " = GREATEST(" + F_INCOME + ", ?), "
+						+ F_LOAN + " = GREATEST(" + F_LOAN + ", ?), "
+						+ F_MONEY + " = GREATEST(" + F_MONEY + ", ?), "
+						+ F_VALUE + " = GREATEST(" + F_VALUE + ", ?), "
+						+ F_PERFORMANCE + " = GREATEST(" + F_PERFORMANCE + ", ?) "
+						+ "WHERE " + F_COMPANY_ID + " = ?");
+			}
 			
 			int n = 1;
-			statement.setTimestamp(n++, new Timestamp(System.currentTimeMillis()));
 			statement.setLong(n++, economy.getIncome());
 			statement.setLong(n++, economy.getLoan());
 			statement.setLong(n++, economy.getMoney());
 			statement.setLong(n++, economy.getPastCompanyValue()[0]);
 			statement.setInt(n++, economy.getPastPerformance()[0]);
 
-			statement.setLong(n++, gameId);
-			statement.setInt(n++, companyId);
+			statement.setLong(n++, dbCompanyId);
 			
 			return statement.executeUpdate() == 1;
 		} catch (SQLException ex) {
@@ -599,28 +786,82 @@ public class DatabaseConnector implements Closeable {
 		}
 	}
 	
-	public boolean storeStatisticalData(long gameId, byte companyId, CompanyStatistics stats) {
+	public long getCompanyId(long gameId, byte companyId) {
 		PreparedStatement statement = null;
 		try {
-			statement = connection.prepareStatement(
-					"INSERT INTO " + TABLE_STATISTICS + " ("
-					+ F_COMPANY_ID + ", "
-					+ F_TS + ", "
-					+ F_NTRAINS + ", "
-					+ F_NLORRIES + ", "
-					+ F_NBUSSES + ", "
-					+ F_NPLANES + ", "
-					+ F_NSHIPS + ", "
-					+ F_NSTATIONS + ", "
-					+ F_NDEPOTS + ", "
-					+ F_NSTOPS + ", "
-					+ F_NAIRPORTS + ", "
-					+ F_NHARBOURS + ") "
-					+ "SELECT " + F_ID + ", ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? FROM " + TABLE_COMPANIES
-						+ " WHERE " + F_GAME_ID + " = ? AND " + F_COMPANY_ID + " = ? AND " + F_CLOSED + " IS NULL");
+			statement = connection.prepareStatement("SELECT " + F_ID + " FROM " + TABLE_COMPANIES
+					+ " WHERE " + F_GAME_ID + " = ? AND " + F_COMPANY_ID + " = ? AND " + F_CLOSED + " IS NULL ORDER BY " + F_ID + " ASC");
 			
 			int n = 1;
-			statement.setTimestamp(n++, new Timestamp(System.currentTimeMillis()));
+			statement.setLong(n++, gameId);
+			statement.setInt(n++, companyId);
+			
+			long result;
+			ResultSet rs = statement.executeQuery();
+			if (rs.next()) {
+				result = rs.getLong(1);
+			} else {
+				result = 0;
+			}
+			
+			if (rs.next()) {
+				LOGGER.error("Data inconsistency detected: more than one active company {} for the game {} found.", companyId, gameId);
+			}
+			
+			rs.close();
+			return result;
+		} catch (SQLException ex) {
+			LOGGER.error("Failed to get the company's {} db-id of the game {}.", companyId, gameId, ex);
+			return 0;
+		} finally {
+			try {
+				statement.close();
+			} catch (Exception e) {}
+		}
+	}
+	
+	public boolean storeStatisticalData(long gameId, byte companyId, CompanyStatistics stats) {
+		long dbCompanyId = getCompanyId(gameId, companyId);
+		if (dbCompanyId == 0) {
+			return false;
+		}
+		
+		CompanyStatistics alreadyThere = getStatisticalData(dbCompanyId);
+
+		PreparedStatement statement = null;
+		try {
+			if (alreadyThere == null) {
+				statement = connection.prepareStatement(
+						"INSERT INTO " + TABLE_INFRASTRUCTURE + " ("
+						+ F_NTRAINS + ", "
+						+ F_NLORRIES + ", "
+						+ F_NBUSSES + ", "
+						+ F_NPLANES + ", "
+						+ F_NSHIPS + ", "
+						+ F_NSTATIONS + ", "
+						+ F_NDEPOTS + ", "
+						+ F_NSTOPS + ", "
+						+ F_NAIRPORTS + ", "
+						+ F_NHARBOURS + ", "
+						+ F_COMPANY_ID + ") "
+						+ "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+			} else {
+				statement = connection.prepareStatement(
+						"UPDATE " + TABLE_INFRASTRUCTURE + " SET "
+						+ F_NTRAINS + " = GREATEST(" + F_NTRAINS + ", ?), "
+						+ F_NLORRIES + " = GREATEST(" + F_NLORRIES + ", ?), "
+						+ F_NBUSSES + " = GREATEST(" + F_NBUSSES + ", ?), "
+						+ F_NPLANES + " = GREATEST(" + F_NPLANES + ", ?), "
+						+ F_NSHIPS + " = GREATEST(" + F_NSHIPS + ", ?), "
+						+ F_NSTATIONS + " = GREATEST(" + F_NSTATIONS + ", ?), "
+						+ F_NDEPOTS + " = GREATEST(" + F_NDEPOTS + ", ?), "
+						+ F_NSTOPS + " = GREATEST(" + F_NSTOPS + ", ?), "
+						+ F_NAIRPORTS + " = GREATEST(" + F_NAIRPORTS + ", ?), "
+						+ F_NHARBOURS + " = GREATEST(" + F_NHARBOURS + ", ?) "
+						+ "WHERE " + F_COMPANY_ID + " = ?");
+			}
+			
+			int n = 1;
 			statement.setInt(n++, stats.getNumberOfTrains());
 			statement.setInt(n++, stats.getNumberOfLorries());
 			statement.setInt(n++, stats.getNumberOfBusses());
@@ -632,8 +873,7 @@ public class DatabaseConnector implements Closeable {
 			statement.setInt(n++, stats.getNumberOfAirports());
 			statement.setInt(n++, stats.getNumberOfHarbours());
 
-			statement.setLong(n++, gameId);
-			statement.setInt(n++, companyId);
+			statement.setLong(n++, dbCompanyId);
 			
 			return statement.executeUpdate() == 1;
 		} catch (SQLException ex) {
@@ -764,6 +1004,59 @@ public class DatabaseConnector implements Closeable {
 		}
 	}
 	
+	public boolean updateGameDate(long gameId, Date gameDate) {
+		PreparedStatement statement = null;
+		try {
+			statement = connection.prepareStatement(
+					"UPDATE " + TABLE_GAMES + " SET "
+					+ F_GAME_DATE + " = ? "
+					+ "WHERE " + F_ID + " = ?");
+			
+			int n = 1;
+			statement.setString(n++,
+					String.format("%04d-%02d-%02d",
+							gameDate.getYear(),
+							gameDate.getMonth(),
+							// fix for date issues of the game:
+							// some years in the game are leap-years, while they should NOT be
+							// SQL is complaining about such dates, so we correct ALL end-of-Feb to 28th to be sure
+							(gameDate.getDay() == 29 && gameDate.getMonth() == 2) ? 28 : gameDate.getDay()));
+			statement.setLong(n++, gameId);
+			
+			return statement.executeUpdate() == 1;
+		} catch (SQLException ex) {
+			LOGGER.error("Failed to update game {} date {}", gameId, gameDate, ex);
+			return false;
+		} finally {
+			try {
+				statement.close();
+			} catch (Exception e) {}
+		}
+	}
+	
+	public boolean updateGamePerformance(long gameId, int performance) {
+		PreparedStatement statement = null;
+		try {
+			statement = connection.prepareStatement(
+					"UPDATE " + TABLE_GAMES + " SET "
+					+ F_PERFORMANCE + " = ? "
+					+ "WHERE " + F_ID + " = ?");
+			
+			int n = 1;
+			statement.setInt(n++, performance);;
+			statement.setLong(n++, gameId);
+			
+			return statement.executeUpdate() == 1;
+		} catch (SQLException ex) {
+			LOGGER.error("Failed to update game {} performance {}", gameId, performance, ex);
+			return false;
+		} finally {
+			try {
+				statement.close();
+			} catch (Exception e) {}
+		}
+	}
+	
 	public List<TopPlayer> getTopList(long gameId, int limit) {
 		PreparedStatement statement = null;
 		try {
@@ -771,13 +1064,12 @@ public class DatabaseConnector implements Closeable {
 			
 			statement = connection.prepareStatement(
 					"SELECT c." + F_NAME + ", "
-							+ "MAX(e." + F_INCOME + "), MAX(e." + F_LOAN + "), MAX(e." + F_MONEY + "), MAX(e." + F_VALUE + ") AS here, MAX(e." + F_PERFORMANCE + "), "
-							+ "g." + F_STARTED + ", g." + F_FINISHED + " "
-							+ "FROM " + TABLE_ECONOMY + " AS e "
-							+ "LEFT JOIN " + TABLE_COMPANIES + " AS c ON (e." + F_COMPANY_ID + " = c." + F_ID + ") "
+							+ "e." + F_INCOME + ", e." + F_LOAN + ", e." + F_MONEY + ", e." + F_VALUE + " AS here, e." + F_PERFORMANCE + ", "
+							+ "g." + F_TS_STARTED + ", g." + F_TS_FINISHED + " "
+							+ "FROM " + TABLE_COMPANIES + " AS c "
+							+ "LEFT JOIN " + TABLE_ECONOMICS + " AS e ON (e." + F_COMPANY_ID + " = c." + F_ID + ") "
 							+ "LEFT JOIN " + TABLE_GAMES + " AS g ON (c." + F_GAME_ID + " = g." + F_ID + ") "
 							+ "WHERE g." + F_SERVER_NAME + " = (SELECT " + F_SERVER_NAME + " FROM " + TABLE_GAMES + " WHERE " + F_ID + " = ?) "
-							+ "GROUP BY e." + F_COMPANY_ID + " "
 							+ "ORDER BY here DESC "
 							+ "LIMIT ?");
 			

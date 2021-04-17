@@ -137,7 +137,7 @@ public class CustomServerListener extends ServerListenerAdapter {
 			int days = date.getRawValue() - this.lastDate.getRawValue();
 			if (days > 0) {
 				long realTime = System.currentTimeMillis() - lastDateTs;
-				this.context.setPerformance(realTime / days);
+				this.context.setPerformance((int)(realTime / days));
 			}
 		}
 		

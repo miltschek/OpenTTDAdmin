@@ -65,7 +65,10 @@ public class Context {
 	private boolean gameConnected;
 	private long dbGameId;
 	private Date currentDate = new Date(0);
-	private long performance;
+	private int dbUpdateCounterDate = 0;
+	private int performance;
+	private int dbUpdateCounterPerformance = 0;
+	private final int DB_UPDATE_INTERVAL = 10;
 	
 	/**
 	 * Describes type of an event for filtering purposes.
@@ -179,6 +182,14 @@ public class Context {
 	 */
 	public void setCurrentDate(Date currentDate) {
 		this.currentDate = currentDate;
+		
+		if (this.db != null && dbGameId > 0 && (this.dbUpdateCounterDate++ % DB_UPDATE_INTERVAL == 0)) {
+			if (db.updateGameDate(dbGameId, currentDate)) {
+				LOGGER.debug("Updated game {} date {}.", dbGameId, currentDate);
+			} else {
+				LOGGER.error("Failed to update game {} date {}.", dbGameId, currentDate);
+			}
+		}
 	}
 	
 	/**
@@ -193,15 +204,23 @@ public class Context {
 	 * Sets the duration of one in-game day expressed as real-time milliseconds.
 	 * @param performance the duration of one in-game day expressed as real-time milliseconds
 	 */
-	public void setPerformance(long performance) {
+	public void setPerformance(int performance) {
 		this.performance = performance;
+		
+		if (this.db != null && dbGameId > 0 && (this.dbUpdateCounterPerformance++ % DB_UPDATE_INTERVAL == 0)) {
+			if (db.updateGamePerformance(dbGameId, performance)) {
+				LOGGER.debug("Updated game {} performance {}.", dbGameId, performance);
+			} else {
+				LOGGER.error("Failed to update game {} performance {}.", dbGameId, performance);
+			}
+		}
 	}
 	
 	/**
 	 * Gets the duration of one in-game day expressed as real-time milliseconds.
 	 * @return the duration of one in-game day expressed as real-time milliseconds
 	 */
-	public long getPerformance() {
+	public int getPerformance() {
 		return performance;
 	}
 	
