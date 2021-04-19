@@ -424,6 +424,9 @@ public class Main {
 			}
 		}
 		
+		/*for (String s : configuration.getPlayerNames()) {
+			System.out.println(s);
+		}*/
 		//long dbGameId = 1;//db.createNewGame(new GameData("127.0.0.1", 12345, "serwer", "mapa", 12345, 2019, 1024, 2048));
 		//LOGGER.info("create game {}", dbGameId);
 		//Map<Long, GameData> games = db.getGames(true);

@@ -353,13 +353,16 @@ public class CustomClientListener extends ClientListenerAdapter implements Clien
 		if (this.context.isForceNameChange() && NO_NAME_PLAYER.matcher(clientInfo.getClientName()).matches()) {
 			int hash = clientInfo.getNetworkAddress().hashCode() & 0x7fffffff;
 
-			int index = hash % NAMES.length;
+			String[] namesTable = (this.context.getPlayerNames() == null
+					|| this.context.getPlayerNames().length == 0) ? NAMES : this.context.getPlayerNames();
+			
+			int index = hash % namesTable.length;
 			final int loopDetection = index;
 			
 			boolean free = true;
 			do {
 				index++;
-				if (index >= NAMES.length) {
+				if (index >= namesTable.length) {
 					index = 0;
 				}
 				
@@ -369,7 +372,7 @@ public class CustomClientListener extends ClientListenerAdapter implements Clien
 				}
 				
 				for (ClientData otherClient : newClients.values()) {
-					if (NAMES[index].equals(otherClient.getName())) {
+					if (namesTable[index].equals(otherClient.getName())) {
 						free = false;
 						break;
 					}
@@ -377,9 +380,9 @@ public class CustomClientListener extends ClientListenerAdapter implements Clien
 			} while (!free);
 			
 			if (free) {
-				LOGGER.info("Forcing the player {} to get a new name {}.", clientInfo.getClientId(), NAMES[index]);
+				LOGGER.info("Forcing the player {} to get a new name {}.", clientInfo.getClientId(), namesTable[index]);
 				this.context.notifyUser(clientInfo.getClientId(), "You will get a new nice name. Feel free to change it via !name or in multiplayer settings.");
-				this.context.renameUser(clientInfo.getClientId(), NAMES[index]);
+				this.context.renameUser(clientInfo.getClientId(), namesTable[index]);
 			}
 		}
 	}

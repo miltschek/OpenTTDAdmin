@@ -430,6 +430,10 @@ public class Context {
 		this.admin.executeRCon("resetcompany " + companyId);
 	}
 	
+	public String[] getPlayerNames() {
+		return this.configuration.getPlayerNames();
+	}
+	
 	/**
 	 * Activate the lock for the company reset routine.
 	 * @param clientId client ID that requested a reset

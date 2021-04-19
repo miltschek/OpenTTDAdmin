@@ -31,6 +31,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -394,6 +395,7 @@ public class Configuration {
 	private final Google google;
 	private final List<Game> games;
 	private final Map<String, String> welcomeMessages;
+	private final String[] playerNames;
 	private final Database database;
 	private final Chat chat = new Chat();
 	
@@ -494,6 +496,16 @@ public class Configuration {
 			} else {
 				this.welcomeMessages = null;
 			}
+			
+			if (json.has("player_names")) {
+				JSONArray playerNamesJson = json.getJSONArray("player_names");
+				this.playerNames = new String[playerNamesJson.length()];
+				for (int n = playerNamesJson.length() - 1; n >= 0; n--) {
+					this.playerNames[n] = playerNamesJson.getString(n);
+				}
+			} else {
+				this.playerNames = null;
+			}
 		} catch (JSONException ex) {
 			throw new IOException(ex);
 		}
@@ -521,6 +533,14 @@ public class Configuration {
 	 */
 	public Collection<? extends Game> getGames() {
 		return games;
+	}
+	
+	/**
+	 * Gets a list of player names for forced name changes.
+	 * @return list of player names for forced name changes
+	 */
+	public String[] getPlayerNames() {
+		return playerNames;
 	}
 	
 	/**
