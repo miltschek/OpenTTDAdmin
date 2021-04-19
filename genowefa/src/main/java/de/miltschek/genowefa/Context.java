@@ -56,6 +56,7 @@ public class Context {
 	private final OttdAdminClient admin;
 	private final SlackRTMClient slack;
 	private final String channel;
+	private final String adminChannel;
 	private final GoogleTranslate googleTranslate;
 	private final DatabaseConnector db;
 	
@@ -148,6 +149,7 @@ public class Context {
 			OttdAdminClient admin,
 			SlackRTMClient slack,
 			String channel,
+			String adminChannel,
 			GoogleTranslate googleTranslate,
 			DatabaseConnector db) {
 		this.configuration = configuration;
@@ -156,6 +158,7 @@ public class Context {
 		this.admin = admin;
 		this.slack = slack;
 		this.channel = channel;
+		this.adminChannel = adminChannel;
 		this.googleTranslate = googleTranslate;
 		this.db = db;
 	}
@@ -305,7 +308,14 @@ public class Context {
 				return true;
 			}
 			
-			return this.slack.sendMessage(this.channel, message);
+			boolean result;
+			if (eventType == EventType.AdminRequest && this.adminChannel != null) {
+				result = this.slack.sendMessage(this.adminChannel, message + " /" + this.channel);
+			} else {
+				result = true;
+			}
+			
+			return this.slack.sendMessage(this.channel, message) & result;
 		}
 		
 		return false;

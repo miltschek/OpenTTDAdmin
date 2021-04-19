@@ -69,7 +69,7 @@ public class ChatListener implements Consumer<ChatMessage> {
 		if (t.getMessage() == null) {
 			// nix
 			LOGGER.debug("A null chat message has been received from {} to {} private {} company {} public {}.", t.getSenderId(), t.getRecipientId(), t.isPrivate(), t.isCompany(), t.isPublic());
-		} else if (t.getMessage().startsWith("!admin")) {
+		} else if (t.getMessage().startsWith("!admin") || t.getMessage().startsWith("/admin")) {
 			LOGGER.warn("Admin action has been requested by {}: {}.", t.getSenderId(), t.getMessage());
 	    	if (this.context.notifyAdmin(
 	    			EventType.AdminRequest,

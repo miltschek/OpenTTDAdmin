@@ -481,7 +481,7 @@ public class Main {
 			admin.setUpdateDates(Frequency.Daily);
 			
 			ResetLock resetLock = new ResetLock();
-			Context context = new Context(configuration, game, resetLock, admin, slack, game.getSlackChannel(), googleTranslate, db);
+			Context context = new Context(configuration, game, resetLock, admin, slack, game.getSlackChannel(), game.getSlackAdminChannel(), googleTranslate, db);
 			admin.addChatListener(new ChatListener(context));
 			admin.addClientListener(new CustomClientListener(context));
 			admin.addCompanyListener(new CustomCompanyListener(context));

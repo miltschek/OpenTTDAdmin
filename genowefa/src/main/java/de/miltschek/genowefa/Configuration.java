@@ -177,6 +177,7 @@ public class Configuration {
 		private final String password;
 		
 		private String slackChannel;
+		private String slackAdminChannel;
 		private String welcomeMessagePath = "on_new_client.txt";
 		private boolean forceNameChange;
 
@@ -199,6 +200,14 @@ public class Configuration {
 		 */
 		public void setSlackChannel(String slackChannel) {
 			this.slackChannel = slackChannel;
+		}
+		
+		/**
+		 * Sets an admin slack channel name to be coupled with this game server.
+		 * @param slackAdminChannel an admin slack channel name to be coupled with this game server. Include the hash-symbol.
+		 */
+		public void setSlackAdminChannel(String slackAdminChannel) {
+			this.slackAdminChannel = slackAdminChannel;
 		}
 		
 		/**
@@ -239,6 +248,14 @@ public class Configuration {
 		 */
 		public String getSlackChannel() {
 			return slackChannel;
+		}
+		
+		/**
+		 * Gets the admin slack channel name to be coupled with this game server.
+		 * @return the admin slack channel name to be coupled with this game server.
+		 */
+		public String getSlackAdminChannel() {
+			return slackAdminChannel;
 		}
 		
 		/**
@@ -420,6 +437,10 @@ public class Configuration {
 	
 					if (gameJson.has("slack_channel")) {
 						game.setSlackChannel(gameJson.getString("slack_channel"));
+					}
+					
+					if (gameJson.has("slack_admin_channel")) {
+						game.setSlackAdminChannel(gameJson.getString("slack_admin_channel"));
 					}
 					
 					if (gameJson.has("welcome_msg_path")) {
