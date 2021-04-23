@@ -550,7 +550,7 @@ public class Context {
 			if (this.db.playerQuit(dbGameId, clientId)) {
 				LOGGER.debug("Stored client ID {} quit the game ID {}.", clientId, dbGameId);
 			} else {
-				LOGGER.error("Failed to store client ID {} quit the game ID {}.", clientId, dbGameId);
+				LOGGER.warn("Failed to store client ID {} quit the game ID {}.", clientId, dbGameId);
 			}
 		}
 	}
@@ -619,7 +619,7 @@ public class Context {
 							this.getPort(),
 							gameData.getServerName());
 				} else {
-					dbGameId = db.createNewGame(gameData);
+					dbGameId = db.createNewGame(this.thisGame.getGameName(), gameData);
 					
 					if (dbGameId > 0) {
 						LOGGER.info("Created a new Game ID {} in the database for the server {}:{}, name {}.",

@@ -31,7 +31,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Consumer;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -173,6 +172,7 @@ public class Configuration {
 	 * Holds settings specific to OTTD game server.
 	 */
 	public static class Game {
+		private final String gameName;
 		private final String address;
 		private final int port;
 		private final String password;
@@ -184,15 +184,24 @@ public class Configuration {
 
 		/**
 		 * Creates settings of an OTTD game server.
+		 * @param gameName name of the game
 		 * @param address network address of the server (IP or name).
 		 * @param port admin port of the server
 		 * @param password admin password to the server
 		 */
-		public Game(String address, int port, String password) {
-			super();
+		public Game(String gameName, String address, int port, String password) {
+			this.gameName = gameName;
 			this.address = address;
 			this.port = port;
 			this.password = password;
+		}
+		
+		/**
+		 * Gets the name of the game.
+		 * @return the name of the game.
+		 */
+		public String getGameName() {
+			return gameName;
 		}
 		
 		/**
@@ -435,7 +444,11 @@ public class Configuration {
 				for (int n = gamesJson.length() - 1; n >= 0; n--) {
 					JSONObject gameJson = gamesJson.getJSONObject(n);
 					
-					Game game = new Game(gameJson.getString("address"), gameJson.getInt("port"), gameJson.getString("password"));
+					Game game = new Game(
+							gameJson.getString("name"),
+							gameJson.getString("address"),
+							gameJson.getInt("port"),
+							gameJson.getString("password"));
 	
 					if (gameJson.has("slack_channel")) {
 						game.setSlackChannel(gameJson.getString("slack_channel"));

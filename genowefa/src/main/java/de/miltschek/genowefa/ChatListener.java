@@ -227,6 +227,11 @@ public class ChatListener implements Consumer<ChatMessage> {
 						continue;
 					}
 					
+					// skip translations to the sender
+					if (user.getClientId() == t.getSenderId()) {
+						continue;
+					}
+					
 					// only for users that requested a translation...
 					String target;
 					if ((target = user.getTranslationLanguage()) != null) {
@@ -261,12 +266,16 @@ public class ChatListener implements Consumer<ChatMessage> {
 			if (translation != null && !"en".equals(translation.getSourceLanguage())) {
 				this.context.notifyAdmin(
 						EventType.Chat,
-						":pencil: " + senderId + " " + t.getMessage() + "\r\n"
+						":pencil: " + senderId + " "
+						+ (t.isPrivate() ? ("(P->" + t.getRecipientId() + ") ") : (t.isCompany() ? ("(C->" + t.getRecipientId() + ") ") : ""))
+						+ t.getMessage() + "\r\n"
 						+ ":flags: " + translation.getStatement());
 			} else {
 				this.context.notifyAdmin(
 						EventType.Chat,
-						":pencil: " + senderId + " " + t.getMessage());
+						":pencil: " + senderId + " "
+						+ (t.isPrivate() ? ("(P->" + t.getRecipientId() + ") ") : (t.isCompany() ? ("(C->" + t.getRecipientId() + ") ") : ""))
+						+ t.getMessage());
 			}
 		}
 	}
