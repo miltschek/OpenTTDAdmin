@@ -359,8 +359,9 @@ public class CustomClientListener extends ClientListenerAdapter implements Clien
 			int index = hash % namesTable.length;
 			final int loopDetection = index;
 			
-			boolean free = true;
+			boolean free;
 			do {
+				free = true;
 				index++;
 				if (index >= namesTable.length) {
 					index = 0;
@@ -381,7 +382,7 @@ public class CustomClientListener extends ClientListenerAdapter implements Clien
 			
 			if (free) {
 				LOGGER.info("Forcing the player {} to get a new name {}.", clientInfo.getClientId(), namesTable[index]);
-				this.context.notifyUser(clientInfo.getClientId(), "You will get a new nice name. Feel free to change it via !name or in multiplayer settings.");
+				// nobody reads it this.context.notifyUser(clientInfo.getClientId(), "You will get a new nice name. Feel free to change it via !name or in multiplayer settings.");
 				this.context.renameUser(clientInfo.getClientId(), namesTable[index]);
 			}
 		}
