@@ -824,7 +824,7 @@ public class DatabaseConnector implements Closeable {
 		}
 	}
 	
-	public boolean createOrUpdatePlayer(long gameId, ClientData clientData) {
+	public boolean createOrUpdatePlayer(long gameId, int clientId, String name, String networkAddress, String countryCode, String city, boolean proxy) {
 		PreparedStatement statement = null;
 		try {
 			statement = connection.prepareStatement(
@@ -832,7 +832,7 @@ public class DatabaseConnector implements Closeable {
 			
 			int n = 1;
 			statement.setLong(n++, gameId);
-			statement.setInt(n++, clientData.getClientId());
+			statement.setInt(n++, clientId);
 
 			int count = 0;
 			ResultSet resultSet = statement.executeQuery();
@@ -862,23 +862,23 @@ public class DatabaseConnector implements Closeable {
 						+ F_PROXY + " = ? "
 						+ "WHERE " + F_GAME_ID + " = ? AND " + F_CLIENT_ID + " = ?");
 			} else {
-				LOGGER.error("More than one player entries of the same key: game {}, client {}.", gameId, clientData.getClientId());
+				LOGGER.error("More than one player entries of the same key: game {}, client {}.", gameId, clientId);
 				return false;
 			}
 			
 			n = 1;
-			statement.setString(n++, clientData.getName());
-			statement.setString(n++, clientData.getNetworkAddress());
-			statement.setString(n++, clientData.getCountryCode());
-			statement.setString(n++, clientData.getCity());
-			statement.setBoolean(n++, clientData.isProxy());
+			statement.setString(n++, name);
+			statement.setString(n++, networkAddress);
+			statement.setString(n++, countryCode);
+			statement.setString(n++, city);
+			statement.setBoolean(n++, proxy);
 			
 			statement.setLong(n++, gameId);
-			statement.setInt(n++, clientData.getClientId());
+			statement.setInt(n++, clientId);
 
 			return statement.executeUpdate() == 1;
 		} catch (SQLException ex) {
-			LOGGER.error("Failed to create/update client data: game {}, client {}.", gameId, clientData.getClientId(), ex);
+			LOGGER.error("Failed to create/update client data: game {}, client {}.", gameId, clientId, ex);
 			return false;
 		} finally {
 			try {

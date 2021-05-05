@@ -183,7 +183,17 @@ public class Main {
 						
 						sb.append("\n");
 						
-						sb.append(" - loan ");
+						for (ClientData client : context.getClients()) {
+							if (client.getPlaysAs() == company.getCompanyId()) {
+								sb.append(" - ");
+								sb.append(client.getClientId());
+								sb.append(": ");
+								sb.append(client.getName());
+								sb.append("\n");
+							}
+						}
+						
+						/*sb.append(" - loan ");
 						sb.append(company.getLoan());
 						sb.append("\n - income ");
 						sb.append(company.getIncome());
@@ -220,7 +230,7 @@ public class Main {
 						sb.append(company.getPlanes());
 						sb.append("/");
 						sb.append(company.getAirports());
-						sb.append(" :airplane:");
+						sb.append(" :airplane:");*/
 
 						sb.append("\n");
 					}
@@ -283,7 +293,22 @@ public class Main {
 						case CompanyInfo.WATER:
 							sb.append("water (should never happen)"); break;
 							default:
-								sb.append((int)client.getPlaysAs() + 1);
+							{
+								CompanyData companyData = context.getCompany(client.getPlaysAs());
+								if (companyData == null) {
+									sb.append((int)client.getPlaysAs() + 1);
+								} else {
+									sb.append((int)client.getPlaysAs() + 1);
+									sb.append(": ");
+									sb.append(companyData.getName() == null ? "n/a" : companyData.getName());
+									String color = companyData.getColorName();
+									if (color != null) {
+										sb.append(" [");
+										sb.append(color);
+										sb.append("]");
+									}
+								}
+							}
 						}
 						
 						sb.append("\n");
@@ -297,19 +322,6 @@ public class Main {
 							sb.append(client.getJoinDate().getYear());
 							sb.append(" game time \n");
 						}
-						
-						/*if (client.getLeftTs() > 0) {
-							sb.append(" - left ");
-							sb.append(SDF.format(new Date(client.getJoinedTs())));
-							sb.append(" UTC");
-							sb.append(" - left ");
-							sb.append(client.getLeftGameDate().getDay());
-							sb.append("-");
-							sb.append(client.getLeftGameDate().getMonth());
-							sb.append("-");
-							sb.append(client.getLeftGameDate().getYear());
-							sb.append(" game time");
-						}*/
 					}
 					
 					slack.sendMessage(slackMessage.getChannelName(), sb.toString());

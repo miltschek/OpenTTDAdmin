@@ -28,8 +28,10 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Random;
 import java.util.function.BiConsumer;
 
+import org.apache.commons.codec.digest.DigestUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,6 +52,8 @@ import de.miltschek.openttdadmin.data.Date;
 public class Context {
 	private static final Logger LOGGER = LoggerFactory.getLogger(Context.class);
 	
+	private final Random randomizer = new Random();
+	
 	private final Configuration configuration;
 	private final Configuration.Game thisGame;
 	private final ResetLock resetLock;
@@ -65,6 +69,7 @@ public class Context {
 	
 	private boolean gameConnected;
 	private long dbGameId;
+	private long gameSalt;
 	private Date currentDate = new Date(0);
 	private int dbUpdateCounterDate = 0;
 	private int performance;
@@ -241,6 +246,11 @@ public class Context {
 	 */
 	public void setGameConnected(boolean gameConnected) {
 		this.gameConnected = gameConnected;
+		if (gameConnected) {
+			this.gameSalt = randomizer.nextLong();
+		} else {
+			this.dbGameId = 0;
+		}
 	}
 	
 	/**
@@ -721,7 +731,18 @@ public class Context {
 	 */
 	public void clientUpdate(ClientData clientData) {
 		if (this.db != null && dbGameId > 0) {
-			if (db.createOrUpdatePlayer(dbGameId, clientData)) {
+			
+			String networkAddressHash = clientData.getNetworkAddress() == null ? null
+					: DigestUtils.sha256Hex(clientData.getNetworkAddress() + this.gameSalt);
+			
+			if (db.createOrUpdatePlayer(
+					dbGameId,
+					clientData.getClientId(),
+					clientData.getName(),
+					networkAddressHash,
+					clientData.getCountryCode(),
+					clientData.getCity(),
+					clientData.isProxy())) {
 				LOGGER.debug("Created/updated a player ID {} for the game {}.", clientData.getClientId(), dbGameId);
 			} else {
 				LOGGER.error("Failed to create/update a player ID {} for the game {}.", clientData.getClientId(), dbGameId);

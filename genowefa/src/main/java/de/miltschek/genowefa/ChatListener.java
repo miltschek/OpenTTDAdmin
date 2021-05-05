@@ -25,10 +25,12 @@ package de.miltschek.genowefa;
 
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
+import java.time.ZoneId;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.TimeZone;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -155,7 +157,7 @@ public class ChatListener implements Consumer<ChatMessage> {
 
 		} else if (t.getMessage().equals("!top")) {
 			LOGGER.info("User {} requested a top list.", t.getSenderId());
-			
+			SDF.setTimeZone(TimeZone.getTimeZone("UTC"));
 			List<TopPlayer> topList = this.context.getTopList();
 			if (topList == null || topList.size() == 0) {
 				this.context.notifyAll("Hall of Fame is currently not available.");
@@ -163,7 +165,7 @@ public class ChatListener implements Consumer<ChatMessage> {
 				int n = 1;
 				for (TopPlayer top : topList) {
 					String message = (n++) + ". " + top.getCompanyName() + " - value " + DECF.format(top.getTopCompanyValue()) + " GBP - "
-							+ ((top.getGameFinishTs() == 0) ? "current game" : "game finished on " + SDF.format(new Date(top.getGameFinishTs())));
+							+ ((top.getGameFinishTs() == 0) ? "current game" : "game finished on " + SDF.format( new Date(top.getGameFinishTs()) ) + " UTC" );
 					
 					if (t.isPublic()) {
 						this.context.notifyAll(message);
