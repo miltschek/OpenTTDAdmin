@@ -903,6 +903,40 @@ public class DatabaseConnector implements Closeable {
 		PreparedStatement statement = null;
 		try {
 			statement = connection.prepareStatement(
+					"SELECT COUNT(*) FROM " + TABLE_PLAYERS + " WHERE "
+					+ F_GAME_ID + " = ? AND "
+					+ F_CLIENT_ID + " = ? AND "
+					+ F_COMPANY_ID + " = ? AND "
+					+ F_LEFT_TS + " IS NULL");
+			
+			int n = 1;
+			statement.setLong(n++, gameId);
+			statement.setInt(n++, playerId);
+			statement.setLong(n++, dbCompanyId);
+
+			int count = 0;
+			ResultSet resultSet = statement.executeQuery();
+			if (resultSet.next()) {
+				count = resultSet.getInt(1);
+			}
+			
+			resultSet.close();
+			LOGGER.debug("Player {} of the company {} of the game {} in database stored {} times.",
+					playerId, companyId, gameId, count);
+			if (count > 0) {
+				return true;
+			}
+		} catch (SQLException ex) {
+			LOGGER.error("Failed to check whether player {} is already stored for the company {} of the game {}.", playerId, companyId, gameId, ex);
+			return false;
+		} finally {
+			try {
+				statement.close();
+			} catch (Exception e) {}
+		}
+		
+		try {
+			statement = connection.prepareStatement(
 					"INSERT INTO " + TABLE_PLAYERS + " ("
 					+ F_TS + ", "
 					+ F_GAME_ID + ", "
