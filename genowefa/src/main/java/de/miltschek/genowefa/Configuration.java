@@ -29,8 +29,10 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -400,6 +402,102 @@ public class Configuration {
 		}
 	}
 	
+	/**
+	 * Administrator's settings.
+	 */
+	public static class Administrator {
+		private final String userId;
+		private final String nickName;
+		private final Set<String> grants = new HashSet<>();
+		
+		/**
+		 * Creates administrator's settings object.
+		 * @param userId unique user identifier as assigned by Slack
+		 * @param nickName nick name to be used for chat messages
+		 */
+		public Administrator(String userId, String nickName) {
+			this.userId = userId;
+			this.nickName = nickName;
+		}
+		
+		/**
+		 * Registers granted access to a given command.
+		 * @param command command name the user has rights to
+		 */
+		public void grant(String command) {
+			this.grants.add(command);
+		}
+		
+		/**
+		 * Gets the user identifier as assigned by Slack
+		 * @return the user identifier as assigned by Slack
+		 */
+		public String getUserId() {
+			return userId;
+		}
+		
+		/**
+		 * Gets the nick name to be used for chat messages
+		 * @return the nick name to be used for chat messages
+		 */
+		public String getNickName() {
+			return nickName;
+		}
+		
+		/**
+		 * Gets a set of granted commands.
+		 * @return a set of granted commands
+		 */
+		public Set<? extends String> getGrants() {
+			return grants;
+		}
+	}
+	
+	/**
+	 * Definition of a deny rule to reject players, companies etc.
+	 */
+	public static class DenyRule {
+		private final String type;
+		private final String pattern;
+		private final String message;
+		
+		/**
+		 * Creates a deny rule.
+		 * @param type type of the rule (possible values depend on what other classes support)
+		 * @param pattern pattern of the rule (possible values depend on what other classes support)
+		 * @param message message to be shown to the player in case the rule gets applied
+		 */
+		public DenyRule(String type, String pattern, String message) {
+			this.type = type;
+			this.pattern = pattern;
+			this.message = message;
+		}
+		
+		/**
+		 * Gets the type of the rule (possible values depend on what other classes support).
+		 * @return type of the rule (possible values depend on what other classes support)
+		 */
+		public String getType() {
+			return type;
+		}
+		
+		/**
+		 * Gets the pattern of the rule (possible values depend on what other classes support).
+		 * @return pattern of the rule (possible values depend on what other classes support)
+		 */
+		public String getPattern() {
+			return pattern;
+		}
+		
+		/**
+		 * Gets the message to be shown to the player in case the rule gets applied.
+		 * @return message to be shown to the player in case the rule gets applied
+		 */
+		public String getMessage() {
+			return message;
+		}
+	}
+	
 	private final Slack slack;
 	private final Google google;
 	private final List<Game> games;
@@ -407,6 +505,8 @@ public class Configuration {
 	private final String[] playerNames;
 	private final Database database;
 	private final Chat chat = new Chat();
+	private final Map<String, Administrator> administrators = new HashMap<String, Administrator>();
+	private final Set<DenyRule> denyRules = new HashSet<>();
 	
 	/**
 	 * Loads the configuration out of a JSON file.
@@ -519,6 +619,36 @@ public class Configuration {
 			} else {
 				this.playerNames = null;
 			}
+			
+			if (json.has("administrators")) {
+				JSONArray administratorsJson = json.getJSONArray("administrators");
+				for (int n = administratorsJson.length() - 1; n >= 0; n--) {
+					JSONObject administratorJson = administratorsJson.getJSONObject(n);
+
+					Administrator administrator = new Administrator(
+							administratorJson.getString("user_id"),
+							administratorJson.getString("nick_name"));
+					
+					JSONArray grantsJson = administratorJson.getJSONArray("grant");
+					for (int m = grantsJson.length() - 1; m >= 0; m--) {
+						administrator.grant(grantsJson.getString(m));
+					}
+					
+					this.administrators.put(administrator.getUserId(), administrator);
+				}
+			}
+			
+			if (json.has("deny_rules")) {
+				JSONArray denyRulesJson = json.getJSONArray("deny_rules");
+				for (int n = denyRulesJson.length() - 1; n >= 0; n--) {
+					JSONObject denyRuleJson = denyRulesJson.getJSONObject(n);
+					
+					this.denyRules.add(new DenyRule(
+							denyRuleJson.getString("type"),
+							denyRuleJson.getString("pattern"),
+							denyRuleJson.getString("message")));
+				}
+			}
 		} catch (JSONException ex) {
 			throw new IOException(ex);
 		}
@@ -589,5 +719,22 @@ public class Configuration {
 				return result;
 			}
 		}
+	}
+	
+	/**
+	 * Gets administrator's settings for the given user identifier.
+	 * @param userId user identifier as assigned by Slack
+	 * @return administrator's settings object or null if not available
+	 */
+	public Administrator getAdministrator(String userId) {
+		return this.administrators.get(userId);
+	}
+	
+	/**
+	 * Gets a set of deny rules.
+	 * @return a set of deny rules
+	 */
+	public Set<? extends DenyRule> getDenyRules() {
+		return this.denyRules;
 	}
 }

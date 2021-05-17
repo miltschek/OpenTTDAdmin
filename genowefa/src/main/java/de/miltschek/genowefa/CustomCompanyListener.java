@@ -32,6 +32,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import de.miltschek.genowefa.Configuration.DenyRule;
 import de.miltschek.genowefa.Context.CompanyDataProvider;
 import de.miltschek.genowefa.Context.EventType;
 import de.miltschek.openttdadmin.data.ClosureReason;
@@ -106,6 +107,31 @@ public class CustomCompanyListener extends CompanyListenerAdapter implements Com
 				+ ", name " + companyInfo.getCompanyName()
 				+ ", manager " + companyInfo.getManagerName()
 				+ ", " + (companyInfo.isPasswordProtected() ? "protected" : "unprotected"));
+		
+		boolean denyMatched = false;
+		for (DenyRule denyRule : this.context.getDenyRules()) {
+			if ("name".equals(denyRule.getType())) {
+				if (companyInfo.getCompanyName() != null
+						&& companyInfo.getCompanyName().matches(denyRule.getPattern())
+						|| companyInfo.getManagerName() != null
+						&& companyInfo.getManagerName().matches(denyRule.getPattern())) {
+					denyMatched = true;
+				}
+			}
+			
+			if (denyMatched) {
+				/*LOGGER.info("Closing company (0-based) {}:{}, manager {} due to a matching rule {}/{}.",
+						companyInfo.getIndex(), companyInfo.getCompanyName(), companyInfo.getManagerName(),
+						denyRule.getType(), denyRule.getPattern());
+				this.context.resetCompany(companyInfo.getIndex(), denyRule.getMessage());*/
+				this.context.notifyAdmin(EventType.AdminRequest,
+						"Deny rule matched for company (1-based) " + (companyInfo.getIndex() + 1)
+							+ ":" + companyInfo.getCompanyName()
+							+ ", manager " + companyInfo.getManagerName()
+							+ ". No automatic action taken.");
+				return;
+			}
+		}
 	}
 	
 	@Override
@@ -174,6 +200,30 @@ public class CustomCompanyListener extends CompanyListenerAdapter implements Com
 				+ (newName ? ", new name " + companyData.getName() : "")
 				+ (newManager ? ", new manager " + companyData.getManagerName() : "")
 				+ (newPassword ? ", " + (companyData.isPasswordProtected() ? "protected" : "unprotected") : ""));
+		
+		boolean denyMatched = false;
+		for (DenyRule denyRule : this.context.getDenyRules()) {
+			if ("name".equals(denyRule.getType())) {
+				if (companyInfo.getCompanyName() != null
+						&& companyInfo.getCompanyName().matches(denyRule.getPattern())
+						|| companyInfo.getManagerName() != null
+						&& companyInfo.getManagerName().matches(denyRule.getPattern())) {
+					denyMatched = true;
+				}
+			}
+			
+			if (denyMatched) {
+				LOGGER.info("Closing company (0-based) {}:{}, manager {} due to a matching rule {}/{}.",
+						companyInfo.getIndex(), companyInfo.getCompanyName(), companyInfo.getManagerName(),
+						denyRule.getType(), denyRule.getPattern());
+				this.context.notifyAdmin(EventType.AdminRequest,
+						"Deny rule matched for company (1-based) " + (companyInfo.getIndex() + 1)
+							+ ":" + companyInfo.getCompanyName()
+							+ ", manager " + companyInfo.getManagerName()
+							+ ". No automatic action taken.");
+				return;
+			}
+		}
 	}
 	
 	@Override

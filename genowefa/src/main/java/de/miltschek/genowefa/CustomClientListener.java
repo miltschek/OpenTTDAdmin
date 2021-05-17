@@ -35,6 +35,7 @@ import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import de.miltschek.genowefa.Configuration.DenyRule;
 import de.miltschek.genowefa.Context.ClientDataProvider;
 import de.miltschek.genowefa.Context.EventType;
 import de.miltschek.integrations.GeoIp;
@@ -350,6 +351,35 @@ public class CustomClientListener extends ClientListenerAdapter implements Clien
 				// + ", lang " + clientInfo.getLanguage() // it's always 'Any'
 				+ ((geoIp != null) ? (", from " + geoIp.getCountry() + ", " + geoIp.getCity()) + (geoIp.isProxy() ? ", proxy" : ""): ""));
 		
+		boolean denyMatched = false;
+		for (DenyRule denyRule : this.context.getDenyRules()) {
+			if ("country".equals(denyRule.getType())) {
+				if (geoIp != null && geoIp.getCountryCode() != null
+						&& geoIp.getCountryCode().equalsIgnoreCase(denyRule.getPattern())) {
+					denyMatched = true;
+				}
+			}
+			
+			if ("name".equals(denyRule.getType())) {
+				if (clientInfo.getClientName() != null
+						&& clientInfo.getClientName().matches(denyRule.getPattern())) {
+					denyMatched = true;
+				}
+			}
+			
+			if ("proxy".equals(denyRule.getType())) {
+				if (geoIp != null && geoIp.isProxy()) {
+					denyMatched = true;
+				}
+			}
+			
+			if (denyMatched) {
+				LOGGER.info("Kicking client {} due to a matching rule {}/{}.", clientInfo.getClientId(), denyRule.getType(), denyRule.getPattern());
+				this.context.kickClient(clientInfo.getClientId(), denyRule.getMessage());
+				return;
+			}
+		}
+		
 		if (this.context.isForceNameChange() && NO_NAME_PLAYER.matcher(clientInfo.getClientName()).matches()) {
 			int hash = clientInfo.getNetworkAddress().hashCode() & 0x7fffffff;
 
@@ -502,6 +532,22 @@ public class CustomClientListener extends ClientListenerAdapter implements Clien
 				+ clientId
 				+ ", name " + clientName
 				+ ", plays as " + getCompanyDescription(playAs));
+		
+		boolean denyMatched = false;
+		for (DenyRule denyRule : this.context.getDenyRules()) {
+			if ("name".equals(denyRule.getType())) {
+				if (clientName != null
+						&& clientName.matches(denyRule.getPattern())) {
+					denyMatched = true;
+				}
+			}
+			
+			if (denyMatched) {
+				LOGGER.info("Kicking client {} due to a matching rule {}/{}.", clientId, denyRule.getType(), denyRule.getPattern());
+				this.context.kickClient(clientId, denyRule.getMessage());
+				return;
+			}
+		}
 	}
 
 	@Override

@@ -82,8 +82,25 @@ public class Main {
 		if (context == null) {
 			return false;
 		} else {
+			if (slackMessage.getUserId() == null) {
+				LOGGER.warn("Command {} without a user id. Ignoring.", slackMessage.getCommand());
+				return false;
+			}
+			
+			Configuration.Administrator administrator = context.getAdministrator(slackMessage.getUserId());
+			if (administrator == null) {
+				LOGGER.warn("Command {} from an unregistered user id {}. Ignoring.", slackMessage.getCommand(), slackMessage.getUserId());
+				return false;
+			}
+			
+			if (!administrator.getGrants().contains("*") && !administrator.getGrants().contains("/chat")) {
+				LOGGER.warn("No grants for chat for the user id {}. Ignoring.", slackMessage.getUserId());
+				slack.sendMessage(slackMessage.getChannelName(), ":exclamation: No permission for chat.");
+				return false;
+			}
+
 			try {
-				context.notifyAll(slackMessage.getText());
+				context.notifyAll("[" + administrator.getNickName() + "] " + slackMessage.getText());
 				return true;
 			} catch (Exception ex) {
 				LOGGER.error("Failed to forward a chat {}.", slackMessage, ex);
@@ -100,13 +117,32 @@ public class Main {
 	private static Boolean onCommand(SlackMessage slackMessage) {
 		Context context = slackToContext.get(slackMessage.getChannelName());
 		if (context == null) {
+			LOGGER.error("No context found for the channel {}.", slackMessage.getChannelName());
 			return false;
 		} else {
+			if (slackMessage.getUserId() == null) {
+				LOGGER.warn("Command {} without a user id. Ignoring.", slackMessage.getCommand());
+				return false;
+			}
+			
+			Configuration.Administrator administrator = context.getAdministrator(slackMessage.getUserId());
+			if (administrator == null) {
+				LOGGER.warn("Command {} from an unregistered user id {}. Ignoring.", slackMessage.getCommand(), slackMessage.getUserId());
+				return false;
+			}
+			
+			if (!administrator.getGrants().contains("*") && !administrator.getGrants().contains(slackMessage.getCommand())) {
+				LOGGER.warn("No grants for the command {} for the user id {}. Ignoring.", slackMessage.getCommand(), slackMessage.getUserId());
+				slack.sendMessage(slackMessage.getChannelName(), ":exclamation: No permission for the command.");
+				return false;
+			}
+			
 			try {
 				String[] params = parameters(slackMessage.getText());
 				
 				if ("/date".equals(slackMessage.getCommand())) {
 					slack.sendMessage(slackMessage.getChannelName(), ":computer: Game date " + context.getCurrentDate());
+					
 					
 				} else if ("/kickuser".equals(slackMessage.getCommand())) {
 					if (params.length == 2) {
@@ -193,45 +229,6 @@ public class Main {
 							}
 						}
 						
-						/*sb.append(" - loan ");
-						sb.append(company.getLoan());
-						sb.append("\n - income ");
-						sb.append(company.getIncome());
-						sb.append("\n - money ");
-						sb.append(company.getMoney());
-						sb.append("\n - value ");
-						sb.append(company.getValue());
-						sb.append("\n - performance ");
-						sb.append(company.getPerformance());
-						sb.append("\n");
-						
-						sb.append(" - ");
-						
-						sb.append(company.getBusses());
-						sb.append("/");
-						sb.append(company.getBusStops());
-						sb.append(" :bus: ");
-						
-						sb.append(company.getTrains());
-						sb.append("/");
-						sb.append(company.getTrainStations());
-						sb.append(" :bullettrain_front: ");
-						
-						sb.append(company.getShips());
-						sb.append("/");
-						sb.append(company.getHarbours());
-						sb.append(" :boat: ");
-						
-						sb.append(company.getLorries());
-						sb.append("/");
-						sb.append(company.getLorryDepots());
-						sb.append(" :truck: ");
-						
-						sb.append(company.getPlanes());
-						sb.append("/");
-						sb.append(company.getAirports());
-						sb.append(" :airplane:");*/
-
 						sb.append("\n");
 					}
 					

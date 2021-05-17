@@ -29,12 +29,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
+import java.util.Set;
 import java.util.function.BiConsumer;
 
 import org.apache.commons.codec.digest.DigestUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import de.miltschek.genowefa.Configuration.Administrator;
+import de.miltschek.genowefa.Configuration.DenyRule;
 import de.miltschek.integrations.GoogleTranslate;
 import de.miltschek.integrations.GoogleTranslate.Result;
 import de.miltschek.integrations.SlackRTMClient;
@@ -384,7 +387,7 @@ public class Context {
 	public void resetCompany(byte companyId) {
 		this.admin.executeRCon("resetcompany " + (companyId + 1));
 	}
-
+	
 	/**
 	 * Sends a request for a date delivery from the server.
 	 */
@@ -773,5 +776,22 @@ public class Context {
 		if (this.companyDataProvider != null) {
 			this.companyDataProvider.clearCache();
 		}
+	}
+	
+	/**
+	 * Gets administrator's settings for the given user identifier.
+	 * @param userId user identifier as assigned by Slack
+	 * @return administrator's settings object or null if not available
+	 */
+	public Configuration.Administrator getAdministrator(String userId) {
+		return this.configuration.getAdministrator(userId);
+	}
+	
+	/**
+	 * Gets a set of deny rules.
+	 * @return a set of deny rules
+	 */
+	public Set<? extends Configuration.DenyRule> getDenyRules() {
+		return this.configuration.getDenyRules();
 	}
 }
