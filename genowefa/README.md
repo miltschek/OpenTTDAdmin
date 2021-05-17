@@ -7,6 +7,12 @@ A fully functional admin app ready to use out of the box:
 
 ![Genowefa Preview](../doc/genowefa.png)
 
+Caution
+-------
+
+The current development tree offers much more funtions than the last official release. The guidelines do not cover yet any of the new functions (database and web integration, multiple administrators support, deny lists etc.).
+
+
 Building
 --------
 
