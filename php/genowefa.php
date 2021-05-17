@@ -53,37 +53,37 @@ class MyDao {
 
 	function __construct() {
 		$this->connection = new mysqli(self::SERVERNAME, self::USERNAME, self::PASSWORD, self::DBNAME);
+		$this->connection->query('SET time_zone="+0:00";');
 	}
 
-	function getServers() {
-		echo '<!-- getServers -->';
-		$sql = $this->connection->prepare('select address, port, server_name from genowefa_games group by address, port, server_name order by 1, 2, 3');
-				$sql->bind_result($address, $port, $serverName);
-				$sql->execute();
-				$sql->store_result();
+	function getGameNames() {
+		echo '<!-- getGameNames -->';
+		$sql = $this->connection->prepare('select distinct game_name from genowefa_games order by 1');
+		$sql->bind_result($gameName);
+		$sql->execute();
+		$sql->store_result();
 
 		$result = array();
 
 		while ($sql->fetch()) {
-						$result[] = array(
-								'address' => $address,
-								'port' => $port,
-								'serverName' => $serverName);
-				}
+			$result[] = array(
+				'gameName' => $gameName);
+		}
 
-				return $result;
+		return $result;
 	}
 
 	function getGames() {
 		echo '<!-- getGames -->';
-		$sql = $this->connection->prepare('select id, address, port, started, finished, server_name, generation_seed, starting_year, map_size_x, map_size_y from genowefa_games order by started desc');
-		$sql->bind_result($id, $address, $port, $started, $finished, $serverName, $generationSeed, $startingYear, $mapSizeX, $mapSizeY);
+		$sql = $this->connection->prepare('select id, game_name, address, port, ts_started, ts_finished, server_name, generation_seed, starting_year, map_size_x, map_size_y, game_date, performance from genowefa_games order by ts_started desc');
+		$sql->bind_result($id, $gameName, $address, $port, $started, $finished, $serverName, $generationSeed, $startingYear, $mapSizeX, $mapSizeY, $gameDate, $performance);
 		$sql->execute();
 		$sql->store_result();
 		$result = array();
 
-				while ($sql->fetch()) {
-						$result[] = array('id' => $id,
+		while ($sql->fetch()) {
+			$result[] = array('id' => $id,
+				'gameName' => $gameName,
 				'address' => $address,
 				'port' => $port,
 				'started' => $started,
@@ -92,79 +92,71 @@ class MyDao {
 				'generationSeed' => $generationSeed,
 				'startingYear' => $startingYear,
 				'mapSizeX' => $mapSizeX,
-				'mapSizeY' => $mapSizeY);
-				}
+				'mapSizeY' => $mapSizeY,
+				'gameDate' => $gameDate,
+				'performance' => $performance);
+		}
 
-				return $result;
+		return $result;
 	}
 
-	function getCompanies($gameId) {
-		echo '<!-- getCompanies -->';
-		$sql = $this->connection->prepare('select id, company_id, founded, closed, closure_reason, color, name, manager_name, password_protected from genowefa_companies where game_id = ? order by id');
+	function getClientsCount($gameId) {
+		$sql = $this->connection->prepare('select count(*) from genowefa_players where game_id = ? and ts_left = 0');
 		$sql->bind_param('i', $gameId);
-		$sql->bind_result($id, $companyId, $founded, $closed, $closureReason, $color, $name, $managerName, $passwordProtected);
+		$sql->bind_result($count);
 		$sql->execute();
 		$sql->store_result();
-				$result = array();
 
-				while ($sql->fetch()) {
-						$result[] = array('id' => $id,
-				'companyId' => $companyId,
-								'founded' => $founded,
-								'closed' => $closed,
-								'closureReason' => $closureReason,
-								'color' => $color,
-								'name' => $name,
-								'managerName' => $managerName,
-								'passwordProtected' => $passwordProtected);
-				}
+		if ($sql->fetch()) {
+			return $count;
+		}
 
-				return $result;
+		return -1;
 	}
 
 	function getClients($companyId) {
 		echo '<!-- getClients -->';
-		$sql = $this->connection->prepare('select p.ts, p.left_ts, c.client_id, c.name, c.ip, c.country, c.city, c.proxy from genowefa_players as p left join genowefa_clients as c on p.game_id = c.game_id and p.client_id = c.client_id where p.company_id = ?');
+		$sql = $this->connection->prepare('select p.ts_joined, p.ts_left, c.client_id, c.name, c.ip, c.country, c.city, c.proxy from genowefa_players as p left join genowefa_clients as c on p.game_id = c.game_id and p.client_id = c.client_id where p.company_id = ?');
 		$sql->bind_param('i', $companyId);
 
 		$sql->bind_result($ts, $leftTs, $clientId, $name, $ip, $country, $city, $proxy);
 		$sql->execute();
-				$sql->store_result();
-				$result = array();
+		$sql->store_result();
+		$result = array();
 
-				while ($sql->fetch()) {
-						$result[] = array(
+		while ($sql->fetch()) {
+			$result[] = array(
 				'ts' => $ts,
-								'leftTs' => $leftTs,
-								'clientId' => $clientId,
-								'name' => $name,
-								'ip' => $ip,
-								'country' => $country,
-								'city' => $city,
-								'proxy' => $proxy);
-				}
+				'leftTs' => $leftTs,
+				'clientId' => $clientId,
+				'name' => $name,
+				'ip' => $ip,
+				'country' => $country,
+				'city' => $city,
+				'proxy' => $proxy);
+		}
 
-				return $result;
+		return $result;
 	}
 
 	function getEconomy($companyId) {
 		echo '<!-- getEconomy -->';
 		$sql = $this->connection->prepare('select income, loan, money, value, performance from genowefa_economy where company_id = ? order by ts desc limit 1');
 		$sql->bind_param('i', $companyId);
-				$sql->bind_result($income, $loan, $money, $value, $performance);
-				$sql->execute();
-				$sql->store_result();
+		$sql->bind_result($income, $loan, $money, $value, $performance);
+		$sql->execute();
+		$sql->store_result();
 
 		if ($sql->fetch()) {
-						return array(
-								'income' => $income,
-								'loan' => $loan,
-								'money' => $money,
-								'value' => $value,
-								'performance' => $performance);
-				}
+			return array(
+				'income' => $income,
+				'loan' => $loan,
+				'money' => $money,
+				'value' => $value,
+				'performance' => $performance);
+		}
 
-				return null;
+		return null;
 	}
 
 	function getInfrastructure($companyId) {
@@ -196,41 +188,80 @@ class MyDao {
 		return null;
 	}
 
-	function getTopTen($limit = 10, $serverName = null) {
-		$filter = $serverName !== null;
-		$sql = $this->connection->prepare('SELECT c.name, c.color,'
-			. ' MAX(e.income), MAX(e.loan), MAX(e.money), MAX(e.`value`) AS here, MAX(e.performance),'
-			. ' MAX(s.num_busses), MAX(s.num_lorries), MAX(s.num_trains), MAX(s.num_ships), MAX(s.num_planes),'
-			. ' MAX(s.num_stops), MAX(s.num_depots), MAX(s.num_stations), MAX(s.num_harbours), MAX(s.num_airports),'
-			. ' g.server_name, g.started, g.finished'
-			. ' FROM genowefa_economy AS e'
-			. ' LEFT JOIN genowefa_statistics AS s ON (e.company_id = s.company_id)'
-			. ' LEFT JOIN genowefa_companies AS c ON (e.company_id = c.id)'
-			. ' LEFT JOIN genowefa_games AS g ON (c.game_id = g.id)'
-			. ($filter ? ' WHERE g.server_name = ?' : '')
-			. ' GROUP BY e.company_id'
-			. ' ORDER BY here DESC'
-			. ' LIMIT ?;');
+	function getCompanies($gameId, $activeOnly = true) {
+		$sql = $this->connection->prepare('SELECT c.id, c.company_id, c.name, c.color, c.founded, c.closed, c.closure_reason, c.manager_name, c.password_protected, '
+			. 'e.value, e.performance '
+			. 'FROM genowefa_companies c '
+			. 'LEFT JOIN genowefa_economics e ON (e.company_id = c.id) '
+			. 'WHERE game_id = ? '
+			. ($activeOnly ? 'AND closed IS NULL ' : '')
+			. 'ORDER BY e.value DESC');
+		$sql->bind_param('i', $gameId);
+		$sql->bind_result($id, $companyId, $name, $color, $founded, $closed, $closureReason, $managerName, $passwordProtected,
+			$value, $performance);
+		$sql->execute();
+		$sql->store_result();
+
+		$result = array();
+
+		while ($sql->fetch()) {
+			$result[] = array(
+				'id' => $id,
+				'companyId' => $companyId,
+				'name' => $name,
+				'color' => $color,
+				'founded' => $founded,
+				'closed' => $closed,
+				'closureReason' => $closureReason,
+				'managerName' => $managerName,
+				'passwordProtected' => $passwordProtected,
+				'value' => $value,
+				'performance' => $performance);
+		}
+
+		return $result;
+	}
+
+	function getTopTen($limit = 10, $gameName) {
+		$filter = $gameName !== null;
+
+		$sql = $this->connection->prepare(
+			'SELECT c.name, c.color, '
+			. 'e.income, e.loan, e.money, e.value, e.performance, '
+			. 'i.num_busses, i.num_lorries, i.num_trains, i.num_ships, i.num_planes, '
+			. 'i.num_stops, i.num_depots, i.num_stations, i.num_harbours, i.num_airports, '
+			. 'g.ts_started, g.ts_finished '
+			. 'FROM '
+			. 'genowefa_companies AS c '
+			. 'LEFT JOIN genowefa_economics AS e ON (e.company_id = c.id) '
+			. 'LEFT JOIN genowefa_infrastructure i ON (i.company_id = c.id) '
+			. 'LEFT JOIN genowefa_games g ON (g.id = c.game_id) '
+			. 'WHERE c.id IN '
+				// 1 = server name
+				. '(SELECT DISTINCT id FROM genowefa_companies WHERE game_id IN (SELECT DISTINCT id FROM genowefa_games WHERE game_name = ?)) '
+			. 'ORDER BY e.value DESC '
+			// 2 = limit
+			. 'LIMIT ?;');
 
 		if ($filter) {
-			$sql->bind_param('si', $serverName, $limit);
+			$sql->bind_param('si', $gameName, $limit);
 		} else {
-			$sql->bind_param('i', $limit);
+			$sql->bind_param('si', "*", $limit);
 		}
 
 		$sql->bind_result($companyName, $companyColor,
 			$maxIncome, $maxLoan, $maxMoney, $maxValue, $maxPerformance,
 			$maxBusses, $maxLorries, $maxTrains, $maxShips, $maxPlanes,
 			$maxBusStops, $maxLorryDepots, $maxTrainStations, $maxHarbours, $maxAirports,
-			$serverName, $gameStarted, $gameFinished
+			$gameStarted, $gameFinished
 			);
 		$sql->execute();
 		$sql->store_result();
 
 		$result = array();
 
-				while ($sql->fetch()) {
-						$result[] = array(
+		while ($sql->fetch()) {
+			$result[] = array(
 				'companyName' => $companyName,
 				'companyColor' => $companyColor,
 				'maxIncome' => $maxIncome,
@@ -248,13 +279,81 @@ class MyDao {
 				'maxTrainStations' => $maxTrainStations,
 				'maxHarbours' => $maxHarbours,
 				'maxAirports' => $maxAirports,
-				'serverName' => $serverName,
 				'gameStarted' => $gameStarted,
 				'gameFinished' => $gameFinished);
-				}
+			}
 
-				return $result;
+		return $result;
+	}
 
+	function getTopCountries() {
+		echo '<!-- getTopCountries -->';
+
+		$sql = $this->connection->prepare('select country, count(*) from '
+			. '(select country from genowefa_clients where proxy = 0 and country is not null group by country, ip) sub '
+			. 'group by country '
+			. 'order by 2 desc, 1');
+		$sql->bind_result($country, $count);
+		$sql->execute();
+		$sql->store_result();
+
+		$result = array();
+
+		while ($sql->fetch()) {
+			$result[] = array(
+				'country' => $country,
+				'count' => $count);
+		}
+
+		return $result;
+	}
+	
+	function getPlayersData($gameId) {
+		$sql = $this->connection->prepare('SELECT '
+			. 'co.id, co.company_id, co.name, co.color, co.manager_name, co.founded, co.closed, co.closure_reason, co.password_protected, '
+			. 'c.client_id, c.name, c.ip, c.country, c.city, c.proxy, c.ts_joined, c.ts_left, '
+			. 'p.ts_joined, p.ts_left '
+			. 'FROM genowefa_clients c '
+			. 'LEFT JOIN genowefa_players p ON c.game_id = p.game_id AND c.client_id = p.client_id '
+			. 'LEFT JOIN genowefa_companies co ON co.game_id = c.game_id AND co.id = p.company_id '
+			. 'WHERE c.client_id != 1 AND (co.id IS NOT NULL OR c.ts_left = 0) AND c.game_id = ? '
+			. 'ORDER BY co.company_id, co.founded');
+
+		$sql->bind_param('i', $gameId);
+
+		$sql->bind_result($dbCompanyId, $companyId, $companyName, $companyColor, $companyManager, $companyFounded, $companyClosed, $companyClosureReason, $companyPasswordProtected,
+			$clientId, $clientName, $clientIp, $clientCountry, $clientCity, $clientProxy, $clientTsJoined, $clientTsLeft,
+			$playerTsJoined, $playerTsLeft);
+			
+		$sql->execute();
+		$sql->store_result();
+
+		$result = array();
+
+		while ($sql->fetch()) {
+			$result[] = array(
+				'dbCompanyId' => $dbCompanyId,
+				'companyId' => $companyId,
+				'companyName' => $companyName,
+				'companyColor' => $companyColor,
+				'companyManager' => $companyManager,
+				'companyFounded' => $companyFounded,
+				'companyClosed' => $companyClosed,
+				'companyClosureReason' => $companyClosureReason,
+				'companyPasswordProtected' => $companyPasswordProtected,
+				'clientId' => $clientId,
+				'clientName' => $clientName,
+				'clientIp' => $clientIp,
+				'clientCountry' => $clientCountry,
+				'clientCity' => $clientCity,
+				'clientProxy' => $clientProxy,
+				'clientTsJoined' => $clientTsJoined,
+				'clientTsLeft' => $clientTsLeft,
+				'playerTsJoined' => $playerTsJoined,
+				'playerTsLeft' => $playerTsLeft);
+		}
+
+		return $result;
 	}
 
 	function __destruct() {
