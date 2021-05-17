@@ -555,12 +555,26 @@ public class Context {
 	}
 	
 	/**
-	 * Stores a leaving client in a database.
+	 * Stores a player leaving a company in a database.
 	 * @param clientId client ID
 	 */
 	public void playerLeft(int clientId) {
 		if (this.db != null && dbGameId > 0) {
 			if (this.db.playerQuit(dbGameId, clientId)) {
+				LOGGER.debug("Stored client ID {} quit any company of the game ID {}.", clientId, dbGameId);
+			} else {
+				LOGGER.warn("Failed to store client ID {} quit any company of the game ID {}.", clientId, dbGameId);
+			}
+		}
+	}
+	
+	/**
+	 * Stoes a client leaving a game in a database.
+	 * @param clientId client ID
+	 */
+	public void clientLeft(int clientId) {
+		if (this.db != null && dbGameId > 0) {
+			if (this.db.clientQuit(dbGameId, clientId)) {
 				LOGGER.debug("Stored client ID {} quit the game ID {}.", clientId, dbGameId);
 			} else {
 				LOGGER.warn("Failed to store client ID {} quit the game ID {}.", clientId, dbGameId);

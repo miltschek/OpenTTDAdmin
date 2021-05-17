@@ -475,6 +475,7 @@ public class CustomClientListener extends ClientListenerAdapter implements Clien
 		// todo TODO optionally put the clientData in a separate collection, oldClients
 		
 		context.playerLeft(clientId);
+		context.clientLeft(clientId);
 
 		this.context.notifyAdmin(
 			EventType.Client,
@@ -499,6 +500,7 @@ public class CustomClientListener extends ClientListenerAdapter implements Clien
 		// todo TODO optionally put the clientData in a separate collection, oldClients
 		
 		context.playerLeft(clientId);
+		context.clientLeft(clientId);
 
 		this.context.notifyAdmin(
 			EventType.Client,

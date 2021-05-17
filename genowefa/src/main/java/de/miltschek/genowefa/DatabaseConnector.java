@@ -30,6 +30,8 @@ public class DatabaseConnector implements Closeable {
 	private static final String F_ID = "`id`",
 			F_TS_STARTED = "`ts_started`",
 			F_TS_FINISHED = "`ts_finished`",
+			F_TS_JOINED = "`ts_joined`",
+			F_TS_LEFT = "`ts_left`",
 			F_SERVER_NAME = "`server_name`",
 			F_MAP_NAME = "`map_name`",
 			F_GENERATION_SEED = "`generation_seed`",
@@ -66,7 +68,6 @@ public class DatabaseConnector implements Closeable {
 			F_COUNTRY = "`country`",
 			F_CITY = "`city`",
 			F_PROXY = "`proxy`",
-			F_LEFT_TS = "`left_ts`",
 			F_ADDRESS = "`address`",
 			F_PORT = "`port`",
 			F_GAME_DATE = "`game_date`",
@@ -154,16 +155,20 @@ public class DatabaseConnector implements Closeable {
 			F_COUNTRY + " VARCHAR(255)," +
 			F_CITY + " VARCHAR(255)," +
 			F_PROXY + " BOOLEAN," +
+			F_TS_JOINED + " TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP," +
+			F_TS_LEFT + " TIMESTAMP DEFAULT 0," +
 			"PRIMARY KEY (" + F_GAME_ID + ", " + F_CLIENT_ID + ")" +
 			");";
 
 	private static final String TABLE_PLAYERS = "`genowefa_players`";
 	private static final String CREATE_PLAYERS = "CREATE TABLE " + TABLE_PLAYERS + " (" +
-			F_TS + " DATETIME NOT NULL," +
+			//F_TS + " DATETIME NOT NULL," +
 			F_GAME_ID + " BIGINT unsigned NOT NULL," +
 			F_CLIENT_ID + " INT NOT NULL," +
 			F_COMPANY_ID + " BIGINT unsigned NOT NULL," +
-			F_LEFT_TS + " DATETIME," +
+			//F_LEFT_TS + " DATETIME," +
+			F_TS_JOINED + " TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, " +
+			F_TS_LEFT + " TIMESTAMP DEFAULT 0, " +
 			"KEY `player_index` (" + F_GAME_ID + ", " + F_CLIENT_ID + ", " + F_COMPANY_ID + ") USING BTREE," + 
 			"CONSTRAINT `fk_player_client`\r\n" + 
 			"FOREIGN KEY (" + F_GAME_ID + ", " + F_CLIENT_ID + ") REFERENCES " + TABLE_CLIENTS + " (" + F_GAME_ID + ", " + F_CLIENT_ID + ")" + 
@@ -258,7 +263,7 @@ public class DatabaseConnector implements Closeable {
 		
 		try {
 			resultSet = statement.executeQuery("SELECT * FROM " + TABLE_CLIENTS + " WHERE " + F_GAME_ID + " = 0");
-			if (resultSet.getMetaData().getColumnCount() != 7) {
+			if (resultSet.getMetaData().getColumnCount() != 9) {
 				LOGGER.warn("Table {} contains an unexpected number of columns {}.", TABLE_CLIENTS, resultSet.getMetaData().getColumnCount());
 			}
 			resultSet.close();
@@ -907,7 +912,7 @@ public class DatabaseConnector implements Closeable {
 					+ F_GAME_ID + " = ? AND "
 					+ F_CLIENT_ID + " = ? AND "
 					+ F_COMPANY_ID + " = ? AND "
-					+ F_LEFT_TS + " IS NULL");
+					+ F_TS_LEFT + " = 0");
 			
 			int n = 1;
 			statement.setLong(n++, gameId);
@@ -938,14 +943,12 @@ public class DatabaseConnector implements Closeable {
 		try {
 			statement = connection.prepareStatement(
 					"INSERT INTO " + TABLE_PLAYERS + " ("
-					+ F_TS + ", "
 					+ F_GAME_ID + ", "
 					+ F_CLIENT_ID + ", "
 					+ F_COMPANY_ID + ") "
-					+ "VALUES (?, ?, ?, ?)");
+					+ "VALUES (?, ?, ?)");
 			
 			int n = 1;
-			statement.setTimestamp(n++, new Timestamp(System.currentTimeMillis()));
 			statement.setLong(n++, gameId);
 			statement.setInt(n++, playerId);
 			statement.setLong(n++, dbCompanyId);
@@ -966,7 +969,7 @@ public class DatabaseConnector implements Closeable {
 		try {
 			statement = connection.prepareStatement(
 					"UPDATE " + TABLE_PLAYERS + " SET "
-					+ F_LEFT_TS + " = ? "
+					+ F_TS_LEFT + " = ? "
 						+ "WHERE " + F_GAME_ID + " = ? AND " + F_CLIENT_ID + " = ?");
 			
 			int n = 1;
@@ -978,6 +981,30 @@ public class DatabaseConnector implements Closeable {
 			return statement.executeUpdate() >= 1;
 		} catch (SQLException ex) {
 			LOGGER.error("Failed to log player {} quitting game {}.", playerId, gameId, ex);
+			return false;
+		} finally {
+			try {
+				statement.close();
+			} catch (Exception e) {}
+		}
+	}
+	
+	public boolean clientQuit(long gameId, int playerId) {
+		PreparedStatement statement = null;
+		try {
+			statement = connection.prepareStatement("UPDATE " + TABLE_CLIENTS + " SET "
+					+ F_TS_LEFT + " = ? "
+					+ "WHERE " + F_GAME_ID + " = ? AND " + F_CLIENT_ID + " = ?");
+
+			int n = 1;
+			statement.setTimestamp(n++, new Timestamp(System.currentTimeMillis()));
+			
+			statement.setLong(n++, gameId);
+			statement.setInt(n++, playerId);
+			
+			return statement.executeUpdate() >= 1;
+		} catch (SQLException ex) {
+			LOGGER.error("Failed to log client {} quitting game {}.", playerId, gameId, ex);
 			return false;
 		} finally {
 			try {
