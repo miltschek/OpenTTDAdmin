@@ -35,6 +35,7 @@ public enum NetworkPacketType {
 	ADMIN_PACKET_ADMIN_RCON(5),             ///< The admin sends a remote console command.
 	ADMIN_PACKET_ADMIN_GAMESCRIPT(6),       ///< The admin sends a JSON string for the GameScript.
 	ADMIN_PACKET_ADMIN_PING(7),             ///< The admin sends a ping to the server, expecting a ping-reply (PONG) packet.
+	ADMIN_PACKET_ADMIN_EXTERNAL_CHAT(7),    ///< The admin sends a chat message from external source.
 
 	ADMIN_PACKET_SERVER_FULL(100),      ///< The server tells the admin it cannot accept the admin.
 	ADMIN_PACKET_SERVER_BANNED(101),          ///< The server tells the admin it is banned.

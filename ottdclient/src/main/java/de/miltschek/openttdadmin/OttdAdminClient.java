@@ -51,12 +51,14 @@ import de.miltschek.openttdadmin.data.CompanyListenerAdapter;
 import de.miltschek.openttdadmin.data.CompanyStatistics;
 import de.miltschek.openttdadmin.data.Date;
 import de.miltschek.openttdadmin.data.ErrorCode;
+import de.miltschek.openttdadmin.data.ExternalChatMessage;
 import de.miltschek.openttdadmin.data.Frequency;
 import de.miltschek.openttdadmin.data.FrequencyLong;
 import de.miltschek.openttdadmin.data.Language;
 import de.miltschek.openttdadmin.data.ServerInfo;
 import de.miltschek.openttdadmin.data.ServerListenerAdapter;
 import de.miltschek.openttdadmin.packets.AdminChat;
+import de.miltschek.openttdadmin.packets.AdminExternalChat;
 import de.miltschek.openttdadmin.packets.AdminGamescript;
 import de.miltschek.openttdadmin.packets.AdminJoin;
 import de.miltschek.openttdadmin.packets.AdminPing;
@@ -112,7 +114,7 @@ public class OttdAdminClient implements Closeable
 	/** Hardcoded client name. */
 	private final static String CLIENT_NAME = "miltschekOAC";
 	/** Hardcoded client version. */
-	private final static String CLIENT_VERSION = "1.0";
+	private final static String CLIENT_VERSION = "1.1";
 	/** Supported admin protocol's version. */
 	private final static byte SUPPORTED_SERVER_VERSION = 1;
 
@@ -291,6 +293,19 @@ public class OttdAdminClient implements Closeable
     	}
     	
     	this.worker.sendPacket(AdminChat.createPacket(networkAction, destinationType, chatMessage.getRecipientId(), chatMessage.getMessage()));
+    }
+    
+    /**
+     * Send an external chat message to the server.
+     * @param externalChatMessage external chat message to be sent
+     * @since OTTD 12.0
+     */
+    public void sendExternalChat(ExternalChatMessage externalChatMessage) {
+    	this.worker.sendPacket(AdminExternalChat.createPacket(
+    			externalChatMessage.getSource(),
+    			externalChatMessage.getColor(),
+    			externalChatMessage.getUser(),
+    			externalChatMessage.getMessage()));
     }
     
     /**

@@ -21,63 +21,62 @@
  *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  *  SOFTWARE.
  */
-package de.miltschek.openttdadmin.packets;
+package de.miltschek.openttdadmin.data;
 
 /**
- * TODO: document it
+ * External chat message.
+ * @since OTTD 12.0
  */
-public class ServerClientInfo extends OttdPacket {
-	private int clientId;
-	private String networkAddress;
-	private String clientName;
-	private byte rawLanguage;
-	private NetworkLanguage language;
-	private int joinDate;
-	private byte playAs;
+public class ExternalChatMessage {
+	private String source;
+	private TextColor color;
+	private String user;
+	private String message;
 	
-	public ServerClientInfo(byte[] buffer) {
-		super(buffer);
-		
-		resetCursor();
-		this.clientId = readInt32();
-		this.networkAddress = readString();
-		this.clientName = readString();
-		this.rawLanguage = readByte();
-		this.language = NetworkLanguage.getEnum(rawLanguage);
-		this.joinDate = readInt32();
-		this.playAs = readByte();
-	}
-
-	public int getClientId() {
-		return clientId;
-	}
-
-	public String getNetworkAddress() {
-		return networkAddress;
-	}
-
-	public String getClientName() {
-		return clientName;
-	}
-
 	/**
-	 * Returns client language ID.
-	 * @deprecated Since OTTD 12.0 the value is fixed to 0.
-	 * @return client language ID.
+	 * Creates the external chat message.
+	 * @param source TODO
+	 * @param color color of the chat message
+	 * @param user TODO
+	 * @param message TODO
 	 */
-	public byte getRawLanguage() {
-		return rawLanguage;
+	public ExternalChatMessage(String source, TextColor color, String user, String message) {
+		super();
+		this.source = source;
+		this.color = color;
+		this.user = user;
+		this.message = message;
 	}
 	
-	public NetworkLanguage getLanguage() {
-		return language;
+	/**
+	 * TODO
+	 * @return
+	 */
+	public String getSource() {
+		return source;
 	}
-
-	public int getJoinDate() {
-		return joinDate;
+	
+	/**
+	 * Gets the color of the message.
+	 * @return color of the message.
+	 */
+	public TextColor getColor() {
+		return color;
 	}
-
-	public byte getPlayAs() {
-		return playAs;
+	
+	/**
+	 * TODO
+	 * @return
+	 */
+	public String getUser() {
+		return user;
+	}
+	
+	/**
+	 * TODO
+	 * @return
+	 */
+	public String getMessage() {
+		return message;
 	}
 }

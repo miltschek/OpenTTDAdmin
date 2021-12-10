@@ -64,6 +64,11 @@ public class ServerWelcome extends OttdPacket {
 		return serverDedicated;
 	}
 
+	/**
+	 * Returns the map name.
+	 * @deprecated Since OTTD 12.0 the string is empty.
+	 * @return map name
+	 */
 	public String getMapName() {
 		return mapName;
 	}
