@@ -2,6 +2,8 @@
 OpenTTD Admin Client Library + Integrations + Fully Functional App
 Connects to the admin port of the OTTD and offers a Java-API for sending and receiving events to/from the OTTD server.
 
+** New: external chat message as of OTTD 12.0+.
+
 Overview
 --------
 
