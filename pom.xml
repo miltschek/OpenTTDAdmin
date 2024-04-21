@@ -4,7 +4,8 @@
 
   <groupId>de.miltschek</groupId>
   <artifactId>openttdadmin</artifactId>
-  <version>1.3.1</version>
+  <packaging>pom</packaging>
+  <version>1.4.0</version>
 
   <name>openttdadmin</name>
   <url>http://maven.apache.org</url>
