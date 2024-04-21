@@ -1,7 +1,7 @@
 /*
  *  MIT License
  *
- *  Copyright (c) 2021 miltschek
+ *  Copyright (c) 2024 miltschek
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -24,23 +24,35 @@
 package de.miltschek.openttdadmin.packets;
 
 /**
- * TODO: document it
+ * Destination of chat messages.
  */
 public enum DestinationType {
-	DESTTYPE_BROADCAST(0), ///< Send message/notice to all clients (All)
-	DESTTYPE_TEAM(1),      ///< Send message/notice to everyone playing the same company (Team)
-	DESTTYPE_CLIENT(2);    ///< Send message/notice to only a certain client (Private)
+	/** Send message/notice to all clients (All). */
+	DESTTYPE_BROADCAST(0),
+	/** Send message/notice to everyone playing the same company (Team). */
+	DESTTYPE_TEAM(1),
+	/** Send message/notice to only a certain client (Private). */
+	DESTTYPE_CLIENT(2);
 
 	private int value;
-		
+
 	private DestinationType(int value) {
 		this.value = value;
 	}
 	
+	/**
+	 * Get a value associated with the destination type.
+	 * @return a value associated with the destination type
+	 */
 	public int getValue() {
 		return value;
 	}
 	
+	/**
+	 * Get a destination type associated with the given value.
+	 * @param value network-level value denoting a destination type
+	 * @return a destination type associated with the given value
+	 */
 	public static DestinationType getEnum(int value) {
 		switch (value) {
 		case 0: return DESTTYPE_BROADCAST;

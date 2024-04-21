@@ -1,7 +1,7 @@
 /*
  *  MIT License
  *
- *  Copyright (c) 2021 miltschek
+ *  Copyright (c) 2024 miltschek
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -24,10 +24,15 @@
 package de.miltschek.openttdadmin.packets;
 
 /**
- * TODO: document it
+ * The server indicates that the remote console command has completed.
  */
 public class ServerRconEnd extends OttdPacket {
 	private String command;
+
+	/**
+	 * Interprets raw data to create a representation of the packet.
+	 * @param buffer buffer containing raw data
+	 */
 	public ServerRconEnd(byte[] buffer) {
 		super(buffer);
 		
@@ -35,9 +40,11 @@ public class ServerRconEnd extends OttdPacket {
 		this.command = readString();
 	}
 	
+	/**
+	 * Returns the remote command that has been completed.
+	 * @return the remote command that has been completed
+	 */
 	public String getCommand() {
 		return command;
 	}
-	
-	
 }

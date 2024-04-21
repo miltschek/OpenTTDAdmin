@@ -1,7 +1,7 @@
 /*
  *  MIT License
  *
- *  Copyright (c) 2021 miltschek
+ *  Copyright (c) 2024 miltschek
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -26,17 +26,30 @@ package de.miltschek.openttdadmin.packets;
 import java.nio.charset.StandardCharsets;
 
 /**
- * TODO: document it
+ * The admin announces and authenticates itself to the server.
  */
 public class AdminJoin extends OttdPacket {
 	private static final int NETWORK_PASSWORD_LENGTH = 33;
 	private static final int NETWORK_ADMIN_NAME_LENGTH = 25;
 	private static final int NETWORK_ADMIN_VERSION_LENGTH = 33;
 	
+	/**
+	 * Creates a packet out of binary data.
+	 * @param buffer buffer containing binary data of the packet
+	 * @param startPosition beginning of the valid data within the given buffer
+	 * @param length length of the valid data within the given buffer
+	 */
 	public AdminJoin(byte[] buffer, int startPosition, int length) {
 		super(buffer, startPosition, length);
 	}
 	
+	/**
+	 * Creates a packet out of provided data.
+	 * @param password password for the admin access
+	 * @param adminName name of the admin client (must not be empty)
+	 * @param adminVersion version of the admin client (must not be empty)
+	 * @return a created packet
+	 */
 	public static AdminJoin createPacket(String password, String adminName, String adminVersion) {
 		byte[] passwordBytes = password.getBytes(StandardCharsets.UTF_8);
 		byte[] adminNameBytes = adminName.getBytes(StandardCharsets.UTF_8);

@@ -1,7 +1,7 @@
 /*
  *  MIT License
  *
- *  Copyright (c) 2021 miltschek
+ *  Copyright (c) 2024 miltschek
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -24,13 +24,17 @@
 package de.miltschek.openttdadmin.packets;
 
 /**
- * TODO: document it
+ * The server gives the admin an information update on a client.
  */
 public class ServerClientUpdate extends OttdPacket {
 	private int clientId;
 	private String clientName;
 	private byte playAs;
 	
+	/**
+	 * Interprets raw data to create a representation of the packet.
+	 * @param buffer buffer containing raw data
+	 */
 	public ServerClientUpdate(byte[] buffer) {
 		super(buffer);
 		
@@ -40,17 +44,27 @@ public class ServerClientUpdate extends OttdPacket {
 		this.playAs = readByte();
 	}
 
+	/**
+	 * Gets the unique ID of the client.
+	 * @return the unique ID of the client
+	 */
 	public int getClientId() {
 		return clientId;
 	}
 
+	/**
+	 * Gets the client name.
+	 * @return the client name
+	 */
 	public String getClientName() {
 		return clientName;
 	}
 
+	/**
+	 * Gets the company ID the client is playing.
+	 * @return the company ID the client is playing
+	 */
 	public byte getPlayAs() {
 		return playAs;
 	}
-	
-	
 }

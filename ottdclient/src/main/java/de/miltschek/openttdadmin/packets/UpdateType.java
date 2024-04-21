@@ -1,7 +1,7 @@
 /*
  *  MIT License
  *
- *  Copyright (c) 2021 miltschek
+ *  Copyright (c) 2024 miltschek
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -24,29 +24,29 @@
 package de.miltschek.openttdadmin.packets;
 
 /**
- * TODO: document it
+ * Update types an admin can register a frequency for.
  */
 public enum UpdateType {
-	/** ADMIN_FREQUENCY_POLL | ADMIN_FREQUENCY_DAILY | ADMIN_FREQUENCY_WEEKLY | ADMIN_FREQUENCY_MONTHLY | ADMIN_FREQUENCY_QUARTERLY | ADMIN_FREQUENCY_ANUALLY */
-	ADMIN_UPDATE_DATE(0),            ///< Updates about the date of the game.
-	/** ADMIN_FREQUENCY_POLL | ADMIN_FREQUENCY_AUTOMATIC */
-	ADMIN_UPDATE_CLIENT_INFO(1),     ///< Updates about the information of clients.
-	/** ADMIN_FREQUENCY_POLL | ADMIN_FREQUENCY_AUTOMATIC */
-	ADMIN_UPDATE_COMPANY_INFO(2),    ///< Updates about the generic information of companies.
-	/** ADMIN_FREQUENCY_POLL | ADMIN_FREQUENCY_WEEKLY | ADMIN_FREQUENCY_MONTHLY | ADMIN_FREQUENCY_QUARTERLY | ADMIN_FREQUENCY_ANUALLY */
-	ADMIN_UPDATE_COMPANY_ECONOMY(3), ///< Updates about the economy of companies.
-	/** ADMIN_FREQUENCY_POLL | ADMIN_FREQUENCY_WEEKLY | ADMIN_FREQUENCY_MONTHLY | ADMIN_FREQUENCY_QUARTERLY | ADMIN_FREQUENCY_ANUALLY */
-	ADMIN_UPDATE_COMPANY_STATS(4),   ///< Updates about the statistics of companies.
-	/** ADMIN_FREQUENCY_AUTOMATIC */
-	ADMIN_UPDATE_CHAT(5),            ///< The admin would like to have chat messages.
-	/** ADMIN_FREQUENCY_AUTOMATIC */
-	ADMIN_UPDATE_CONSOLE(6),         ///< The admin would like to have console messages.
-	/** ADMIN_FREQUENCY_POLL */
-	ADMIN_UPDATE_CMD_NAMES(7),       ///< The admin would like a list of all DoCommand names.
-	/** ADMIN_FREQUENCY_AUTOMATIC */
-	ADMIN_UPDATE_CMD_LOGGING(8),     ///< The admin would like to have DoCommand information.
-	/** ADMIN_FREQUENCY_AUTOMATIC */
-	ADMIN_UPDATE_GAMESCRIPT(9);      ///< The admin would like to have gamescript messages.
+	/** Updates about the date of the game. Default: ADMIN_FREQUENCY_POLL | ADMIN_FREQUENCY_DAILY | ADMIN_FREQUENCY_WEEKLY | ADMIN_FREQUENCY_MONTHLY | ADMIN_FREQUENCY_QUARTERLY | ADMIN_FREQUENCY_ANUALLY. */
+	ADMIN_UPDATE_DATE(0), 
+	/** Updates about the information of clients. Default: ADMIN_FREQUENCY_POLL | ADMIN_FREQUENCY_AUTOMATIC. */
+	ADMIN_UPDATE_CLIENT_INFO(1),
+	/** Updates about the generic information of companies. Default: ADMIN_FREQUENCY_POLL | ADMIN_FREQUENCY_AUTOMATIC. */
+	ADMIN_UPDATE_COMPANY_INFO(2),
+	/** Updates about the economy of companies. Default: ADMIN_FREQUENCY_POLL | ADMIN_FREQUENCY_WEEKLY | ADMIN_FREQUENCY_MONTHLY | ADMIN_FREQUENCY_QUARTERLY | ADMIN_FREQUENCY_ANUALLY. */
+	ADMIN_UPDATE_COMPANY_ECONOMY(3),
+	/** Updates about the statistics of companies. Default: ADMIN_FREQUENCY_POLL | ADMIN_FREQUENCY_WEEKLY | ADMIN_FREQUENCY_MONTHLY | ADMIN_FREQUENCY_QUARTERLY | ADMIN_FREQUENCY_ANUALLY. */
+	ADMIN_UPDATE_COMPANY_STATS(4),
+	/** The admin would like to have chat messages. Default: ADMIN_FREQUENCY_AUTOMATIC. */
+	ADMIN_UPDATE_CHAT(5),
+	/** The admin would like to have console messages. Default: ADMIN_FREQUENCY_AUTOMATIC. */
+	ADMIN_UPDATE_CONSOLE(6),
+	/** The admin would like a list of all DoCommand names. Default: ADMIN_FREQUENCY_POLL. */
+	ADMIN_UPDATE_CMD_NAMES(7),
+	/** The admin would like to have DoCommand information. Default: ADMIN_FREQUENCY_AUTOMATIC. */
+	ADMIN_UPDATE_CMD_LOGGING(8),
+	/** The admin would like to have gamescript messages. Default: ADMIN_FREQUENCY_AUTOMATIC. */
+	ADMIN_UPDATE_GAMESCRIPT(9);
 
 	private int value;
 	
@@ -54,10 +54,19 @@ public enum UpdateType {
 		this.value = value;
 	}
 	
+	/**
+	 * Get a value associated with the update type.
+	 * @return a value associated with the update type
+	 */
 	public int getValue() {
 		return value;
 	}
 	
+	/**
+	 * Get an update type associated with the given value.
+	 * @param value network-level value denoting an update type
+	 * @return an update type associated with the given value
+	 */
 	public static UpdateType getEnum(int value) {
 		switch (value) {
 		case 0: return ADMIN_UPDATE_DATE;

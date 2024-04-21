@@ -1,7 +1,7 @@
 /*
  *  MIT License
  *
- *  Copyright (c) 2021 miltschek
+ *  Copyright (c) 2024 miltschek
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -24,13 +24,25 @@
 package de.miltschek.openttdadmin.packets;
 
 /**
- * TODO: document it
+ * The admin tells the server the update frequency of a particular piece of information.
  */
 public class AdminUpdateFrequency extends OttdPacket {
+	/**
+	 * Creates a packet out of binary data.
+	 * @param buffer buffer containing binary data of the packet
+	 * @param startPosition beginning of the valid data within the given buffer
+	 * @param length length of the valid data within the given buffer
+	 */
 	public AdminUpdateFrequency(byte[] buffer, int startPosition, int length) {
 		super(buffer, startPosition, length);
 	}
 	
+	/**
+	 * Creates a packet out of provided data.
+	 * @param updateType type of information requested from the server
+	 * @param updateFrequency update frequency at which the server should provide the data
+	 * @return a created packet
+	 */
 	public static AdminUpdateFrequency createPacket(UpdateType updateType, UpdateFrequency updateFrequency) {
 		byte[] buffer = new byte[MAX_MTU];
 		

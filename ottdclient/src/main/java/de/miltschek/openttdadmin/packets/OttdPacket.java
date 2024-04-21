@@ -1,7 +1,7 @@
 /*
  *  MIT License
  *
- *  Copyright (c) 2021 miltschek
+ *  Copyright (c) 2024 miltschek
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -29,7 +29,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * TODO: document it
+ * Base class for all network packet types.
+ * Contains a factory method for raw data parsing.
  */
 public abstract class OttdPacket {
 	private static final Logger LOGGER = LoggerFactory.getLogger(OttdPacket.class);
@@ -39,11 +40,23 @@ public abstract class OttdPacket {
 	protected byte[] internalBuffer;
 	private int position;
 	
+	/**
+	 * Creates a network packet object and uses the given buffer as a whole.
+	 * Note: Any modification to the buffer outside this class will affect the class' behavior.
+	 * @param buffer raw data of the packet
+	 */
 	protected OttdPacket(byte[] buffer) {
 		this.internalBuffer = buffer;
 		resetCursor();
 	}
 	
+	/**
+	 * Creates a network packet object from the given fragment of the buffer.
+	 * Note: The data will get copied to the internal buffer of the object.
+	 * @param buffer source buffer
+	 * @param startPosition starting index of the valid data
+	 * @param length length of the valid data
+	 */
 	protected OttdPacket(byte[] buffer, int startPosition, int length) {
 		this.internalBuffer = new byte[length];
 		System.arraycopy(buffer, 0, internalBuffer, startPosition, length);
@@ -141,14 +154,26 @@ public abstract class OttdPacket {
 		return null;
 	}
 	
+	/**
+	 * Returns the internal buffer.
+	 * Note: Any modification to the returned buffer affects the internal buffer (it's a reference, not a copy). 
+	 * @return the internal buffer
+	 */
 	public byte[] getInternalBuffer() {
 		return internalBuffer;
 	}
 	
+	/**
+	 * Moves the internal pointer to the beginning of the packet's payload.
+	 */
 	protected void resetCursor() {
 		this.position = internalBuffer == null ? 0 : 3;
 	}
 	
+	/**
+	 * Consumes 8 bytes from the packet's payload and converts their value to a 64-bit signed int.
+	 * @return 64-bit signed int out of 8 bytes of payload
+	 */
 	protected long readInt64() {
 		return (0xffL & internalBuffer[position++])
 				| ((0xffL & internalBuffer[position++]) << 8)
@@ -160,6 +185,10 @@ public abstract class OttdPacket {
 				| ((0xffL & internalBuffer[position++]) << 56);
 	}
 	
+	/**
+	 * Consumes 4 bytes from the packet's payload and converts their value to a 32-bit signed int.
+	 * @return 32-bit signed int out of 8 bytes of payload
+	 */
 	protected int readInt32() {
 		return (0xff & internalBuffer[position++])
 				| ((0xff & internalBuffer[position++]) << 8)
@@ -167,19 +196,35 @@ public abstract class OttdPacket {
 				| ((0xff & internalBuffer[position++]) << 24);
 	}
 	
+	/**
+	 * Consumes 2 bytes from the packet's payload and converts their value to a 32-bit signed int.
+	 * @return 32-bit signed int out of 2 bytes of payload
+	 */
 	protected int readInt16() {
 		return (0xff & internalBuffer[position++])
 				| ((0xff & internalBuffer[position++]) << 8);
 	}
 	
+	/**
+	 * Consumes 1 byte from the packet's payload and converts its value to an 8-bit signed int.
+	 * @return 8-bit signed int out of 1 byte of payload
+	 */
 	protected byte readByte() {
 		return internalBuffer[position++];
 	}
 	
+	/**
+	 * Consumes 1 byte from the packet's payload and interprets it as a boolean value (0 is false, true otherwise).
+	 * @return boolean value out of 1 byte of payload
+	 */
 	protected boolean readBoolean() {
 		return internalBuffer[position++] != 0;
 	}
 	
+	/**
+	 * Consumes as many bytes until a trailing 0x00-value is found and converts them assuming UTF-8 encoding to a string.
+	 * @return string value of of 0-terminated c-string, UTF-8 encoded
+	 */
 	protected String readString() {
 		int endIndex = find(internalBuffer, position, (byte)0);
 		String result = new String(internalBuffer, position, endIndex - position, StandardCharsets.UTF_8);
@@ -187,6 +232,13 @@ public abstract class OttdPacket {
 		return result;
 	}
 	
+	/**
+	 * Looks for a given value in the byte array.
+	 * @param array byte array to be searched
+	 * @param startPosition starting index inside of the array to be searched for
+	 * @param value value to be found
+	 * @return index value of the position if found, a negative value otherwise
+	 */
 	private static int find(byte[] array, int startPosition, byte value) {
 		for (int n = startPosition; n < array.length; n++) {
 			if (array[n] == value) {

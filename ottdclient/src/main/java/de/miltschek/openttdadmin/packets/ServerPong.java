@@ -1,7 +1,7 @@
 /*
  *  MIT License
  *
- *  Copyright (c) 2021 miltschek
+ *  Copyright (c) 2024 miltschek
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -24,11 +24,15 @@
 package de.miltschek.openttdadmin.packets;
 
 /**
- * TODO: document it
+ * The server replies to a ping request from the admin.
  */
 public class ServerPong extends OttdPacket {
 	private int d1;
 	
+	/**
+	 * Interprets raw data to create a representation of the packet.
+	 * @param buffer buffer containing raw data
+	 */
 	public ServerPong(byte[] buffer) {
 		super(buffer);
 		
@@ -36,6 +40,10 @@ public class ServerPong extends OttdPacket {
 		this.d1 = readInt32();
 	}
 
+	/**
+	 * Returns a 32-bit value that has been sent with the 'ping' request originally.
+	 * @return a 32-bit value that has been sent with the 'ping' request originally
+	 */
 	public int getD1() {
 		return d1;
 	}

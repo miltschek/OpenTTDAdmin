@@ -1,7 +1,7 @@
 /*
  *  MIT License
  *
- *  Copyright (c) 2021 miltschek
+ *  Copyright (c) 2024 miltschek
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -24,11 +24,15 @@
 package de.miltschek.openttdadmin.packets;
 
 /**
- * TODO: document it
+ * The server tells the admin that a new company has started.
  */
 public class ServerCompanyNew extends OttdPacket {
 	private byte companyId;
 	
+	/**
+	 * Interprets raw data to create a representation of the packet.
+	 * @param buffer buffer containing raw data
+	 */
 	public ServerCompanyNew(byte[] buffer) {
 		super(buffer);
 		
@@ -36,6 +40,10 @@ public class ServerCompanyNew extends OttdPacket {
 		this.companyId = readByte();
 	}
 
+	/**
+	 * Returns the company ID.
+	 * @return the company ID
+	 */
 	public byte getCompanyId() {
 		return companyId;
 	}

@@ -1,7 +1,7 @@
 /*
  *  MIT License
  *
- *  Copyright (c) 2021 miltschek
+ *  Copyright (c) 2024 miltschek
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -24,7 +24,7 @@
 package de.miltschek.openttdadmin.packets;
 
 /**
- * TODO: document it
+ * The server welcomes the admin to a game.
  */
 public class ServerWelcome extends OttdPacket {
 	private String serverName;
@@ -37,6 +37,10 @@ public class ServerWelcome extends OttdPacket {
 	private int mapSizeX;
 	private int mapSizeY;
 	
+	/**
+	 * Interprets raw data to create a representation of the packet.
+	 * @param buffer buffer containing raw data
+	 */
 	public ServerWelcome(byte[] buffer) {
 		super(buffer);
 
@@ -52,14 +56,26 @@ public class ServerWelcome extends OttdPacket {
 		this.mapSizeY = readInt16();
 	}
 	
+	/**
+	 * Returns the name of the server.
+	 * @return the name of the server
+	 */
 	public String getServerName() {
 		return serverName;
 	}
 
+	/**
+	 * Returns the revision (version) of the game, which can be an official tag or a git-hash. 
+	 * @return the revision (version) of the game
+	 */
 	public String getNetworkRevision() {
 		return networkRevision;
 	}
 
+	/**
+	 * Returns a flag denoting whether the server is a dedicated one (server-only, no local player).
+	 * @return true if the server is a dedicated one, false otherwise
+	 */
 	public boolean isServerDedicated() {
 		return serverDedicated;
 	}
@@ -73,25 +89,43 @@ public class ServerWelcome extends OttdPacket {
 		return mapName;
 	}
 
+	/**
+	 * Returns the seed used for map generation.
+	 * @return the seed used for map generation
+	 */
 	public int getGenerationSeed() {
 		return generationSeed;
 	}
 
+	/**
+	 * Returns the ID of the landscape type of the map.
+	 * @return the ID of the landscape type of the map
+	 */
 	public byte getLandscape() {
 		return landscape;
 	}
 
+	/**
+	 * Returns the starting year of the game.
+	 * @return the starting year of the game
+	 */
 	public int getStartingYear() {
 		return startingYear;
 	}
 
+	/**
+	 * Returns the width of the map.
+	 * @return the width of the map
+	 */
 	public int getMapSizeX() {
 		return mapSizeX;
 	}
 
+	/**
+	 * Returns the height of the map.
+	 * @return the height of the map
+	 */
 	public int getMapSizeY() {
 		return mapSizeY;
 	}
-	
-	
 }

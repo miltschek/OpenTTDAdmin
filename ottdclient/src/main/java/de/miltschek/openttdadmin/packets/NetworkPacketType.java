@@ -1,7 +1,7 @@
 /*
  *  MIT License
  *
- *  Copyright (c) 2021 miltschek
+ *  Copyright (c) 2024 miltschek
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -24,7 +24,7 @@
 package de.miltschek.openttdadmin.packets;
 
 /**
- * TODO: document it
+ * Types of TCP packets specific to the admin network.
  */
 public enum NetworkPacketType {
 	ADMIN_PACKET_ADMIN_JOIN(0),             ///< The admin announces and authenticates itself to the server.
@@ -74,10 +74,19 @@ public enum NetworkPacketType {
 		this.value = value;
 	}
 	
+	/**
+	 * Get a value associated with the network packet type.
+	 * @return a value associated with the network packet type
+	 */
 	public int getValue() {
 		return value;
 	}
 	
+	/**
+	 * Get a network packet type associated with the given value.
+	 * @param value network-level value denoting a network packet typen
+	 * @return a network packet type associated with the given value
+	 */
 	public static NetworkPacketType getEnum(int value) {
 		switch (value) {
 

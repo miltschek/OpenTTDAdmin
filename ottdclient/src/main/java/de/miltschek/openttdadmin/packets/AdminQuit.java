@@ -1,7 +1,7 @@
 /*
  *  MIT License
  *
- *  Copyright (c) 2021 miltschek
+ *  Copyright (c) 2024 miltschek
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -24,13 +24,23 @@
 package de.miltschek.openttdadmin.packets;
 
 /**
- * TODO: document it
+ * The admin tells the server that it is quitting.
  */
 public class AdminQuit extends OttdPacket {
+	/**
+	 * Creates a packet out of binary data.
+	 * @param buffer buffer containing binary data of the packet
+	 * @param startPosition beginning of the valid data within the given buffer
+	 * @param length length of the valid data within the given buffer
+	 */
 	public AdminQuit(byte[] buffer) {
 		super(buffer);
 	}
 	
+	/**
+	 * Creates a default packet.
+	 * @return a created packet
+	 */
 	public static AdminQuit createPacket() {
 		return new AdminQuit(new byte[] {
 				3, 0,

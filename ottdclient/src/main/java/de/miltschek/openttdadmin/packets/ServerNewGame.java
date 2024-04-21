@@ -1,7 +1,7 @@
 /*
  *  MIT License
  *
- *  Copyright (c) 2021 miltschek
+ *  Copyright (c) 2024 miltschek
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -24,9 +24,13 @@
 package de.miltschek.openttdadmin.packets;
 
 /**
- * TODO: document it
+ * The server tells the admin its going to start a new game.
  */
 public class ServerNewGame extends OttdPacket {
+	/**
+	 * Interprets raw data to create a representation of the packet.
+	 * @param buffer buffer containing raw data
+	 */
 	public ServerNewGame(byte[] buffer) {
 		super(buffer);
 		

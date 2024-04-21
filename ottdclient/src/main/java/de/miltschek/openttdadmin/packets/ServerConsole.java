@@ -1,7 +1,7 @@
 /*
  *  MIT License
  *
- *  Copyright (c) 2021 miltschek
+ *  Copyright (c) 2024 miltschek
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -24,12 +24,16 @@
 package de.miltschek.openttdadmin.packets;
 
 /**
- * TODO: document it
+ * The server gives the admin the data that got printed to its console. 
  */
 public class ServerConsole extends OttdPacket {
 	private String origin;
 	private String text;
 	
+	/**
+	 * Interprets raw data to create a representation of the packet.
+	 * @param buffer buffer containing raw data
+	 */
 	public ServerConsole(byte[] buffer) {
 		super(buffer);
 		
@@ -38,13 +42,19 @@ public class ServerConsole extends OttdPacket {
 		this.text = readString();
 	}
 
+	/**
+	 * Returns the origin of the string.
+	 * @return the origin of the string
+	 */
 	public String getOrigin() {
 		return origin;
 	}
 
+	/**
+	 * Returns the string from the console.
+	 * @return the string from the console
+	 */
 	public String getText() {
 		return text;
 	}
-	
-	
 }

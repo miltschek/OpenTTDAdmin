@@ -1,7 +1,7 @@
 /*
  *  MIT License
  *
- *  Copyright (c) 2021 miltschek
+ *  Copyright (c) 2024 miltschek
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -27,11 +27,15 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * TODO: document it
+ * The server sends out the names of the DoCommands to the admins.
  */
 public class ServerCmdNames extends OttdPacket {
 	private Map<Integer, String> commands = new HashMap<Integer, String>();
 	
+	/**
+	 * Interprets raw data to create a representation of the packet.
+	 * @param buffer buffer containing raw data
+	 */
 	public ServerCmdNames(byte[] buffer) {
 		super(buffer);
 		
@@ -41,6 +45,10 @@ public class ServerCmdNames extends OttdPacket {
 		}
 	}
 	
+	/**
+	 * Returns a collection of all possible commands which can be executed by the game engine.
+	 * @return a map of command IDs to their names
+	 */
 	public Map<? extends Integer, ? extends String> getCommands() {
 		return this.commands;
 	}

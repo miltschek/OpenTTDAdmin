@@ -1,7 +1,7 @@
 /*
  *  MIT License
  *
- *  Copyright (c) 2021 miltschek
+ *  Copyright (c) 2024 miltschek
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -26,15 +26,26 @@ package de.miltschek.openttdadmin.packets;
 import java.nio.charset.StandardCharsets;
 
 /**
- * TODO: document it
+ * The admin sends a JSON string for the GameScript.
  */
 public class AdminGamescript extends OttdPacket {
 	private static final int NETWORK_GAMESCRIPT_JSON_LENGTH = 1457;
 	
+	/**
+	 * Creates a packet out of binary data.
+	 * @param buffer buffer containing binary data of the packet
+	 * @param startPosition beginning of the valid data within the given buffer
+	 * @param length length of the valid data within the given buffer
+	 */
 	public AdminGamescript(byte[] buffer, int startPosition, int length) {
 		super(buffer, startPosition, length);
 	}
 	
+	/**
+	 * Creates a packet with the given JSON string.
+	 * @param json JSON string (syntax will not be verified)
+	 * @return a created packet
+	 */
 	public static AdminGamescript createPacket(String json) {
 		byte[] buffer = new byte[MAX_MTU];
 		

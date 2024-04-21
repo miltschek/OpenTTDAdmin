@@ -1,7 +1,7 @@
 /*
  *  MIT License
  *
- *  Copyright (c) 2021 miltschek
+ *  Copyright (c) 2024 miltschek
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -24,7 +24,7 @@
 package de.miltschek.openttdadmin.packets;
 
 /**
- * TODO: document it
+ * The server gives the admin information about a client.
  */
 public class ServerClientInfo extends OttdPacket {
 	private int clientId;
@@ -35,6 +35,10 @@ public class ServerClientInfo extends OttdPacket {
 	private int joinDate;
 	private byte playAs;
 	
+	/**
+	 * Interprets raw data to create a representation of the packet.
+	 * @param buffer buffer containing raw data
+	 */
 	public ServerClientInfo(byte[] buffer) {
 		super(buffer);
 		
@@ -48,20 +52,32 @@ public class ServerClientInfo extends OttdPacket {
 		this.playAs = readByte();
 	}
 
+	/**
+	 * Gets the client ID.
+	 * @return the client ID
+	 */
 	public int getClientId() {
 		return clientId;
 	}
 
+	/**
+	 * Gets the network address of the client or an empty string if not available.
+	 * @return the network address of the client or an empty string if not available
+	 */
 	public String getNetworkAddress() {
 		return networkAddress;
 	}
 
+	/**
+	 * Gets the client name.
+	 * @return the client name
+	 */
 	public String getClientName() {
 		return clientName;
 	}
 
 	/**
-	 * Returns client language ID.
+	 * Returns the network-level value of the client language.
 	 * @deprecated Since OTTD 12.0 the value is fixed to 0.
 	 * @return client language ID.
 	 */
@@ -69,14 +85,27 @@ public class ServerClientInfo extends OttdPacket {
 		return rawLanguage;
 	}
 	
+	/**
+	 * Gets the language of the client.
+	 * @deprecated Since OTTD 12.0 the value is fixed to 0.
+	 * @return language of the client
+	 */
 	public NetworkLanguage getLanguage() {
 		return language;
 	}
 
+	/**
+	 * Gets the in-game date when the client joined. 
+	 * @return the in-game date when the client joined
+	 */
 	public int getJoinDate() {
 		return joinDate;
 	}
 
+	/**
+	 * Gets the company ID the client is playing.
+	 * @return the company ID the client is playing
+	 */
 	public byte getPlayAs() {
 		return playAs;
 	}

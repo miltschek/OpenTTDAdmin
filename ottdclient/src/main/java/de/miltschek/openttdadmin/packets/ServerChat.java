@@ -1,7 +1,7 @@
 /*
  *  MIT License
  *
- *  Copyright (c) 2021 miltschek
+ *  Copyright (c) 2024 miltschek
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -24,7 +24,7 @@
 package de.miltschek.openttdadmin.packets;
 
 /**
- * TODO: document it
+ * The server received a chat message and relays it.
  */
 public class ServerChat extends OttdPacket {
 	private NetworkAction action;
@@ -33,6 +33,10 @@ public class ServerChat extends OttdPacket {
 	private String message;
 	private int data;
 	
+	/**
+	 * Interprets raw data to create a representation of the packet.
+	 * @param buffer buffer containing raw data
+	 */
 	public ServerChat(byte[] buffer) {
 		super(buffer);
 		
@@ -44,22 +48,42 @@ public class ServerChat extends OttdPacket {
 		this.data = readInt32();
 	}
 
+	/**
+	 * Gets the network action value.
+	 * @return the network action value.
+	 */
 	public NetworkAction getAction() {
 		return action;
 	}
 
+	/**
+	 * Gets the type of the destination address. 
+	 * @return the type of the destination address
+	 */
 	public DestinationType getDestinationType() {
 		return destinationType;
 	}
 
+	/**
+	 * Gets the client ID of the sender of the message.
+	 * @return the client ID of the sender of the message
+	 */
 	public int getClientId() {
 		return clientId;
 	}
 
+	/**
+	 * Gets the message.
+	 * @return the message
+	 */
 	public String getMessage() {
 		return message;
 	}
 
+	/**
+	 * Gets additional data, if any.
+	 * @return additional data, if any
+	 */
 	public int getData() {
 		return data;
 	}

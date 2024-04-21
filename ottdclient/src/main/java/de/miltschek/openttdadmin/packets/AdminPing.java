@@ -1,7 +1,7 @@
 /*
  *  MIT License
  *
- *  Copyright (c) 2021 miltschek
+ *  Copyright (c) 2024 miltschek
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -24,13 +24,24 @@
 package de.miltschek.openttdadmin.packets;
 
 /**
- * TODO: document it
+ * The admin sends a ping to the server, expecting a ping-reply (PONG) packet.
  */
 public class AdminPing extends OttdPacket {
+	/**
+	 * Creates a packet out of binary data.
+	 * @param buffer buffer containing binary data of the packet
+	 * @param startPosition beginning of the valid data within the given buffer
+	 * @param length length of the valid data within the given buffer
+	 */
 	public AdminPing(byte[] buffer, int startPosition, int length) {
 		super(buffer, startPosition, length);
 	}
 	
+	/**
+	 * Creates a packet out of provided data.
+	 * @param d1 a 32-bit value that identified the 'ping' request and can be matched with a 'pong' response afterwards
+	 * @return a created packet
+	 */
 	public static AdminPing createPacket(int d1) {
 		byte[] buffer = new byte[MAX_MTU];
 		

@@ -1,7 +1,7 @@
 /*
  *  MIT License
  *
- *  Copyright (c) 2021 miltschek
+ *  Copyright (c) 2024 miltschek
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -27,45 +27,84 @@ package de.miltschek.openttdadmin.packets;
  * Mapping of network currency codes to their IDs and vice-versa.
  */
 public enum NetworkCurrency {
-	CURRENCY_GBP(0),       ///< British Pound
-	CURRENCY_USD(1),       ///< US Dollar
-	CURRENCY_EUR(2),       ///< Euro
-	CURRENCY_JPY(3),       ///< Japanese Yen
-	CURRENCY_ATS(4),       ///< Austrian Schilling
-	CURRENCY_BEF(5),       ///< Belgian Franc
-	CURRENCY_CHF(6),       ///< Swiss Franc
-	CURRENCY_CZK(7),       ///< Czech Koruna
-	CURRENCY_DEM(8),       ///< Deutsche Mark
-	CURRENCY_DKK(9),       ///< Danish Krona
-	CURRENCY_ESP(10),       ///< Spanish Peseta
-	CURRENCY_FIM(11),       ///< Finish Markka
-	CURRENCY_FRF(12),       ///< French Franc
-	CURRENCY_GRD(13),       ///< Greek Drachma
-	CURRENCY_HUF(14),       ///< Hungarian Forint
-	CURRENCY_ISK(15),       ///< Icelandic Krona
-	CURRENCY_ITL(16),       ///< Italian Lira
-	CURRENCY_NLG(17),       ///< Dutch Gulden
-	CURRENCY_NOK(18),       ///< Norwegian Krone
-	CURRENCY_PLN(19),       ///< Polish Zloty
-	CURRENCY_RON(20),       ///< Romenian Leu
-	CURRENCY_RUR(21),       ///< Russian Rouble
-	CURRENCY_SIT(22),       ///< Slovenian Tolar
-	CURRENCY_SEK(23),       ///< Swedish Krona
-	CURRENCY_YTL(24),       ///< Turkish Lira
-	CURRENCY_SKK(25),       ///< Slovak Kornuna
-	CURRENCY_BRL(26),       ///< Brazilian Real
-	CURRENCY_EEK(27),       ///< Estonian Krooni
-	CURRENCY_LTL(28),       ///< Lithuanian Litas
-	CURRENCY_KRW(29),       ///< South Korean Won
-	CURRENCY_ZAR(30),       ///< South African Rand
-	CURRENCY_CUSTOM(31),    ///< Custom currency
-	CURRENCY_GEL(32),       ///< Georgian Lari
-	CURRENCY_IRR(33),       ///< Iranian Rial
-	CURRENCY_RUB(34),       ///< New Russian Ruble
-	CURRENCY_MXN(35),       ///< Mexican Peso
-	CURRENCY_NTD(36),       ///< New Taiwan Dollar
-	CURRENCY_CNY(37),       ///< Chinese Renminbi
-	CURRENCY_HKD(38);       ///< Hong Kong Dollar
+	/** British Pound */
+	CURRENCY_GBP(0),
+	/** US Dollar */
+	CURRENCY_USD(1),
+	/** Euro */
+	CURRENCY_EUR(2),
+	/** Japanese Yen */
+	CURRENCY_JPY(3),
+	/** Austrian Schilling */
+	CURRENCY_ATS(4),
+	/** Belgian Franc */
+	CURRENCY_BEF(5),
+	/** Swiss Franc */
+	CURRENCY_CHF(6),
+	/** Czech Koruna */
+	CURRENCY_CZK(7),
+	/** Deutsche Mark */
+	CURRENCY_DEM(8),
+	/** Danish Krona */
+	CURRENCY_DKK(9),
+	/** Spanish Peseta */
+	CURRENCY_ESP(10),
+	/** Finish Markka */
+	CURRENCY_FIM(11),
+	/** French Franc */
+	CURRENCY_FRF(12),
+	/** Greek Drachma */
+	CURRENCY_GRD(13),
+	/** Hungarian Forint */
+	CURRENCY_HUF(14),
+	/** Icelandic Krona */
+	CURRENCY_ISK(15),
+	/** Italian Lira */
+	CURRENCY_ITL(16),
+	/** Dutch Gulden */
+	CURRENCY_NLG(17),
+	/** Norwegian Krone */
+	CURRENCY_NOK(18),
+	/** Polish Zloty */
+	CURRENCY_PLN(19),
+	/** Romanian Leu */
+	CURRENCY_RON(20),
+	/** Russian Rouble */
+	CURRENCY_RUR(21),
+	/** Slovenian Tolar */
+	CURRENCY_SIT(22),
+	/** Swedish Krona */
+	CURRENCY_SEK(23),
+	/** Turkish Lira */
+	CURRENCY_YTL(24),
+	/** Slovak Kornuna */
+	CURRENCY_SKK(25),
+	/** Brazilian Real */
+	CURRENCY_BRL(26),
+	/** Estonian Krooni */
+	CURRENCY_EEK(27),
+	/** Lithuanian Litas */
+	CURRENCY_LTL(28),
+	/** South Korean Won */
+	CURRENCY_KRW(29),
+	/** South African Rand */
+	CURRENCY_ZAR(30),
+	/** Custom currency */
+	CURRENCY_CUSTOM(31),
+	/** Georgian Lari */
+	CURRENCY_GEL(32),
+	/** Iranian Rial */
+	CURRENCY_IRR(33),
+	/** New Russian Ruble */
+	CURRENCY_RUB(34),
+	/** Mexican Peso */
+	CURRENCY_MXN(35),
+	/** New Taiwan Dollar */
+	CURRENCY_NTD(36),
+	/** Chinese Renminbi */
+	CURRENCY_CNY(37),
+	/** Hong Kong Dollar */
+	CURRENCY_HKD(38);
 
 	private final int value;
 	
@@ -108,7 +147,7 @@ public enum NetworkCurrency {
 		case 17: return CURRENCY_NLG;       ///< Dutch Gulden
 		case 18: return CURRENCY_NOK;       ///< Norwegian Krone
 		case 19: return CURRENCY_PLN;       ///< Polish Zloty
-		case 20: return CURRENCY_RON;       ///< Romenian Leu
+		case 20: return CURRENCY_RON;       ///< Romanian Leu
 		case 21: return CURRENCY_RUR;       ///< Russian Rouble
 		case 22: return CURRENCY_SIT;       ///< Slovenian Tolar
 		case 23: return CURRENCY_SEK;       ///< Swedish Krona

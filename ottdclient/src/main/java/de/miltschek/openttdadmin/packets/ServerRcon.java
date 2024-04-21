@@ -1,7 +1,7 @@
 /*
  *  MIT License
  *
- *  Copyright (c) 2021 miltschek
+ *  Copyright (c) 2024 miltschek
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -24,12 +24,16 @@
 package de.miltschek.openttdadmin.packets;
 
 /**
- * TODO: document it
+ * The server's reply to a remove console command.
  */
 public class ServerRcon extends OttdPacket {
 	private int color;
 	private String result;
 	
+	/**
+	 * Interprets raw data to create a representation of the packet.
+	 * @param buffer buffer containing raw data
+	 */
 	public ServerRcon(byte[] buffer) {
 		super(buffer);
 		
@@ -38,13 +42,19 @@ public class ServerRcon extends OttdPacket {
 		this.result = readString();
 	}
 
+	/**
+	 * Returns the color ID.
+	 * @return the color ID
+	 */
 	public int getColor() {
 		return color;
 	}
 
+	/**
+	 * Returns the result of the remote command.
+	 * @return the result of the remote command
+	 */
 	public String getResult() {
 		return result;
 	}
-	
-	
 }

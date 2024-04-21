@@ -1,7 +1,7 @@
 /*
  *  MIT License
  *
- *  Copyright (c) 2021 miltschek
+ *  Copyright (c) 2024 miltschek
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -24,13 +24,17 @@
 package de.miltschek.openttdadmin.packets;
 
 /**
- * TODO: document it
+ * The server tells the admin that a company was removed.
  */
 public class ServerCompanyRemove extends OttdPacket {
 	private byte companyId;
 	private byte rawRemoveReason;
 	private AdminCompanyRemoveReason removeReason;
 	
+	/**
+	 * Interprets raw data to create a representation of the packet.
+	 * @param buffer buffer containing raw data
+	 */
 	public ServerCompanyRemove(byte[] buffer) {
 		super(buffer);
 		
@@ -40,14 +44,26 @@ public class ServerCompanyRemove extends OttdPacket {
 		this.removeReason = AdminCompanyRemoveReason.getEnum(this.rawRemoveReason);
 	}
 
+	/**
+	 * Returns the company ID.
+	 * @return the company ID
+	 */
 	public byte getCompanyId() {
 		return companyId;
 	}
 	
+	/**
+	 * Returns the reason of the closure.
+	 * @return the reason of the closure
+	 */
 	public AdminCompanyRemoveReason getRemoveReason() {
 		return removeReason;
 	}
 
+	/**
+	 * Returns the network-level value of the reason of the closure.
+	 * @return the network-level value of the reason of the closure
+	 */
 	public byte getRawRemoveReason() {
 		return rawRemoveReason;
 	}

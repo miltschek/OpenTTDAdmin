@@ -1,7 +1,7 @@
 /*
  *  MIT License
  *
- *  Copyright (c) 2021 miltschek
+ *  Copyright (c) 2024 miltschek
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -24,7 +24,7 @@
 package de.miltschek.openttdadmin.packets;
 
 /**
- * TODO: document it
+ * The error codes we send around in the protocols.
  */
 public enum NetworkErrorCode {
 	NETWORK_ERROR_GENERAL(0), // Try to use this one like never
@@ -58,10 +58,19 @@ public enum NetworkErrorCode {
 		this.value = value;
 	}
 	
+	/**
+	 * Get a value associated with the network error code.
+	 * @return a value associated with the network error code
+	 */
 	public int getValue() {
 		return value;
 	}
 	
+	/**
+	 * Get a network error code associated with the given value.
+	 * @param value network-level value denoting a network error code
+	 * @return a network error code associated with the given value
+	 */
 	public static NetworkErrorCode getEnum(int value) {
 		switch (value) {
 		case 0: return NETWORK_ERROR_GENERAL;

@@ -1,7 +1,7 @@
 /*
  *  MIT License
  *
- *  Copyright (c) 2021 miltschek
+ *  Copyright (c) 2024 miltschek
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -24,12 +24,15 @@
 package de.miltschek.openttdadmin.packets;
 
 /**
- * TODO: document it
+ * Reasons for removing a company - communicated to admins.
  */
 public enum AdminCompanyRemoveReason {
-	ADMIN_CRR_MANUAL(0),    ///< The company is manually removed.
-	ADMIN_CRR_AUTOCLEAN(1), ///< The company is removed due to autoclean.
-	ADMIN_CRR_BANKRUPT(2);  ///< The company went belly-up.
+	/** The company is manually removed. */
+	ADMIN_CRR_MANUAL(0),
+	/** The company is removed due to autoclean. */
+	ADMIN_CRR_AUTOCLEAN(1),
+	/** The company went belly-up. */
+	ADMIN_CRR_BANKRUPT(2);
 
 	private int value;
 	
@@ -37,10 +40,19 @@ public enum AdminCompanyRemoveReason {
 		this.value = value;
 	}
 	
+	/**
+	 * Get a value associated with the company removal reason.
+	 * @return a value associated with the company removal reason
+	 */
 	public int getValue() {
 		return value;
 	}
 	
+	/**
+	 * Get an company removal reason associated with the given value.
+	 * @param value network-level value denoting a company removal reason
+	 * @return a company removal reason associated with the given value
+	 */
 	public static AdminCompanyRemoveReason getEnum(int value) {
 		switch (value) {
 		case 0: return ADMIN_CRR_MANUAL;

@@ -1,7 +1,7 @@
 /*
  *  MIT License
  *
- *  Copyright (c) 2021 miltschek
+ *  Copyright (c) 2024 miltschek
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -24,13 +24,29 @@
 package de.miltschek.openttdadmin.packets;
 
 /**
- * TODO: document it
+ * The admin explicitly polls for a piece of information.
  */
 public class AdminPoll extends OttdPacket {
+	/**
+	 * Creates a packet out of binary data.
+	 * @param buffer buffer containing binary data of the packet
+	 * @param startPosition beginning of the valid data within the given buffer
+	 * @param length length of the valid data within the given buffer
+	 */
 	public AdminPoll(byte[] buffer, int startPosition, int length) {
 		super(buffer, startPosition, length);
 	}
 	
+	/**
+	 * Creates a packet out of provided data.
+	 * @param updateType type of information requested from the server
+	 * @param parameter depends on the updateType:
+	 *        for ADMIN_UPDATE_DATE: ignored,
+	 *        for ADMIN_UPDATE_CLIENT_INFO: UINT32_MAX requests all clients, 1 requests the server's info, all other values a specific client ID,
+	 *        for ADMIN_UPDATE_COMPANY_INFO:  UINT32_MAX requests all companies, all other values a specific company ID,
+	 *        for ADMIN_UPDATE_COMPANY_ECONOMY, ADMIN_UPDATE_COMPANY_STATS, ADMIN_UPDATE_CMD_NAMES: ignored
+	 * @return a created packet
+	 */
 	public static AdminPoll createPacket(UpdateType updateType, int parameter) {
 		byte[] buffer = new byte[MAX_MTU];
 		

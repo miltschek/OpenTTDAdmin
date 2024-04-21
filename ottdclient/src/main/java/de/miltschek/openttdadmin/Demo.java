@@ -1,7 +1,7 @@
 /*
  *  MIT License
  *
- *  Copyright (c) 2021 miltschek
+ *  Copyright (c) 2024 miltschek
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -168,10 +168,13 @@ public class Demo {
 				
 				System.out.println(" - password protected = " + companyInfo.isPasswordProtected());
 				System.out.println(" - quarters of bankruptcy = " + companyInfo.getQuartersOfBankruptcy());
-				System.out.println(" - share owners 1 = " + companyInfo.getShareOwner(0));
-				System.out.println(" - share owners 2 = " + companyInfo.getShareOwner(1));
-				System.out.println(" - share owners 3 = " + companyInfo.getShareOwner(2));
-				System.out.println(" - share owners 4 = " + companyInfo.getShareOwner(3));
+				System.out.println(" - shares supported = " + companyInfo.isSharesSupported());
+				if (companyInfo.isSharesSupported()) {
+					System.out.println("   - share owners 1 = " + companyInfo.getShareOwner(0));
+					System.out.println("   - share owners 2 = " + companyInfo.getShareOwner(1));
+					System.out.println("   - share owners 3 = " + companyInfo.getShareOwner(2));
+					System.out.println("   - share owners 4 = " + companyInfo.getShareOwner(3));
+				}
 			}
 			
 			@Override

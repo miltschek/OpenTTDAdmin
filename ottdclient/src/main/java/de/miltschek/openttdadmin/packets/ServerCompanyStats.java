@@ -1,7 +1,7 @@
 /*
  *  MIT License
  *
- *  Copyright (c) 2021 miltschek
+ *  Copyright (c) 2024 miltschek
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -24,21 +24,30 @@
 package de.miltschek.openttdadmin.packets;
 
 /**
- * TODO: document it
+ * The server gives the admin some statistics about a company.
  */
 public class ServerCompanyStats extends OttdPacket {
 	private static final int NETWORK_VEH_END = 5;
 	
+	/** A train as a vehicle type. */
 	public static final int TRAIN = 0,
+			/** A lorry as a vehicle type. */
 		LORRY = 1,
+			/** A bus as a vehicle type. */
 		BUS = 2,
+			/** A plane as a vehicle type. */
 		PLANE = 3,
+			/** A ship as a vehicle type. */
 		SHIP = 4;
 	
 	private byte index;
 	private int[] vehicles = new int[NETWORK_VEH_END];
 	private int[] stations = new int[NETWORK_VEH_END];
 	
+	/**
+	 * Interprets raw data to create a representation of the packet.
+	 * @param buffer buffer containing raw data
+	 */
 	public ServerCompanyStats(byte[] buffer) {
 		super(buffer);
 		
@@ -54,14 +63,28 @@ public class ServerCompanyStats extends OttdPacket {
 		}
 	}
 	
+	/**
+	 * Returns the company ID.
+	 * @return the company ID
+	 */
 	public byte getIndex() {
 		return index;
 	}
 
+	/**
+	 * Returns a number of vehicles of the given type.
+	 * @param vehicleType type of vehicles {@link #TRAIN}, {@link #LORRY}, {@link #BUS}, {@link #PLANE} or {@link #SHIP}.
+	 * @return a number of vehicles of the given type
+	 */
 	public int getVehicles(int vehicleType) {
 		return vehicles[vehicleType];
 	}
 
+	/**
+	 * Returns a number of stations for the given vehicle type.
+	 * @param vehicleType type of vehicles {@link #TRAIN}, {@link #LORRY}, {@link #BUS}, {@link #PLANE} or {@link #SHIP}.
+	 * @return a number of stations for the given vehicle type
+	 */
 	public int getStations(int vehicleType) {
 		return stations[vehicleType];
 	}

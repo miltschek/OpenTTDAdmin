@@ -1,7 +1,7 @@
 /*
  *  MIT License
  *
- *  Copyright (c) 2021 miltschek
+ *  Copyright (c) 2024 miltschek
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -24,13 +24,17 @@
 package de.miltschek.openttdadmin.packets;
 
 /**
- * TODO: document it
+ * The server tells the admin that a client caused an error.
  */
 public class ServerClientError extends OttdPacket {
 	private int clientId;
 	private NetworkErrorCode errorCode;
 	private byte rawErrorCode;
 	
+	/**
+	 * Interprets raw data to create a representation of the packet.
+	 * @param buffer buffer containing raw data
+	 */
 	public ServerClientError(byte[] buffer) {
 		super(buffer);
 		
@@ -40,14 +44,26 @@ public class ServerClientError extends OttdPacket {
 		this.errorCode = NetworkErrorCode.getEnum(rawErrorCode);
 	}
 
+	/**
+	 * Gets the client ID of the client that caused the error.
+	 * @return the client ID of the client that caused the error
+	 */
 	public int getClientId() {
 		return clientId;
 	}
 
+	/**
+	 * Gets the translated error code (if possible).
+	 * @return the translated error code (if possible)
+	 */
 	public NetworkErrorCode getErrorCode() {
 		return errorCode;
 	}
 	
+	/**
+	 * Gets the original network-level value of the error code.
+	 * @return the original network-level value of the error code
+	 */
 	public byte getRawErrorCode() {
 		return rawErrorCode;
 	}

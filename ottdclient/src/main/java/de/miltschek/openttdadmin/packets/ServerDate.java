@@ -1,7 +1,7 @@
 /*
  *  MIT License
  *
- *  Copyright (c) 2021 miltschek
+ *  Copyright (c) 2024 miltschek
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -24,10 +24,15 @@
 package de.miltschek.openttdadmin.packets;
 
 /**
- * TODO: document it
+ * The server tells the admin what the current game date is.
  */
 public class ServerDate extends OttdPacket {
 	private int date;
+
+	/**
+	 * Interprets raw data to create a representation of the packet.
+	 * @param buffer buffer containing raw data
+	 */
 	public ServerDate(byte[] buffer) {
 		super(buffer);
 		
@@ -35,6 +40,11 @@ public class ServerDate extends OttdPacket {
 		this.date = readInt32();
 	}
 	
+	/**
+	 * Returns the game's date in the internal units.
+	 * See {@link de.miltschek.openttdadmin.data.Date} for translation.
+	 * @return the game's date in the internal units
+	 */
 	public int getDate() {
 		return date;
 	}

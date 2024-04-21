@@ -1,7 +1,7 @@
 /*
  *  MIT License
  *
- *  Copyright (c) 2021 miltschek
+ *  Copyright (c) 2024 miltschek
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -24,7 +24,7 @@
 package de.miltschek.openttdadmin.packets;
 
 /**
- * TODO: document it
+ * The server gives the admin some economy related company information.
  */
 public class ServerCompanyEconomy extends OttdPacket {
 	private static final int HISTORY_SIZE = 2;
@@ -39,6 +39,10 @@ public class ServerCompanyEconomy extends OttdPacket {
 	private int[] pastPerformance = new int[HISTORY_SIZE];
 	private int[] pastDeliveredCargo = new int[HISTORY_SIZE];
 	
+	/**
+	 * Interprets raw data to create a representation of the packet.
+	 * @param buffer buffer containing raw data
+	 */
 	public ServerCompanyEconomy(byte[] buffer) {
 		super(buffer);
 		
@@ -56,41 +60,78 @@ public class ServerCompanyEconomy extends OttdPacket {
 		}
 	}
 
+	/**
+	 * Returns a number of quarter contained in the report.
+	 * @return number of quarter contained in the report
+	 */
 	public static int getHistorySize() {
 		return HISTORY_SIZE;
 	}
 
+	/**
+	 * Returns the company ID.
+	 * @return the company ID
+	 */
 	public byte getIndex() {
 		return index;
 	}
 
+	/**
+	 * Returns the amount of money.
+	 * @return the amount of money
+	 */
 	public long getMoney() {
 		return money;
 	}
 
+	/**
+	 * Returns the amount of a loan.
+	 * @return the amount of a loan
+	 */
 	public long getLoan() {
 		return loan;
 	}
 
+	/**
+	 * Returns the income.
+	 * @return the income
+	 */
 	public long getIncome() {
 		return income;
 	}
 
+	/**
+	 * Returns the delivered cargo TODO verify the units.
+	 * @return the delivered cargo TODO verify the units
+	 */
 	public int getDeliveredCargo() {
 		return deliveredCargo;
 	}
 
+	/**
+	 * Returns the company value for the given quarter.
+	 * @param quarter the quarter in the range 0..getHistorySize()-1
+	 * @return the company value for the given quarter
+	 */
 	public long getPastCompanyValue(int quarter) {
 		return pastCompanyValue[quarter];
 	}
 
+	/**
+	 * Returns the company performance for the given quarter.
+	 * @param quarter the quarter in the range 0..getHistorySize()-1
+	 * @return the company performance for the given quarter
+	 */
 	public int getPastPerformance(int quarter) {
 		return pastPerformance[quarter];
 	}
 
+	/**
+	 * Returns the delivered cargo TODO verify the units for the given quarter.
+	 * @param quarter the quarter in the range 0..getHistorySize()-1
+	 * @return the delivered cargo TODO verify the units for the given quarter
+	 */
 	public int getPastDeliveredCargo(int quarter) {
 		return pastDeliveredCargo[quarter];
 	}
-	
-	
 }
