@@ -167,7 +167,7 @@ public class Demo {
 				}
 				
 				System.out.println(" - password protected = " + companyInfo.isPasswordProtected());
-				System.out.println(" - months of bankruptcy = " + companyInfo.getMonthsOfBankruptcy());
+				System.out.println(" - quarters of bankruptcy = " + companyInfo.getQuartersOfBankruptcy());
 				System.out.println(" - share owners 1 = " + companyInfo.getShareOwner(0));
 				System.out.println(" - share owners 2 = " + companyInfo.getShareOwner(1));
 				System.out.println(" - share owners 3 = " + companyInfo.getShareOwner(2));

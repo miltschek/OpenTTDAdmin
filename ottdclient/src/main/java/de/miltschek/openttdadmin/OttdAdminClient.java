@@ -114,9 +114,9 @@ public class OttdAdminClient implements Closeable
 	/** Hardcoded client name. */
 	private final static String CLIENT_NAME = "miltschekOAC";
 	/** Hardcoded client version. */
-	private final static String CLIENT_VERSION = "1.1";
+	private final static String CLIENT_VERSION = "1.4";
 	/** Supported admin protocol's version. */
-	private final static byte SUPPORTED_SERVER_VERSION = 1;
+	private final static byte SUPPORTED_SERVER_VERSION = 3;
 
 	/** Configuration parameter: address. */
 	private final String host;
@@ -511,6 +511,7 @@ public class OttdAdminClient implements Closeable
 	    					LOGGER.error("could not send data - no output stream");
 	    				} else {
 	    					try {
+	    						LOGGER.debug("sending request...");
 		    					outputStream.write(task);
 		    					outputStream.flush();
 	    	    			} catch (IOException ex) {
@@ -577,7 +578,9 @@ public class OttdAdminClient implements Closeable
 		    		}
 		    		
 			    	try {
+			    		LOGGER.debug("trying to connect...");
 						client = new Socket(OttdAdminClient.this.host, OttdAdminClient.this.port);
+						LOGGER.debug("socket created");
 						// TODO: fine tuning client.setKeepAlive(true);
 					} catch (UnknownHostException e) {
 						LOGGER.error("unknown host {}", OttdAdminClient.this.host);
@@ -594,6 +597,7 @@ public class OttdAdminClient implements Closeable
 				    	this.outputStream = client.getOutputStream();
 				    	
 				    	AdminJoin adminJoin = AdminJoin.createPacket(OttdAdminClient.this.password, CLIENT_NAME, CLIENT_VERSION);
+				    	LOGGER.debug("admin join enqueued");
 				    	requests.add(adminJoin.getInternalBuffer());
 				    	
 				    	boolean welcomeReceived = false, settingsSent = false;
@@ -621,6 +625,7 @@ public class OttdAdminClient implements Closeable
 				    		}
 				    		
 				    		// get the length of the next packet
+				    		LOGGER.debug("wating for a response...");
 					    	byte[] buffer = new byte[OttdPacket.MAX_MTU];
 					    	int read = adminIs.read(buffer, 0, 2);
 					    	
@@ -663,13 +668,13 @@ public class OttdAdminClient implements Closeable
 					    		break;
 					    	}
 					    	
-					    	OttdPacket packetReceived = OttdPacket.parsePacket(buffer);
+					    	OttdPacket packetReceived = OttdPacket.parsePacket(OttdAdminClient.this.serverVersion, buffer);
 				    		if (packetReceived == null) {
 				    			// the packet could not be identified - ignore it
 				    			LOGGER.warn("an unidentified packet has been received");
 				    		} else if (packetReceived instanceof ServerProtocol) {
 			    				ServerProtocol p = (ServerProtocol)packetReceived;
-			    				if ((OttdAdminClient.this.serverVersion = p.getAdminVersion()) != SUPPORTED_SERVER_VERSION) {
+			    				if ((OttdAdminClient.this.serverVersion = p.getAdminVersion()) > SUPPORTED_SERVER_VERSION) {
 			    					LOGGER.warn("the server implements a potentially unsupported protocol version {}", p.getAdminVersion());
 			    				}
 			    				
@@ -823,6 +828,7 @@ public class OttdAdminClient implements Closeable
 			    						p.getInauguratedYear(),
 			    						p.isAi(),
 			    						p.getMonthsOfBankruptcy(),
+			    						p.isSharesSupported(),
 			    						new byte[] { p.getShareOwners(0), p.getShareOwners(1), p.getShareOwners(2), p.getShareOwners(3) });
 			    				
 			    				try {
@@ -873,7 +879,8 @@ public class OttdAdminClient implements Closeable
 			    						p.getManagerName(),
 			    						Color.getEnum(p.getColor()),
 			    						p.isPasswordProtected(),
-			    						p.getMonthsOfBankruptcy(),
+			    						p.getQuartersOfBankruptcy(),
+			    						p.isSharesSupported(),
 			    						new byte[] { p.getShareOwners(0), p.getShareOwners(1), p.getShareOwners(2), p.getShareOwners(3) });
 			    				
 			    				try {

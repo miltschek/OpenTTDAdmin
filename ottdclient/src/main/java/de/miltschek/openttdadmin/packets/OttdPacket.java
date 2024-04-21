@@ -50,7 +50,13 @@ public abstract class OttdPacket {
 		resetCursor();
 	}
 	
-	public static OttdPacket parsePacket(byte[] buffer) {
+	/**
+	 * Identifies the network packet and parses it accordingly.
+	 * @param protocolVersion protocol version number if known, 0 otherwise
+	 * @param buffer raw packet data
+	 * @return object representing an identified packet
+	 */
+	public static OttdPacket parsePacket(byte protocolVersion, byte[] buffer) {
 		try {
 			NetworkPacketType type = NetworkPacketType.getEnum(buffer[2] & 0xff);
 			
@@ -92,9 +98,9 @@ public abstract class OttdPacket {
 			case ADMIN_PACKET_SERVER_COMPANY_NEW:
 				return new ServerCompanyNew(buffer);
 			case ADMIN_PACKET_SERVER_COMPANY_INFO:
-				return new ServerCompanyInfo(buffer);
+				return new ServerCompanyInfo(protocolVersion, buffer);
 			case ADMIN_PACKET_SERVER_COMPANY_UPDATE:
-				return new ServerCompanyUpdate(buffer);
+				return new ServerCompanyUpdate(protocolVersion, buffer);
 			case ADMIN_PACKET_SERVER_COMPANY_REMOVE:
 				return new ServerCompanyRemove(buffer);
 			case ADMIN_PACKET_SERVER_COMPANY_ECONOMY:

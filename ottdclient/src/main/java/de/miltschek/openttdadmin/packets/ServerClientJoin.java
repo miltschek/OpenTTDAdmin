@@ -24,11 +24,15 @@
 package de.miltschek.openttdadmin.packets;
 
 /**
- * TODO: document it
+ * The server tells the admin that a client has joined.
  */
 public class ServerClientJoin extends OttdPacket {
 	private int clientId;
 	
+	/**
+	 * Interprets raw data to create a representation of the packet.
+	 * @param buffer buffer containing raw data
+	 */
 	public ServerClientJoin(byte[] buffer) {
 		super(buffer);
 		
@@ -36,9 +40,11 @@ public class ServerClientJoin extends OttdPacket {
 		this.clientId = readInt32();
 	}
 
+	/**
+	 * Gets the unique ID of the client.
+	 * @return the unique ID of the client
+	 */
 	public int getClientId() {
 		return clientId;
 	}
-	
-	
 }

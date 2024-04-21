@@ -36,7 +36,8 @@ public class CompanyInfo {
 	private int inauguratedYear;
 	private boolean aiSet;
 	private boolean ai;
-	private byte monthsOfBankruptcy;
+	private byte quartersOfBankruptcy;
+	private boolean sharesSupported;
 	private byte[] shareOwners;
 	
 	/** Special company ID denoting a town. */
@@ -64,10 +65,11 @@ public class CompanyInfo {
 	 * @param inauguratedYear year of the company's opening
 	 * @param ai true if it's an AI player, false otherwise
 	 * @param monthsOfBankruptcy months of bankruptcy TODO: check how it is calculated
+	 * @param sharesSupported a flag denoting whether shares buying/selling is supported
 	 * @param shareOwners owners of company's shares (4 times 25%)
 	 */
 	public CompanyInfo(byte index, String companyName, String managerName, Color color, boolean passwordProtected,
-			int inauguratedYear, boolean ai, byte monthsOfBankruptcy, byte[] shareOwners) {
+			int inauguratedYear, boolean ai, byte quartersOfBankruptcy, boolean sharesSupported, byte[] shareOwners) {
 		super();
 		this.index = index;
 		this.companyName = companyName;
@@ -78,7 +80,8 @@ public class CompanyInfo {
 		this.inauguratedYear = inauguratedYear;
 		this.aiSet = true;
 		this.ai = ai;
-		this.monthsOfBankruptcy = monthsOfBankruptcy;
+		this.quartersOfBankruptcy = quartersOfBankruptcy;
+		this.sharesSupported = sharesSupported;
 		this.shareOwners = shareOwners;
 	}
 
@@ -89,11 +92,12 @@ public class CompanyInfo {
 	 * @param managerName name of the company's manager
 	 * @param color color of the company
 	 * @param passwordProtected true if the company is password protected, false otherwise
-	 * @param monthsOfBankruptcy months of bankruptcy TODO: check how it is calculated
+	 * @param quartersOfBankruptcy number quarters that the company is unable to pay its debts
+	 * @param sharesSupported a flag denoting whether shares buying/selling is supported 
 	 * @param shareOwners IDs of the owners of company's shares (4 times 25%)
 	 */
 	public CompanyInfo(byte index, String companyName, String managerName, Color color, boolean passwordProtected,
-			byte monthsOfBankruptcy, byte[] shareOwners) {
+			byte quartersOfBankruptcy, boolean sharesSupported, byte[] shareOwners) {
 		super();
 		this.index = index;
 		this.companyName = companyName;
@@ -102,7 +106,8 @@ public class CompanyInfo {
 		this.passwordProtected = passwordProtected;
 		this.inauguratedYearSet = false;
 		this.aiSet = false;
-		this.monthsOfBankruptcy = monthsOfBankruptcy;
+		this.quartersOfBankruptcy = quartersOfBankruptcy;
+		this.sharesSupported = sharesSupported;
 		this.shareOwners = shareOwners;
 	}
 
@@ -181,17 +186,26 @@ public class CompanyInfo {
 	}
 
 	/**
-	 * Gets the months of bankruptcy TODO: check how it is calculated.
-	 * @return months of bankruptcy TODO: check how it is calculated
+	 * Gets the number of quarters that the company is unable to pay its debts.
+	 * @return the number of quarters that the company is unable to pay its debts
 	 */
-	public byte getMonthsOfBankruptcy() {
-		return monthsOfBankruptcy;
+	public byte getQuartersOfBankruptcy() {
+		return quartersOfBankruptcy;
+	}
+	
+	/**
+	 * Returns a flag denoting whether shares buying/selling is supported.
+	 * @return true if the shares buying/selling is supported, false otherwise
+	 */
+	public boolean isSharesSupported() {
+		return this.sharesSupported;
 	}
 
 	/**
-	 * Gets the IDs of the owners of company's shares (4 times 25%)
+	 * Gets the IDs of the owners of company's shares (4 times 25%).
 	 * @param part the share to be returned (0..3)
 	 * @return ID of the owner of the requested company's share
+	 * @deprecated since OpenTTD14.0 shares are not supported, all values are set to 0
 	 */
 	public byte getShareOwner(int part) {
 		return shareOwners[part];

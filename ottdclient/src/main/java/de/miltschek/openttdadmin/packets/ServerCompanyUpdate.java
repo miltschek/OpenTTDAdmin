@@ -24,7 +24,7 @@
 package de.miltschek.openttdadmin.packets;
 
 /**
- * TODO: document it
+ * The server gives the admin an information update on a company.
  */
 public class ServerCompanyUpdate extends OttdPacket {
 	private byte index;
@@ -32,10 +32,16 @@ public class ServerCompanyUpdate extends OttdPacket {
 	private String managerName;
 	private byte color;
 	private boolean passwordProtected;
-	private byte monthsOfBankruptcy;
+	private byte quartersOfBankruptcy;
+	private boolean sharesSupported;
 	private byte[] shareOwners = new byte[4];
 	
-	public ServerCompanyUpdate(byte[] buffer) {
+	/**
+	 * Interprets raw data to create a representation of the packet.
+	 * @param protocolVersion protocol version number
+	 * @param buffer buffer containing raw data
+	 */
+	public ServerCompanyUpdate(byte protocolVersion, byte[] buffer) {
 		super(buffer);
 		
 		resetCursor();
@@ -44,40 +50,82 @@ public class ServerCompanyUpdate extends OttdPacket {
 		this.managerName = readString();
 		this.color = readByte();
 		this.passwordProtected = readBoolean();
-		this.monthsOfBankruptcy = readByte();
-		
-		for (int n = 0; n < this.shareOwners.length; n++) {
-			this.shareOwners[n] = readByte();
+		this.quartersOfBankruptcy = readByte();
+
+		// company shares removed with the version 3
+		if (protocolVersion < 3) {
+			this.sharesSupported = true;
+			for (int n = 0; n < this.shareOwners.length; n++) {
+				this.shareOwners[n] = readByte();
+			}
+		} else {
+			this.sharesSupported = false;
 		}
 	}
 
+	/**
+	 * Gets the ID of the company.
+	 * @return the ID of the company
+	 */
 	public byte getIndex() {
 		return index;
 	}
 
+	/**
+	 * Gets the name of the company.
+	 * @return the name of the company
+	 */
 	public String getCompanyName() {
 		return companyName;
 	}
 
+	/**
+	 * Gets the name of the manager of the company.
+	 * @return the name of the manager of the company
+	 */
 	public String getManagerName() {
 		return managerName;
 	}
 
+	/**
+	 * Gets the ID of the color of the company.
+	 * @return the ID of the color of the company
+	 */
 	public byte getColor() {
 		return color;
 	}
 
+	/**
+	 * Returns a flag denoting whether the company is password-protected.
+	 * @return true if the company is password-protected, false otherwise
+	 */
 	public boolean isPasswordProtected() {
 		return passwordProtected;
 	}
 
-	public byte getMonthsOfBankruptcy() {
-		return monthsOfBankruptcy;
+	/**
+	 * Returns the number of quarters (rounded to the next one) that the company is unable to pay its debts.
+	 * @return the number of quarters (rounded to the next one) that the company is unable to pay its debts
+	 */
+	public byte getQuartersOfBankruptcy() {
+		return quartersOfBankruptcy;
+	}
+	
+	/**
+	 * Returns a flag denoting whether shares buying/selling is supported.
+	 * @return true if the shares buying/selling is supported, false otherwise
+	 */
+	public boolean isSharesSupported() {
+		return this.sharesSupported;
 	}
 
+	/**
+	 * Returns an ID of the shareholder, if any. The shares are organized in 25% steps.
+	 * @param one of the 25% shares of the company (0..3)
+	 * @return holder ID of the share or 0 if not sold
+	 * @deprecated since OpenTTD14.0 shares have been removed, the values are always 0 
+	 */
 	public byte getShareOwners(int part) {
 		return shareOwners[part];
 	}
-	
-	
 }

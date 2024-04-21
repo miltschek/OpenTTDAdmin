@@ -37,7 +37,7 @@ public enum NetworkPacketType {
 	ADMIN_PACKET_ADMIN_PING(7),             ///< The admin sends a ping to the server, expecting a ping-reply (PONG) packet.
 	ADMIN_PACKET_ADMIN_EXTERNAL_CHAT(7),    ///< The admin sends a chat message from external source.
 
-	ADMIN_PACKET_SERVER_FULL(100),      ///< The server tells the admin it cannot accept the admin.
+	ADMIN_PACKET_SERVER_FULL(100),            ///< The server tells the admin it cannot accept the admin.
 	ADMIN_PACKET_SERVER_BANNED(101),          ///< The server tells the admin it is banned.
 	ADMIN_PACKET_SERVER_ERROR(102),           ///< The server tells the admin an error has occurred.
 	ADMIN_PACKET_SERVER_PROTOCOL(103),        ///< The server tells the admin its protocol version.

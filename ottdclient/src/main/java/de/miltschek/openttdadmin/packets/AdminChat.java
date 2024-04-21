@@ -26,13 +26,27 @@ package de.miltschek.openttdadmin.packets;
 import java.nio.charset.StandardCharsets;
 
 /**
- * TODO: document it
+ * The admin sends a chat message to be distributed.
  */
 public class AdminChat extends OttdPacket {
+	/**
+	 * Creates a packet out of binary data.
+	 * @param buffer buffer containing binary data of the packet
+	 * @param startPosition beginning of the valid data within the given buffer
+	 * @param length length of the valid data within the given buffer
+	 */
 	public AdminChat(byte[] buffer, int startPosition, int length) {
 		super(buffer, startPosition, length);
 	}
 	
+	/**
+	 * Creates a packet out of given arguments.
+	 * @param networkAction TODO
+	 * @param destinationType specifies the meaning of the destination ID
+	 * @param destinationId specifies the ID of the recipient of the type destinationType
+	 * @param message content of the message TODO max length
+	 * @return a constructed network packet
+	 */
 	public static AdminChat createPacket(NetworkAction networkAction, DestinationType destinationType, int destinationId, String message) {
 		byte[] buffer = new byte[MAX_MTU];
 		
